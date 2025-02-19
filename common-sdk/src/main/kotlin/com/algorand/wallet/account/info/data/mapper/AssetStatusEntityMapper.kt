@@ -12,8 +12,9 @@
 
 package com.algorand.wallet.account.info.data.mapper
 
-import com.algorand.wallet.account.info.data.database.model.AccountInformationEntity
+import com.algorand.wallet.account.info.data.database.model.AssetStatusEntity
+import com.algorand.wallet.account.info.domain.model.AssetStatus
 
-internal interface AccountInformationErrorEntityMapper {
-    operator fun invoke(address: String): AccountInformationEntity
+internal interface AssetStatusEntityMapper {
+    operator fun invoke(status: AssetStatus): AssetStatusEntity
 }
