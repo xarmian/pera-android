@@ -50,14 +50,15 @@ import com.algorand.android.utils.exceptions.TransactionConfirmationAwaitExcepti
 import com.algorand.android.utils.exceptions.TransactionIdNullException
 import com.algorand.android.utils.findAllNodes
 import com.algorand.android.utils.sendErrorLog
+import com.algorand.wallet.analytics.domain.service.PeraReferrerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @Suppress("LongParameterList")
 @HiltViewModel
@@ -77,6 +78,7 @@ class MainViewModel @Inject constructor(
     private val sendSignedTransactionUseCase: SendSignedTransactionUseCase,
     private val accountDetailCacheManager: AccountDetailCacheManager,
     private val nodeRepository: NodeRepository,
+    private val peraReferrerManager: PeraReferrerManager,
     accountCacheStatusUseCase: AccountCacheStatusUseCase,
     private val autoLockManagerUseCase: AutoLockManagerUseCase,
     private val accountStateHelperUseCase: AccountStateHelperUseCase
@@ -298,5 +300,11 @@ class MainViewModel @Inject constructor(
 
     fun hasAccountAuthority(accountAddress: String): Boolean {
         return accountStateHelperUseCase.hasAccountAuthority(accountAddress)
+    }
+
+    fun fetchInstallReferrer() {
+        viewModelScope.launch(Dispatchers.IO) {
+            peraReferrerManager.fetchInstallReferrer()
+        }
     }
 }
