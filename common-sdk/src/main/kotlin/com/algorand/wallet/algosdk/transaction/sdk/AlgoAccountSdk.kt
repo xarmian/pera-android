@@ -19,11 +19,9 @@ interface AlgoAccountSdk {
 
     fun createHdAccount(): HdKeyAccount?
 
-    fun recoverHdAccount(mnemonic: String): HdKeyAccount?
-
     fun createAlgo25Account(): Algo25Account?
 
     fun recoverAlgo25Account(mnemonic: String): Algo25Account?
 
-    fun getMnemonicFromSecretKey(secretKey: ByteArray): String?
+    fun getMnemonicFromAlgo25SecretKey(secretKey: ByteArray): String?
 }

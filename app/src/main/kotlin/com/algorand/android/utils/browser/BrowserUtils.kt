@@ -36,8 +36,8 @@ import com.algorand.android.utils.MAINNET_NETWORK_SLUG
 import com.algorand.android.utils.extensions.appendAt
 import com.algorand.android.utils.recordException
 
-private const val PRIVACY_POLICY_URL = "https://perawallet.app/privacy-policy/"
-private const val TERMS_AND_SERVICES_URL = "https://perawallet.app/terms-and-services/"
+const val PRIVACY_POLICY_URL = "https://perawallet.app/privacy-policy/"
+const val TERMS_AND_SERVICES_URL = "https://perawallet.app/terms-and-services/"
 private const val PERA_EXPLORER_URL = "explorer.perawallet.app"
 private const val MARKET_PAGE_URL = "https://play.google.com/store/apps/details?id=com.algorand.android"
 private const val SUPPORT_CENTER_URL = "https://perawallet.app/support/"
@@ -50,15 +50,18 @@ private const val DISPENSER_URL = "https://dispenser.testnet.aws.algodev.network
 private const val VESTIGE_TERMS_OF_SERVICE_URL = "https://about.vestige.fi/disclaimer/terms-of-service"
 private const val TINYMAN_FAQ_PRICE_IMPACT_URL = "https://docs.tinyman.org/faq#what-is-a-price-impact"
 
-const val RECOVER_INFO_URL = "https://perawallet.app/support/recover-account/"
-const val LEDGER_HELP_WEB_URL = "https://perawallet.app/support/ledger/"
+const val RECOVER_ACCOUNT_SUPPORT_URL = "https://perawallet.app/support/recover-account/"
+const val LEDGER_SUPPORT_URL = "https://perawallet.app/support/ledger/"
 const val PERA_SUPPORT_URL = "https://perawallet.app/support/"
 const val ASA_VERIFICATION_URL = "https://explorer.perawallet.app/asa-verification/"
 const val BASE_TWITTER_URL = "https://twitter.com/"
 const val BLANK_URL = "about:blank"
-const val ASB_SUPPORT_URL = "https://perawallet.app/support/asb"
+const val ASB_SUPPORT_URL = "https://perawallet.app/support/asb/"
 const val REKEY_SUPPORT_URL = "https://perawallet.app/support/rekey/"
 const val ASSET_INBOX_SUPPORT_URL = "https://perawallet.app/support/asset-inbox/"
+const val WATCH_SUPPORT_URL = "https://perawallet.app/support/watch-accounts/"
+const val HD_ACCOUNT_SUPPORT_URL = "https://perawallet.app/support/hd-wallets/"
+const val ALGO25_ACCOUNT_SUPPORT_URL = "https://perawallet.app/support/create-new-account/"
 
 const val HTTPS_PROTOCOL = "https://"
 const val HTTP_PROTOCOL = "http://"

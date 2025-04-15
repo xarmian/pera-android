@@ -18,7 +18,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.ContextCompat
 import androidx.room.Room
-import com.algorand.android.core.AccountManager
 import com.algorand.android.database.AlgorandDatabase
 import com.algorand.android.database.AlgorandDatabase.Companion.MIGRATION_10_11
 import com.algorand.android.database.AlgorandDatabase.Companion.MIGRATION_11_12
@@ -38,11 +37,7 @@ import com.algorand.android.ledger.LedgerBleConnectionManager
 import com.algorand.android.ledger.LedgerBleSearchManager
 import com.algorand.android.modules.tracking.core.PeraReferrerInstallClientImpl
 import com.algorand.android.notification.PeraNotificationManager
-import com.algorand.android.usecase.AccountDetailUseCase
-import com.algorand.android.usecase.GetLocalAccountsFromSharedPrefUseCase
-import com.algorand.android.usecase.SimpleAssetDetailUseCase
 import com.algorand.android.utils.ALGORAND_KEYSTORE_URI
-import com.algorand.android.utils.AccountCacheManager
 import com.algorand.android.utils.ENCRYPTED_SHARED_PREF_NAME
 import com.algorand.android.utils.KEYSET_HANDLE
 import com.algorand.android.utils.KEY_TEMPLATE_AES256_GCM
@@ -53,7 +48,6 @@ import com.google.crypto.tink.KeyTemplates
 import com.google.crypto.tink.KeysetHandle
 import com.google.crypto.tink.aead.AeadConfig
 import com.google.crypto.tink.integration.android.AndroidKeysetManager
-import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -74,7 +68,7 @@ object AppModule {
     ): AlgorandDatabase {
         return Room
             .databaseBuilder(appContext, AlgorandDatabase::class.java, AlgorandDatabase.DATABASE_NAME)
-            .fallbackToDestructiveMigration()
+            .fallbackToDestructiveMigration(false)
             .addMigrations(
                 MIGRATION_3_4,
                 MIGRATION_4_5,
@@ -139,27 +133,6 @@ object AppModule {
     @Provides
     fun provideAlgorandNotificationManager(): PeraNotificationManager {
         return PeraNotificationManager()
-    }
-
-    @Singleton
-    @Provides
-    fun provideAccountCacheManager(
-        accountManager: AccountManager,
-        accountDetailUseCase: AccountDetailUseCase,
-        assetDetailUseCase: SimpleAssetDetailUseCase
-    ): AccountCacheManager {
-        return AccountCacheManager(accountManager, accountDetailUseCase, assetDetailUseCase)
-    }
-
-    @Singleton
-    @Provides
-    fun provideAccountManager(
-        aead: Aead,
-        gson: Gson,
-        sharedPref: SharedPreferences,
-        getLocalAccountsFromSharedPrefUseCase: GetLocalAccountsFromSharedPrefUseCase
-    ): AccountManager {
-        return AccountManager(aead, gson, sharedPref, getLocalAccountsFromSharedPrefUseCase)
     }
 
     @Singleton

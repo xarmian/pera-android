@@ -13,9 +13,11 @@
 package com.algorand.wallet.account.info.domain.usecase
 
 import com.algorand.wallet.account.info.domain.model.AccountCacheStatus
+import com.algorand.wallet.account.info.domain.model.AccountFastLookup
 import com.algorand.wallet.account.info.domain.model.AccountInformation
 import com.algorand.wallet.account.info.domain.model.AssetHolding
 import com.algorand.wallet.account.info.domain.model.AssetStatus
+import com.algorand.wallet.account.info.domain.model.RegisteredHdKey
 import com.algorand.wallet.foundation.PeraResult
 import java.math.BigInteger
 import kotlinx.coroutines.flow.Flow
@@ -113,6 +115,14 @@ fun interface GetAccountRekeyAdminAddress {
     suspend operator fun invoke(address: String): String?
 }
 
+fun interface GetAccountFastLookup {
+    suspend operator fun invoke(address: String): PeraResult<AccountFastLookup>
+}
+
 fun interface GetAccountAlgoBalance {
     suspend operator fun invoke(address: String): BigInteger?
+}
+
+fun interface GetRegisteredHdKeys {
+    suspend operator fun invoke(entropy: ByteArray): List<RegisteredHdKey>
 }

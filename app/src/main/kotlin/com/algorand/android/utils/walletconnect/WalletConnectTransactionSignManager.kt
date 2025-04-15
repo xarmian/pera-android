@@ -21,10 +21,6 @@ import com.algorand.android.ledger.CustomScanCallback
 import com.algorand.android.ledger.LedgerBleOperationManager
 import com.algorand.android.ledger.LedgerBleSearchManager
 import com.algorand.android.ledger.operations.WalletConnectTransactionOperation
-import com.algorand.android.models.Account
-import com.algorand.android.models.Account.Detail.Ledger
-import com.algorand.android.models.Account.Detail.RekeyedAuth
-import com.algorand.android.models.Account.Detail.Standard
 import com.algorand.android.models.AnnotatedString
 import com.algorand.android.models.BaseWalletConnectTransaction
 import com.algorand.android.models.LedgerBleResult
@@ -39,12 +35,18 @@ import com.algorand.android.models.WalletConnectSignResult.Error.Defined
 import com.algorand.android.models.WalletConnectSignResult.LedgerWaitingForApproval
 import com.algorand.android.models.WalletConnectSignResult.Success
 import com.algorand.android.models.WalletConnectSignResult.TransactionCancelledByLedger
-import com.algorand.android.usecase.AccountDetailUseCase
 import com.algorand.android.utils.Event
 import com.algorand.android.utils.LifecycleScopedCoroutineOwner
 import com.algorand.android.utils.ListQueuingHelper
 import com.algorand.android.utils.sendErrorLog
 import com.algorand.android.utils.signTx
+import com.algorand.wallet.account.core.domain.model.TransactionSigner
+import com.algorand.wallet.account.local.domain.model.LocalAccount
+import com.algorand.wallet.account.local.domain.usecase.GetAlgo25SecretKey
+import com.algorand.wallet.account.local.domain.usecase.GetHdSeed
+import com.algorand.wallet.account.local.domain.usecase.GetLocalAccount
+import com.algorand.wallet.algosdk.transaction.sdk.SignHdKeyTransaction
+import com.algorand.wallet.encryption.domain.utils.clearFromMemory
 import javax.inject.Inject
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
@@ -54,7 +56,10 @@ class WalletConnectTransactionSignManager @Inject constructor(
     private val ledgerBleSearchManager: LedgerBleSearchManager,
     private val ledgerBleOperationManager: LedgerBleOperationManager,
     private val signHelper: WalletConnectTransactionSignHelper,
-    private val accountDetailUseCase: AccountDetailUseCase
+    private val getAlgo25SecretKey: GetAlgo25SecretKey,
+    private val getHdSeed: GetHdSeed,
+    private val getLocalAccount: GetLocalAccount,
+    private val signHdKeyTransaction: SignHdKeyTransaction
 ) : LifecycleScopedCoroutineOwner() {
 
     val signResultLiveData: LiveData<WalletConnectSignResult>
@@ -75,12 +80,8 @@ class WalletConnectTransactionSignManager @Inject constructor(
             currentItemIndex: Int,
             totalItemCount: Int
         ) {
-            val accountType = getSignerAccountType(transaction.authAddress)
-            if (accountType == null) {
-                signHelper.cacheDequeuedItem(null)
-            } else {
+            currentScope.launch {
                 transaction.signTransaction(
-                    accountDetail = accountType,
                     currentTransactionIndex = currentItemIndex,
                     totalTransactionCount = totalItemCount
                 )
@@ -160,67 +161,64 @@ class WalletConnectTransactionSignManager @Inject constructor(
         }
     }
 
-    private fun BaseWalletConnectTransaction.signTransaction(
-        accountDetail: Account.Detail,
+    private suspend fun BaseWalletConnectTransaction.signTransaction(
         currentTransactionIndex: Int?,
-        totalTransactionCount: Int?,
-        checkIfRekeyed: Boolean = true
+        totalTransactionCount: Int?
     ) {
-        if (checkIfRekeyed && isRekeyedToAnotherAccount()) {
-            when (accountDetail) {
-                is RekeyedAuth -> {
-                    accountDetail.rekeyedAuthDetail[authAddress].let { rekeyedAuthDetail ->
-                        if (rekeyedAuthDetail != null) {
-                            signTransaction(
-                                accountDetail = rekeyedAuthDetail,
-                                checkIfRekeyed = false,
-                                currentTransactionIndex = currentTransactionIndex,
-                                totalTransactionCount = totalTransactionCount
-                            )
-                        } else {
-                            processWithCheckingOtherAccounts(
-                                currentTransactionIndex = currentTransactionIndex,
-                                totalTransactionCount = totalTransactionCount
-                            )
-                        }
-                    }
-                }
-                else -> {
-                    processWithCheckingOtherAccounts(
-                        currentTransactionIndex = currentTransactionIndex,
-                        totalTransactionCount = totalTransactionCount
-                    )
-                }
-            }
-        } else {
-            when (accountDetail) {
-                is Ledger -> {
-                    sendTransactionWithLedger(
-                        ledgerDetail = accountDetail,
-                        currentTransactionIndex = currentTransactionIndex,
-                        totalTransactionCount = totalTransactionCount
-                    )
-                }
-                is RekeyedAuth -> {
-                    if (accountDetail.authDetail != null) {
-                        signTransaction(
-                            accountDetail = accountDetail.authDetail,
-                            checkIfRekeyed = false,
-                            currentTransactionIndex = currentTransactionIndex,
-                            totalTransactionCount = totalTransactionCount
-                        )
-                    } else {
-                        signHelper.cacheDequeuedItem(null)
-                    }
-                }
-                is Standard -> signHelper.cacheDequeuedItem(decodedTransaction?.signTx(accountDetail.secretKey))
-                else -> signHelper.cacheDequeuedItem(null)
+        when (transactionSigner) {
+            is TransactionSigner.Algo25 -> handleAlgo25TransactionSigning()
+            is TransactionSigner.HdKey -> handleHdKeyTransactionSigning()
+            is TransactionSigner.LedgerBle -> sendTransactionWithLedger(
+                ledgerDetail = transactionSigner as TransactionSigner.LedgerBle,
+                currentTransactionIndex = currentTransactionIndex,
+                totalTransactionCount = totalTransactionCount
+            )
+            else -> cacheNullDequeuedItem()
+        }
+    }
+
+    private suspend fun BaseWalletConnectTransaction.handleAlgo25TransactionSigning() {
+        val signerAddress = transactionSigner?.address ?: return cacheNullDequeuedItem()
+        val secretKey = getAlgo25SecretKey(signerAddress) ?: return cacheNullDequeuedItem()
+        val signedTransaction = decodedTransaction?.signTx(secretKey) ?: return cacheNullDequeuedItem()
+        signHelper.cacheDequeuedItem(signedTransaction)
+    }
+
+    private suspend fun BaseWalletConnectTransaction.handleHdKeyTransactionSigning() {
+        val signerAddress = transactionSigner?.address ?: return cacheNullDequeuedItem()
+        val transactionBytes = decodedTransaction ?: return cacheNullDequeuedItem()
+
+        getLocalAccount(signerAddress).let { localAccount ->
+            when (localAccount) {
+                is LocalAccount.HdKey -> signHdKeyTransaction(transactionBytes, localAccount)
+                else -> return cacheNullDequeuedItem()
             }
         }
     }
 
+    private suspend fun signHdKeyTransaction(
+        transactionBytes: ByteArray,
+        localAccount: LocalAccount.HdKey
+    ) {
+        val seed = this.getHdSeed(seedId = localAccount.seedId) ?: return cacheNullDequeuedItem()
+
+        val transactionSignedByteArray = signHdKeyTransaction.signTransaction(
+            transactionBytes,
+            seed.copyOf(),
+            localAccount.account,
+            localAccount.change,
+            localAccount.keyIndex
+        ) ?: return cacheNullDequeuedItem()
+        seed.clearFromMemory()
+        signHelper.cacheDequeuedItem(transactionSignedByteArray)
+    }
+
+    private fun cacheNullDequeuedItem() {
+        signHelper.cacheDequeuedItem(null)
+    }
+
     private fun sendTransactionWithLedger(
-        ledgerDetail: Ledger,
+        ledgerDetail: TransactionSigner.LedgerBle,
         currentTransactionIndex: Int?,
         totalTransactionCount: Int?
     ) {
@@ -268,53 +266,6 @@ class WalletConnectTransactionSignManager @Inject constructor(
             filteredAddress = ledgerAddress,
             coroutineScope = currentScope
         )
-    }
-
-    private fun BaseWalletConnectTransaction.processWithCheckingOtherAccounts(
-        currentTransactionIndex: Int?,
-        totalTransactionCount: Int?
-    ) {
-        when (
-            val authAccountDetail = accountDetailUseCase.getCachedAccountDetail(authAddress.orEmpty())
-                ?.data
-                ?.account
-                ?.detail
-        ) {
-            is Standard -> {
-                if (authAccountDetail.secretKey.isNotEmpty()) {
-                    signHelper.cacheDequeuedItem(decodedTransaction?.signTx(authAccountDetail.secretKey))
-                } else {
-                    signHelper.cacheDequeuedItem(null)
-                }
-            }
-            is Ledger -> {
-                sendTransactionWithLedger(
-                    ledgerDetail = authAccountDetail,
-                    currentTransactionIndex = currentTransactionIndex,
-                    totalTransactionCount = totalTransactionCount
-                )
-            }
-            is Account.Detail.Rekeyed -> {
-                if (authAccountDetail.secretKey?.isNotEmpty() == true) {
-                    signHelper.cacheDequeuedItem(decodedTransaction?.signTx(authAccountDetail.secretKey))
-                } else {
-                    signHelper.cacheDequeuedItem(null)
-                }
-            }
-            is RekeyedAuth -> {
-                if (authAccountDetail.secretKey?.isNotEmpty() == true) {
-                    signHelper.cacheDequeuedItem(decodedTransaction?.signTx(authAccountDetail.secretKey))
-                } else {
-                    signHelper.cacheDequeuedItem(null)
-                }
-            }
-            else -> signHelper.cacheDequeuedItem(null)
-        }
-    }
-
-    private fun getSignerAccountType(signerAccountAddress: String?): Account.Detail? {
-        if (signerAccountAddress.isNullOrBlank()) return null
-        return accountDetailUseCase.getCachedAccountDetail(signerAccountAddress)?.data?.account?.detail
     }
 
     private fun postResult(walletConnectSignResult: WalletConnectSignResult) {

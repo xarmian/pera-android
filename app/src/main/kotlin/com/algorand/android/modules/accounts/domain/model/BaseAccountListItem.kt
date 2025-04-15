@@ -13,8 +13,8 @@
 package com.algorand.android.modules.accounts.domain.model
 
 import androidx.annotation.StringRes
-import com.algorand.android.models.BaseAccountAndAssetListItem
 import com.algorand.android.models.RecyclerListItem
+import com.algorand.android.modules.accountsorting.ui.domain.model.AccountAndAssetListItem
 
 sealed class BaseAccountListItem : RecyclerListItem {
 
@@ -183,11 +183,11 @@ sealed class BaseAccountListItem : RecyclerListItem {
 
     sealed class BaseAccountItem : BaseAccountListItem() {
 
-        abstract val accountListItem: BaseAccountAndAssetListItem.AccountListItem
+        abstract val accountListItem: AccountAndAssetListItem.AccountListItem
         abstract val canCopyable: Boolean
 
         data class AccountItem(
-            override val accountListItem: BaseAccountAndAssetListItem.AccountListItem,
+            override val accountListItem: AccountAndAssetListItem.AccountListItem,
             override val canCopyable: Boolean
         ) : BaseAccountItem() {
 
@@ -195,10 +195,10 @@ sealed class BaseAccountListItem : RecyclerListItem {
 
             override fun areItemsTheSame(other: RecyclerListItem): Boolean {
                 return other is AccountItem &&
-                        other.accountListItem.itemConfiguration.accountAddress ==
-                        accountListItem.itemConfiguration.accountAddress &&
-                        other.accountListItem.itemConfiguration.primaryValue ==
-                        accountListItem.itemConfiguration.primaryValue
+                    other.accountListItem.itemConfiguration.accountAddress ==
+                    accountListItem.itemConfiguration.accountAddress &&
+                    other.accountListItem.itemConfiguration.primaryValue ==
+                    accountListItem.itemConfiguration.primaryValue
             }
 
             override fun areContentsTheSame(other: RecyclerListItem): Boolean {
@@ -207,7 +207,7 @@ sealed class BaseAccountListItem : RecyclerListItem {
         }
 
         data class AccountErrorItem(
-            override val accountListItem: BaseAccountAndAssetListItem.AccountListItem,
+            override val accountListItem: AccountAndAssetListItem.AccountListItem,
             override val canCopyable: Boolean
         ) : BaseAccountItem() {
 
@@ -215,8 +215,8 @@ sealed class BaseAccountListItem : RecyclerListItem {
 
             override fun areItemsTheSame(other: RecyclerListItem): Boolean {
                 return other is AccountErrorItem &&
-                        other.accountListItem.itemConfiguration.accountAddress ==
-                        accountListItem.itemConfiguration.accountAddress
+                    other.accountListItem.itemConfiguration.accountAddress ==
+                    accountListItem.itemConfiguration.accountAddress
             }
 
             override fun areContentsTheSame(other: RecyclerListItem): Boolean {
