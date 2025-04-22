@@ -115,7 +115,7 @@
     <color name="yellow_100">#FFFBD4</color>
 
     <!-- Main -->
-    <color name="background">@color/white</color>
+    <color name="background">@color/purple_100</color>
     <color name="background_secondary">@color/gray_50</color>
     <color name="system_elements">@color/black</color>
 
@@ -166,7 +166,7 @@
     <color name="button_helper_disabled_bg">@color/gray_100</color>
     <color name="button_helper_icon">@color/white</color>
     <color name="button_helper_disabled_icon">@color/gray_500</color>
-    <color name="button_helper_pera_icon">@color/yellow_400</color>
+    <color name="button_helper_pera_icon">@color/purple_400</color>
 
     <!-- Square Button -->
     <color name="button_square_bg">@color/turquoise_700_alpha_12</color>
@@ -182,7 +182,7 @@
     <color name="positive_lighter">@color/turquoise_100</color>
     <color name="success">@color/turquoise_600</color>
     <color name="success_checkmark">@color/white</color>
-    <color name="hero_bg">@color/gray_50</color>
+    <color name="hero_bg">@color/purple_100</color>
 
     <!-- Banner -->
     <color name="banner_bg">@color/turquoise_600</color>
@@ -273,7 +273,7 @@
      When you have time try to remove the ones below.  -->
 
     <!--Override System Colors-->
-    <color name="launcher_background">@color/yellow_400</color>
+    <color name="launcher_background">@color/purple_600</color>
     <color name="colorPrimary">@color/turquoise_700</color>
     <color name="colorPrimaryVariant">@color/turquoise_800</color>
     <color name="colorSecondary">@color/salmon_500</color>
@@ -281,7 +281,7 @@
     <color name="colorError">@color/negative</color>
 
     <!--    Background Colors -->
-    <color name="splash_background">@color/yellow_400</color>
+    <color name="splash_background">@color/purple_600</color>
     <color name="secondary_background">@color/white</color>
     <color name="tertiary_background">@color/white</color>
     <color name="surface_on_background">@color/gray_900</color>

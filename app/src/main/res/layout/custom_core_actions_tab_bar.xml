@@ -59,6 +59,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/spacing_large"
+            android:visibility="gone"
             app:description="@string/convert_between_popular_asa_pairs"
             app:icon="@drawable/ic_swap_helper_button_bg_gray"
             app:title="@string/swap" />
@@ -69,6 +70,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/spacing_large"
+            android:visibility="gone"
             app:description="@string/see_all_options_to_buy"
             app:icon="@drawable/ic_buy_sell_helper_button"
             app:title="@string/buy_sell" />

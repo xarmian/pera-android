@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "980842259849",
-    "project_id": "pera-wallet-voi",
-    "storage_bucket": "pera-wallet-voi.firebasestorage.app"
+    "project_number": "537717066676",
+    "project_id": "pera-wallet-public",
+    "storage_bucket": "pera-wallet-public.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:980842259849:android:bd3a3bfbf1e953e93aad58",
+        "mobilesdk_app_id": "1:537717066676:android:eefa96ca6282560c72c0e1",
         "android_client_info": {
           "package_name": "com.algorand.android"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyB0Rki5ObUc05Qitfg2el9fA7VYvMDn8sM"
+          "current_key": "AIzaSyB9J9S6XMpUN0hqzzIvvWwXux8ufQWgONU"
         }
       ],
       "services": {
@@ -26,15 +26,15 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:980842259849:android:7f0b98b3d2b755353aad58",
+        "mobilesdk_app_id": "1:537717066676:android:a3b584d0f512db4172c0e1",
         "android_client_info": {
-          "package_name": "com.voi.android"
+          "package_name": "com.algorand.android.debug"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyB0Rki5ObUc05Qitfg2el9fA7VYvMDn8sM"
+          "current_key": "AIzaSyB9J9S6XMpUN0hqzzIvvWwXux8ufQWgONU"
         }
       ],
       "services": {
@@ -45,15 +45,15 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:980842259849:android:28e29fad340c2d1e3aad58",
+        "mobilesdk_app_id": "1:537717066676:android:66680aa5a44bdcfd72c0e1",
         "android_client_info": {
-          "package_name": "com.voi.android.debug"
+          "package_name": "com.algorand.android.staging"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyB0Rki5ObUc05Qitfg2el9fA7VYvMDn8sM"
+          "current_key": "AIzaSyB9J9S6XMpUN0hqzzIvvWwXux8ufQWgONU"
         }
       ],
       "services": {
@@ -64,15 +64,15 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:980842259849:android:aacabb068b936a113aad58",
+        "mobilesdk_app_id": "1:537717066676:android:6bb5b0ff464e0d9572c0e1",
         "android_client_info": {
-          "package_name": "com.xarmian.perawalletvoi"
+          "package_name": "com.algorand.android.staging.debug"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyB0Rki5ObUc05Qitfg2el9fA7VYvMDn8sM"
+          "current_key": "AIzaSyB9J9S6XMpUN0hqzzIvvWwXux8ufQWgONU"
         }
       ],
       "services": {

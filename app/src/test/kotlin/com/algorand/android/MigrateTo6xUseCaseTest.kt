@@ -12,6 +12,7 @@
 
 package com.algorand.android.modules.settings.ui.usecase
 
+import com.algorand.android.encryption.domain.usecase.AndroidEncryptionManager
 import com.algorand.android.models.Account
 import com.algorand.android.models.AccountCreation
 import com.algorand.android.modules.settings.domain.usecase.MigrateTo6xUseCase
@@ -32,12 +33,14 @@ import org.junit.Test
 class MigrateTo6xUseCaseTest {
     private var getLocalAccountsFromSharedPrefUseCase:
             GetLocalAccountsFromSharedPrefUseCase = mockk()
+    private var androidEncryptionManager: AndroidEncryptionManager = mockk()
     private var aesPlatformManager: AESPlatformManager = mockk()
     private var accountAdditionUseCase: AccountAdditionUseCase = mockk()
     private var peraExceptionLogger: PeraExceptionLogger = mockk()
     private var sut: MigrateTo6xUseCase =
         MigrateTo6xUseCase(
             getLocalAccountsFromSharedPrefUseCase,
+            androidEncryptionManager,
             aesPlatformManager,
             accountAdditionUseCase,
             peraExceptionLogger

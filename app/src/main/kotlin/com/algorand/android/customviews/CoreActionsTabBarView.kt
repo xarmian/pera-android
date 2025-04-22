@@ -40,9 +40,9 @@ class CoreActionsTabBarView @JvmOverloads constructor(
             coreActionsButton.setOnClickListener { onCoreActionsButtonClick() }
             sendButton.setOnClickListener { listener?.onSendClick() }
             receiveButton.setOnClickListener { listener?.onReceiveClick() }
-            buySellButton.setOnClickListener { listener?.onBuySellClick() }
+            // buySellButton.setOnClickListener { listener?.onBuySellClick() }
             scanQrButton.setOnClickListener { listener?.onScanQRClick() }
-            swapButton.setOnClickListener { listener?.onSwapClick() }
+            // swapButton.setOnClickListener { listener?.onSwapClick() }
             browseDAppsButton.setOnClickListener { listener?.onBrowseDappsClick() }
             cardsButton.setOnClickListener { listener?.onCardsClick() }
             backgroundColorView.setOnClickListener { startHidingAnimation() }
@@ -85,7 +85,7 @@ class CoreActionsTabBarView @JvmOverloads constructor(
                 binding.stakingButton.isVisible = viewState.isStakingEnabled
                 binding.sendButton.isVisible = !viewState.isStakingEnabled
                 binding.scanQrButton.isVisible = !viewState.isStakingEnabled
-                binding.buySellButton.isVisible = binding.buySellButton.isEnabled
+                binding.buySellButton.isVisible = false
                 binding.browseDAppsButton.isVisible = binding.browseDAppsButton.isEnabled
             }
             Idle -> {

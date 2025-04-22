@@ -37,7 +37,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 @HiltAndroidApp
-open class PeraApp : Application() {
+open class VeraApp : Application() {
 
     @Inject
     lateinit var sharedPref: SharedPreferences

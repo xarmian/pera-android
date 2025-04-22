@@ -86,6 +86,6 @@ internal class AccountCacheManagerImpl @Inject constructor(
     }
 
     private companion object {
-        const val NEXT_BLOCK_DELAY_AFTER = 3500L
+        const val NEXT_BLOCK_DELAY_AFTER = 12000L
     }
 }

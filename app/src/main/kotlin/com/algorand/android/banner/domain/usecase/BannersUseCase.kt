@@ -30,6 +30,7 @@ class BannersUseCase @Inject constructor(
 ) {
 
     suspend fun initializeBanner(deviceId: String? = null) {
+        return
         val safeDeviceId = deviceId ?: deviceIdUseCase.getSelectedNodeDeviceId() ?: return
         with(bannerRepository) {
             clearBannerCache()

@@ -14,5 +14,5 @@ package com.algorand.android.modules.currency.domain.model
 
 enum class Currency(val id: String, val symbol: String) {
     USD("USD", "$"),
-    ALGO("ALGO", "\u00A6")
+    ALGO("VOI", "\uD835\uDD67")
 }

@@ -31,6 +31,8 @@ internal class AssetInboxRepositoryImpl(
 ) : AssetInboxRepository {
 
     override suspend fun getRequests(addresses: List<String>): PeraResult<List<AssetInboxRequest>> {
+        return PeraResult.Success(emptyList())
+        
         return requestWithHipoErrorHandler(retrofitErrorHandler) {
             assetInboxApiService.getAssetInboxAllAccountsRequests(addresses.joinToString(","))
         }.map { response ->

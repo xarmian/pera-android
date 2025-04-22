@@ -35,6 +35,7 @@ class AccountsQuickActionsViewHolder(
                 setOnClickListener { listener.onBuySellClick() }
             }
             sendButton.setOnClickListener { listener.onSendClick() }
+            receiveButton.setOnClickListener { listener.onReceiveClick() }
             swapButton.apply {
                 isSelected = item.isSwapButtonSelected
                 setOnClickListener { listener.onSwapClick() }
@@ -45,8 +46,8 @@ class AccountsQuickActionsViewHolder(
     interface AccountsQuickActionsListener {
         fun onBuySellClick()
         fun onSendClick()
+        fun onReceiveClick()
         fun onSwapClick()
-        fun onScanQrClick()
         fun onStakingClick()
     }
 

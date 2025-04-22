@@ -15,9 +15,9 @@ package com.algorand.android.utils.walletconnect.peermeta
 import com.algorand.android.modules.walletconnect.domain.model.WalletConnect
 
 object WalletConnectPeraPeerMeta : WalletConnect.PeerMeta(
-    name = "Pera Wallet",
-    description = "Pera Wallet: Simply the best Algorand wallet.",
-    url = "https://perawallet.app/",
+    name = "Vera Wallet",
+    description = "Vera Wallet: The Wallet for You All.",
+    url = "https://voi.network/",
     icons = listOf(
         "https://algorand-app.s3.amazonaws.com/app-icons/Pera-walletconnect-128.png",
         "https://algorand-app.s3.amazonaws.com/app-icons/Pera-walletconnect-192.png",

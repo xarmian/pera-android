@@ -65,7 +65,7 @@
     <color name="button_helper_disabled_bg">@color/yellow_400_alpha_5</color>
     <color name="button_helper_icon">@color/yellow_400</color>
     <color name="button_helper_disabled_icon">@color/yellow_400_alpha_50</color>
-    <color name="button_helper_pera_icon">@color/yellow_400</color>
+    <color name="button_helper_pera_icon">@color/purple_700</color>
 
     <!-- Square Button -->
     <color name="button_square_bg">@color/turquoise_700_alpha_12</color>
@@ -81,7 +81,7 @@
     <color name="positive_lighter">@color/turquoise_500_alpha_12</color>
     <color name="success">@color/yellow_400</color>
     <color name="success_checkmark">@color/gray_900</color>
-    <color name="hero_bg">#1D1D21</color>
+    <color name="hero_bg">@color/purple_900</color>
 
     <!-- Banner -->
     <color name="banner_bg">@color/gray_800</color>

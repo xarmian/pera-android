@@ -88,7 +88,7 @@ class WcRequestLaunchBackBrowserPreviewUseCase @Inject constructor(
 
         return wcRequestLaunchBackBrowserPreviewMapper.mapToWcRequestLaunchBackBrowserPreview(
             iconResId = R.drawable.ic_info,
-            iconTintResId = R.color.yellow_500,
+            iconTintResId = R.color.purple_600,
             titleAnnotatedString = titleAnnotatedString,
             descriptionAnnotatedString = descriptionAnnotatedString,
             launchBackBrowserList = launchBackBrowserList,

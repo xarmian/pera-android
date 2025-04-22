@@ -308,12 +308,14 @@ class AssetDetailFragment : BaseFragment(R.layout.fragment_asset_detail), AssetA
         with(binding) {
             quickActionButtons.isVisible = isQuickActionButtonsVisible
             swapButton.apply {
-                isVisible = isSwapButtonVisible && isQuickActionButtonsVisible
+                // isVisible = isSwapButtonVisible && isQuickActionButtonsVisible
+                isVisible = false
                 isSelected = isSwapButtonSelected
                 setOnClickListener { assetDetailViewModel.onSwapClick() }
             }
             buyAlgoButton.apply {
-                isVisible = isAlgo && isQuickActionButtonsVisible
+                // isVisible = isAlgo && isQuickActionButtonsVisible
+                isVisible = false
                 setOnClickListener { assetDetailViewModel.onBuySellClick() }
             }
             sendButton.setOnClickListener { assetDetailViewModel.onSendClick() }

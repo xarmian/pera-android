@@ -141,13 +141,13 @@ class AccountsFragment : DaggerBaseFragment(R.layout.fragment_accounts),
             navToSendAlgoNavigation()
         }
 
-        override fun onSwapClick() {
-            accountsViewModel.onSwapTapEvent()
+        override fun onReceiveClick() {
+            accountsViewModel.logEvent(PeraClickEvent.TAP_TAB_RECEIVE)
+            nav(HomeNavigationDirections.actionGlobalReceiveAccountSelectionFragment())
         }
 
-        override fun onScanQrClick() {
-            accountsViewModel.onQrScanTapEvent()
-            navToQrScanFragment()
+        override fun onSwapClick() {
+            accountsViewModel.onSwapTapEvent()
         }
 
         override fun onSortClick() {

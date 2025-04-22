@@ -91,14 +91,14 @@ kotlin {
 }
 
 android {
-    namespace = "co.algorand.app"
+    namespace = "com.algorand.android"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
 
-        applicationId = "co.algorand.app.androidApp"
+        applicationId = "com.voi.android"
         versionCode = 1
         versionName = "1.0.0"
 

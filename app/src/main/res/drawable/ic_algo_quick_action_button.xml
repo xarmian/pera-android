@@ -19,6 +19,10 @@
         android:fillColor="@color/button_helper_bg"
         android:pathData="M24,24m-24,0a24,24 0,0 1,48 0a24,24 0,1 1,-48 0" />
     <path
-        android:fillColor="@color/button_helper_icon"
-        android:pathData="M25.4085 16L16 32H18.3356L26.2404 18.5613L27.3449 22.6236L21.8359 31.9983H24.1699L28.0865 25.3418L29.9092 31.9983H32L29.5201 22.9068L31.1626 20.1043H28.7588L27.6302 16H25.4085Z" />
+        android:fillColor="#8f3fff"
+        android:pathData="M12,18
+            C12,8 24,8 24,36
+            C24,8 36,8 36,18
+            C36,28 28,40 24,40
+            C20,40 12,28 12,18Z"/>
 </vector>

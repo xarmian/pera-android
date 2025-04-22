@@ -30,11 +30,11 @@ if (project.file(offrampGradlePath).exists()) {
 }
 
 def getVersionName = {
-    System.getenv("PERA_APP_VERSION_NAME")?.toString() ?: libs.versions.android.versionName.get().toString()
+    System.getenv("VERA_APP_VERSION_NAME")?.toString() ?: libs.versions.android.versionName.get().toString()
 }
 
 def getVersionCode = {
-    System.getenv("PERA_APP_VERSION_CODE")?.toInteger() ?: libs.versions.android.versionCode.get().toInteger()
+    System.getenv("VERA_APP_VERSION_CODE")?.toInteger() ?: libs.versions.android.versionCode.get().toInteger()
 }
 
 def getGitHash = { ->
@@ -51,7 +51,7 @@ android {
     defaultConfig {
         versionCode getVersionCode()
         versionName getVersionName()
-        applicationId libs.versions.android.namespace.get().toString()
+        applicationId "com.voi.android"
         minSdkVersion libs.versions.android.minSdk.get().toInteger()
         targetSdkVersion libs.versions.android.targetSdk.get().toInteger()
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -64,7 +64,7 @@ android {
         }
 
         buildConfigField "String", "GitHash", "\"${getGitHash()}\""
-        buildConfigField "String", "APPLICATION_NAME", '"pera"'
+        buildConfigField "String", "APPLICATION_NAME", '"vera"'
         buildConfigField "String", "DEEPLINK_PREFIX", '"algorand://"'
         buildConfigField "String", "VERSION_NAME", "\"$versionName\""
         buildConfigField "Integer", "VERSION_CODE", "$versionCode"
@@ -100,7 +100,7 @@ android {
             multiDexEnabled true
             minifyEnabled false
             manifestPlaceholders = [enableCrashReporting: "false", enableFirebasePerformanceLogcat: "true"]
-            resValue("string", "app_name", "Pera Wallet (Dev)")
+            resValue("string", "app_name", "Vera Wallet")
         }
     }
 
@@ -122,8 +122,8 @@ android {
             buildConfigField "String", "ALGORAND_API_KEY", apiKeyProps["ALGORAND_API_KEY"]
             buildConfigField "String", "INDEXER_API_KEY", apiKeyProps["INDEXER_API_KEY"]
             buildConfigField "String", "MOBILE_API_KEY", apiKeyProps["MOBILE_API_KEY"]
-            buildConfigField "String", "MOBILE_ALGORAND_MAINNET_BASE_URL", '"https://mainnet.staging.api.perawallet.app/"'
-            buildConfigField "String", "MOBILE_ALGORAND_TESTNET_BASE_URL", '"https://testnet.staging.api.perawallet.app/"'
+            buildConfigField "String", "MOBILE_ALGORAND_MAINNET_BASE_URL", '"https://api.voirewards.com/"'
+            buildConfigField "String", "MOBILE_ALGORAND_TESTNET_BASE_URL", '"https://api.voirewards.com/"'
             buildConfigField "String", "PERA_3D_EXPLORER_BASE_URL", '"https://static-hosting.perawallet.app/3dviewer/index.html"'
             buildConfigField "String", "DISCOVER_WEBVIEW_USERNAME", apiKeyProps["DISCOVER_WEBVIEW_USERNAME"]
             buildConfigField "String", "DISCOVER_WEBVIEW_PASSWORD", apiKeyProps["DISCOVER_WEBVIEW_PASSWORD"]
@@ -137,12 +137,12 @@ android {
             buildConfigField "String", "ARC59_APP_ADDR_MAINNET", arc59Props["ARC59_APP_ADDR_MAINNET"]
             buildConfigField "long", "ARC59_APP_ID_MAINNET", arc59Props["ARC59_APP_ID_MAINNET"]
 
-            buildConfigField "String", "MELD_TESTNET_URL", '"https://testnet.api.perawallet.app"'
+            buildConfigField "String", "MELD_TESTNET_URL", '"https://api.voirewards.com"'
             buildConfigField "String", "DISCOVER_TESTNET_URL", '"https://discover-mobile-testnet.perawallet.app"'
             buildConfigField "String", "CARDS_TESTNET_URL", '"https://cards-mobile-staging-testnet.perawallet.app"'
             buildConfigField "String", "STAKING_TESTNET_URL", '"https://staking-mobile-testnet.perawallet.app"'
 
-            buildConfigField "String", "MELD_MAINNET_URL", '"https://mainnet.staging.api.perawallet.app"'
+            buildConfigField "String", "MELD_MAINNET_URL", '"https://api.voirewards.com"'
             buildConfigField "String", "DISCOVER_MAINNET_URL", '"https://discover-mobile-staging.perawallet.app"'
             buildConfigField "String", "CARDS_MAINNET_URL", '"https://cards-mobile-staging-mainnet.perawallet.app"'
             buildConfigField "String", "STAKING_MAINNET_URL", '"https://staking-mobile-staging.perawallet.app"'
@@ -159,8 +159,8 @@ android {
             buildConfigField "String", "ALGORAND_API_KEY", apiKeyProps["ALGORAND_API_KEY"]
             buildConfigField "String", "INDEXER_API_KEY", apiKeyProps["INDEXER_API_KEY"]
             buildConfigField "String", "MOBILE_API_KEY", apiKeyProps["MOBILE_API_KEY"]
-            buildConfigField "String", "MOBILE_ALGORAND_MAINNET_BASE_URL", '"https://mainnet.api.perawallet.app/"'
-            buildConfigField "String", "MOBILE_ALGORAND_TESTNET_BASE_URL", '"https://testnet.api.perawallet.app/"'
+            buildConfigField "String", "MOBILE_ALGORAND_MAINNET_BASE_URL", '"https://api.voirewards.com/"'
+            buildConfigField "String", "MOBILE_ALGORAND_TESTNET_BASE_URL", '"https://api.voirewards.com/"'
             buildConfigField "String", "PERA_3D_EXPLORER_BASE_URL", '"https://static-hosting.perawallet.app/3dviewer/index.html"'
             buildConfigField "String", "DISCOVER_WEBVIEW_USERNAME", apiKeyProps["DISCOVER_WEBVIEW_USERNAME"]
             buildConfigField "String", "DISCOVER_WEBVIEW_PASSWORD", apiKeyProps["DISCOVER_WEBVIEW_PASSWORD"]
@@ -174,13 +174,13 @@ android {
             buildConfigField "String", "ARC59_APP_ADDR_MAINNET", arc59Props["ARC59_APP_ADDR_MAINNET"]
             buildConfigField "long", "ARC59_APP_ID_MAINNET", arc59Props["ARC59_APP_ID_MAINNET"]
 
-            buildConfigField "String", "MELD_TESTNET_URL", '"https://testnet.api.perawallet.app"'
-            buildConfigField "String", "DISCOVER_TESTNET_URL", '"https://discover-mobile-testnet.perawallet.app"'
+            buildConfigField "String", "MELD_TESTNET_URL", '"https://api.voirewards.com"'
+            buildConfigField "String", "DISCOVER_TESTNET_URL", '"https://voirewards.com/discover"'
             buildConfigField "String", "CARDS_TESTNET_URL", '"https://cards-mobile-prod-testnet.perawallet.app"'
             buildConfigField "String", "STAKING_TESTNET_URL", '"https://staking-mobile-testnet.perawallet.app"'
 
-            buildConfigField "String", "MELD_MAINNET_URL", '"https://mainnet.api.perawallet.app"'
-            buildConfigField "String", "DISCOVER_MAINNET_URL", '"https://discover-mobile.perawallet.app"'
+            buildConfigField "String", "MELD_MAINNET_URL", '"https://api.voirewards.com"'
+            buildConfigField "String", "DISCOVER_MAINNET_URL", '"https://voirewards.com/discover"'
             buildConfigField "String", "CARDS_MAINNET_URL", '"https://cards-mobile.perawallet.app"'
             buildConfigField "String", "STAKING_MAINNET_URL", '"https://staking-mobile.perawallet.app"'
         }

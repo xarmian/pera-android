@@ -43,6 +43,6 @@ class PeraWebView : WebView {
     }
 
     companion object {
-        private const val USER_AGENT_PREFIX = "pera_android_"
+        private const val USER_AGENT_PREFIX = "vera_android_"
     }
 }

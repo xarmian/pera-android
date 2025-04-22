@@ -49,7 +49,8 @@ class DeveloperSettingsFragment : DaggerBaseFragment(R.layout.fragment_developer
 
     override fun onResume() {
         super.onResume()
-        binding.dispenserListItem.isVisible = developerSettingsViewModel.isConnectedToTestnet()
+        // binding.dispenserListItem.isVisible = developerSettingsViewModel.isConnectedToTestnet()
+        binding.dispenserListItem.isVisible = true
         binding.migrationListItem.isVisible = developerSettingsViewModel.showMigrationViewer()
     }
 

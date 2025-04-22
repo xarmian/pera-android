@@ -440,7 +440,7 @@ class MainActivity :
         when (item.itemId) {
             R.id.accountsFragment -> mainViewModel.logEvent(PeraClickEvent.TAP_LOWERMENU_HOME)
             R.id.discoverHomeNavigation -> mainViewModel.logEvent(PeraClickEvent.TAP_LOWERMENU_DISCOVER)
-            R.id.collectiblesFragment -> mainViewModel.logEvent(PeraClickEvent.TAP_LOWERMENU_NFTS)
+            // R.id.collectiblesFragment -> mainViewModel.logEvent(PeraClickEvent.TAP_LOWERMENU_NFTS)
             R.id.settingsFragment -> mainViewModel.logEvent(PeraClickEvent.TAP_LOWERMENU_SETTINGS)
         }
     }
@@ -711,7 +711,11 @@ class MainActivity :
                 if (isCoreActionsOpen)
                     mainViewModel.logEvent(PeraClickEvent.TAP_LOWERMENU_PERA)
                 binding.bottomNavigationView.menu.forEach { menuItem ->
-                    menuItem.isEnabled = isCoreActionsOpen.not()
+                    if (menuItem.itemId != R.id.collectiblesFragment) {
+                        menuItem.isEnabled = isCoreActionsOpen.not()
+                    } else {
+                        menuItem.isEnabled = false
+                    }
                 }
                 handleNavigationButtonsForChosenNetwork()
             }

@@ -127,12 +127,12 @@ class AccountAdapter(
             accountAdapterListener.onSendClick()
         }
 
-        override fun onSwapClick() {
-            accountAdapterListener.onSwapClick()
+        override fun onReceiveClick() {
+            accountAdapterListener.onReceiveClick()
         }
 
-        override fun onScanQrClick() {
-            accountAdapterListener.onScanQrClick()
+        override fun onSwapClick() {
+            accountAdapterListener.onSwapClick()
         }
 
         override fun onStakingClick() {
@@ -172,9 +172,9 @@ class AccountAdapter(
         fun onBackupBannerActionButtonClick()
         fun onBuySellClick()
         fun onSendClick()
+        fun onReceiveClick()
         fun onStakingClick()
         fun onSwapClick()
-        fun onScanQrClick()
         fun onSortClick()
         fun onAddAccountClick()
     }

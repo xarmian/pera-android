@@ -19,8 +19,8 @@ import java.math.RoundingMode
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 
-const val ALGO_FULL_NAME = "Algo"
-const val ALGO_SHORT_NAME = "ALGO"
+const val ALGO_FULL_NAME = "Voi"
+const val ALGO_SHORT_NAME = "VOI"
 const val ALGO_DECIMALS = 6
 const val DEFAULT_ASSET_DECIMAL = 0
 const val POSITIVE_SIGN = "+"

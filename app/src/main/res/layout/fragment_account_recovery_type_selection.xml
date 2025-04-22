@@ -76,6 +76,7 @@
             android:id="@+id/importFromWebSelectionItem"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintBottom_toTopOf="@id/algorandSecureBackupSelectionItem"
             app:layout_constraintEnd_toEndOf="parent"

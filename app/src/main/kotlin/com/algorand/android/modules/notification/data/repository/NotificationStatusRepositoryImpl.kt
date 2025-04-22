@@ -9,6 +9,8 @@ import com.algorand.android.modules.notification.data.mapper.NotificationStatusD
 import com.algorand.android.network.MobileAlgorandApi
 import com.algorand.android.network.requestWithHipoErrorHandler
 import com.algorand.android.exceptions.RetrofitErrorHandler
+import com.algorand.android.modules.notification.domain.model.NotificationStatusDTO
+import com.algorand.android.models.Result
 import javax.inject.Inject
 
 // TODO: Move to notification module
@@ -21,12 +23,18 @@ class NotificationStatusRepositoryImpl @Inject constructor(
     private val lastSeenNotificationIdLocalSource: LastSeenNotificationIdLocalSource,
 ) : NotificationStatusRepository {
 
-    override suspend fun getNotificationStatus(deviceId: String) = requestWithHipoErrorHandler(hipoApiErrorHandler) {
-        mobileAlgorandApi.getNotificationStatus(deviceId = deviceId)
-    }.map { notificationStatusResponse ->
-        notificationStatusDTOMapper.mapToNotificationStatusDTO(
-            hasNewNotification = notificationStatusResponse.hasNewNotification
-        )
+    override suspend fun getNotificationStatus(deviceId: String): Result<NotificationStatusDTO> {
+        // Bypassing the network call to disable notification status check
+        return Result.Success(NotificationStatusDTO(hasNewNotification = false))
+        /* Original code:
+        requestWithHipoErrorHandler(hipoApiErrorHandler) {
+            mobileAlgorandApi.getNotificationStatus(deviceId = deviceId)
+        }.map { notificationStatusResponse ->
+            notificationStatusDTOMapper.mapToNotificationStatusDTO(
+                hasNewNotification = notificationStatusResponse.hasNewNotification
+            )
+        }
+        */
     }
 
     override suspend fun putLastSeenNotificationId(

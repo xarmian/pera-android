@@ -35,7 +35,11 @@ class TutorialUseCase @Inject constructor(
 
         val tutorials = Tutorial.values().toList()
         val dismissedTutorials = getDismissedTutorialIdsUseCase.getDismissedTutorialIdList()
-        tutorials.firstOrNull { !dismissedTutorials.contains(it.ordinal) }?.let { upcomingTutorial ->
+        tutorials.firstOrNull {
+            !dismissedTutorials.contains(it.ordinal) &&
+            it != Tutorial.SWAP &&
+            it != Tutorial.GIFT_CARDS
+        }?.let { upcomingTutorial ->
             cacheTutorialUseCase.cacheTutorial(upcomingTutorial)
         }
     }

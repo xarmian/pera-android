@@ -17,8 +17,8 @@ import com.algorand.android.models.Node
 
 const val CURRENT_DEFAULT_NODE_LIST_VERSION = 28
 
-const val MAINNET_NODE_NAME = "Algorand MainNet Node"
-const val TESTNET_NODE_NAME = "TestNet"
+const val MAINNET_NODE_NAME = "Voi MainNet Node"
+const val TESTNET_NODE_NAME = "Voi TestNet Node"
 
 val mainNetNode = Node(
     name = MAINNET_NODE_NAME,
@@ -29,7 +29,7 @@ val mainNetNode = Node(
     isActive = false,
     isAddedDefault = true,
     networkSlug = MAINNET_NETWORK_SLUG,
-    mobileAlgorandAddress = BuildConfig.MOBILE_ALGORAND_MAINNET_BASE_URL
+    mobileAlgorandAddress = "https://api.voirewards.com/"
 )
 
 val testNetNode = Node(
@@ -41,5 +41,5 @@ val testNetNode = Node(
     isActive = false,
     isAddedDefault = true,
     networkSlug = TESTNET_NETWORK_SLUG,
-    mobileAlgorandAddress = BuildConfig.MOBILE_ALGORAND_TESTNET_BASE_URL
+    mobileAlgorandAddress = "https://api.voirewards.com/"
 )

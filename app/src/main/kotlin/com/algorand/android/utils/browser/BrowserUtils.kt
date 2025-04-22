@@ -38,15 +38,15 @@ import com.algorand.android.utils.recordException
 
 const val PRIVACY_POLICY_URL = "https://perawallet.app/privacy-policy/"
 const val TERMS_AND_SERVICES_URL = "https://perawallet.app/terms-and-services/"
-private const val PERA_EXPLORER_URL = "explorer.perawallet.app"
-private const val MARKET_PAGE_URL = "https://play.google.com/store/apps/details?id=com.algorand.android"
+private const val PERA_EXPLORER_URL = "explorer.voi.network"
+private const val MARKET_PAGE_URL = "https://play.google.com/store/apps/details?id=com.voi.android"
 private const val SUPPORT_CENTER_URL = "https://perawallet.app/support/"
 private const val TRANSACTION_INFO_URL = "https://perawallet.app/support/transactions/"
 private const val RECOVERY_PASSPHRASE_SUPPORT_URL = "https://perawallet.app/support/passphrase/"
 private const val WATCH_ACCOUNT_SUPPORT_URL = "https://perawallet.app/support/watch-accounts/"
 private const val WC_ADVANCED_PERMISSIONS_URL = "https://perawallet.app/support/walletconnect-advanced-options"
 private const val PERA_INTRODUCTION_URL = "https://perawallet.app/blog/launch-announcement/"
-private const val DISPENSER_URL = "https://dispenser.testnet.aws.algodev.network/"
+private const val DISPENSER_URL = "https://fountain.voirewards.com/"
 private const val VESTIGE_TERMS_OF_SERVICE_URL = "https://about.vestige.fi/disclaimer/terms-of-service"
 private const val TINYMAN_FAQ_PRICE_IMPACT_URL = "https://docs.tinyman.org/faq#what-is-a-price-impact"
 

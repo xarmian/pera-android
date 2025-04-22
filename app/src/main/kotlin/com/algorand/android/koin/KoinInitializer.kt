@@ -13,14 +13,14 @@
 package com.algorand.android.koin
 
 import com.algorand.android.BuildConfig
-import com.algorand.android.core.PeraApp
+import com.algorand.android.core.VeraApp
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
 
 object KoinInitializer {
 
-    fun initKoin(app: PeraApp) {
+    fun initKoin(app: VeraApp) {
         startKoin {
             if (BuildConfig.DEBUG) {
                 androidLogger()
