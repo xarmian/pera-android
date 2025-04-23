@@ -50,6 +50,10 @@
     <color name="purple_600">#6841B7</color>
     <color name="purple_500">#8755D5</color>
     <color name="purple_400">#AB7CE5</color>
+    <color name="purple_400_alpha_5">#0DAB7CE5</color>
+    <color name="purple_400_alpha_10">#1AAB7CE5</color>
+    <color name="purple_400_alpha_20">#33AB7CE5</color>
+    <color name="purple_400_alpha_50">#59AB7CE5</color>
     <color name="purple_300">#C499F1</color>
     <color name="purple_200">#DDBCF9</color>
     <color name="purple_100">#F0DDFC</color>

@@ -33,7 +33,7 @@ abstract class BasePeraWebViewFragment(
 
     abstract val basePeraWebViewViewModel: BasePeraWebViewViewModel
 
-    protected val peraWebViewClientListener = object : PeraWebViewClient.PeraWebViewClientListener {
+    protected open val peraWebViewClientListener = object : PeraWebViewClient.PeraWebViewClientListener {
         override fun onWalletConnectUrlDetected(url: String) {
             handleWalletConnectUrl(url)
         }
@@ -68,6 +68,11 @@ abstract class BasePeraWebViewFragment(
 
         override fun onRenderProcessGone() {
             basePeraWebViewViewModel.destroyWebView()
+        }
+
+        override fun onTargetBlankLinkClicked(url: String) {
+            // Handle target="_blank" links
+            basePeraWebViewViewModel.onTargetBlankLinkClicked(url)
         }
     }
 

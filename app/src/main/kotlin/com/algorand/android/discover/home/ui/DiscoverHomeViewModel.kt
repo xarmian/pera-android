@@ -229,6 +229,18 @@ class DiscoverHomeViewModel @Inject constructor(
         return getIsActiveNodeTestnetUseCase.invoke()
     }
 
+    override fun onTargetBlankLinkClicked(url: String): Boolean {
+        viewModelScope.launch {
+            _discoverHomePreviewFlow.emit(
+                discoverHomePreviewUseCase.pushNewScreen(
+                    discoverHomeUseCase.urlElementToJson(url),
+                    _discoverHomePreviewFlow.value
+                )
+            )
+        }
+        return true
+    }
+
     companion object {
         private const val QUERY_DEBOUNCE = 400L
         private const val URL_KEY = "url"

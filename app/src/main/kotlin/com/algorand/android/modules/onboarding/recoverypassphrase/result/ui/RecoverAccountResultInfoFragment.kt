@@ -84,16 +84,15 @@ class RecoverAccountResultInfoFragment : BaseInfoFragment() {
     @Composable
     override fun PrimaryButton(modifier: Modifier, sheetState: SheetState) {
         val state = recoverAccountResultInfoViewModel.state.collectAsStateWithLifecycle().value
-        val firstButtonText = when (state) {
-            is ViewState.DefaultState -> stringResource(id = state.firstButtonTextRes)
-            else -> ""
-        }
 
-        PeraPrimaryButton(
-            onClick = { navToMeldNavigation() },
-            modifier = modifier,
-            text = firstButtonText
-        )
+        if (state is ViewState.DefaultState && state.isPrimaryButtonVisible) {
+            val firstButtonText = stringResource(id = state.firstButtonTextRes)
+            PeraPrimaryButton(
+                onClick = { navToMeldNavigation() },
+                modifier = modifier,
+                text = firstButtonText
+            )
+        }
     }
 
     @Composable

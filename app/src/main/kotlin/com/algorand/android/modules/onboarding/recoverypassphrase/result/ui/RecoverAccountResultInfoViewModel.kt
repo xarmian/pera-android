@@ -60,7 +60,8 @@ class RecoverAccountResultInfoViewModel @Inject constructor(
                 titleTextRes = titleTextRes,
                 descriptionTextRes = descriptionTextRes,
                 firstButtonTextRes = firstButtonTextRes,
-                secondButtonTextRes = secondButtonTextRes
+                secondButtonTextRes = secondButtonTextRes,
+                isPrimaryButtonVisible = false
             )
             stateDelegate.updateState { defaultState }
         }
@@ -77,7 +78,8 @@ class RecoverAccountResultInfoViewModel @Inject constructor(
             val titleTextRes: Int,
             val descriptionTextRes: Int,
             val firstButtonTextRes: Int,
-            val secondButtonTextRes: Int
+            val secondButtonTextRes: Int,
+            val isPrimaryButtonVisible: Boolean
         ) : ViewState()
     }
 }

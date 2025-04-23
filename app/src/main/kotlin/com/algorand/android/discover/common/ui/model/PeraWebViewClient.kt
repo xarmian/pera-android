@@ -26,7 +26,7 @@ import com.algorand.android.utils.walletconnect.isValidWalletConnectV1Url
 import java.net.HttpURLConnection
 
 // TODO maybe refactor this in a different folder than discover as more parts use this (onramp)
-class PeraWebViewClient(val listener: PeraWebViewClientListener?) : WebViewClient() {
+open class PeraWebViewClient(val listener: PeraWebViewClientListener?) : WebViewClient() {
 
     override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
         listener?.onPageUrlChanged()
@@ -108,5 +108,6 @@ class PeraWebViewClient(val listener: PeraWebViewClientListener?) : WebViewClien
         fun onHttpError()
         fun onPageUrlChanged()
         fun onRenderProcessGone()
+        fun onTargetBlankLinkClicked(url: String) // New callback for target="_blank" links
     }
 }

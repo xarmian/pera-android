@@ -50,4 +50,9 @@ class DiscoverHomeUseCase @Inject constructor(
             null
         }
     }
+
+    fun urlElementToJson(url: String): String {
+        val urlMap = mapOf("url" to url)
+        return gson.toJson(urlMap)
+    }
 }

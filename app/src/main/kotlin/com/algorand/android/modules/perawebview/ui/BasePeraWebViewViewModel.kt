@@ -45,4 +45,21 @@ abstract class BasePeraWebViewViewModel : BaseWebViewViewModel() {
             _lastErrorFlow.emit(null)
         }
     }
+
+    override fun destroyWebView() {
+        viewModelScope.launch {
+            peraWebViewFlow
+                .emit(null)
+        }
+    }
+
+    /**
+     * Method to handle target="_blank" links in WebView
+     * @param url URL from the target="_blank" link
+     * @return true if URL should be handled by the app, false otherwise
+     */
+    open fun onTargetBlankLinkClicked(url: String): Boolean {
+        // Default implementation doesn't handle the URL
+        return false
+    }
 }

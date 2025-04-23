@@ -36,6 +36,7 @@ class PeraWebView : WebView {
         this.settings.javaScriptEnabled = true
         this.settings.domStorageEnabled = true
         this.settings.javaScriptCanOpenWindowsAutomatically = true
+        this.settings.setSupportMultipleWindows(true)
         this.settings.allowFileAccess = false
         this.settings.userAgentString = "$USER_AGENT_PREFIX${BuildConfig.VERSION_NAME} ${settings.userAgentString}"
         this.setRendererPriorityPolicy(RENDERER_PRIORITY_IMPORTANT, false)

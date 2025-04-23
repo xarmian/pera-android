@@ -15,6 +15,7 @@ package com.algorand.android.discover.home.ui
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.View
+import android.webkit.WebView
 import android.widget.SearchView.OnQueryTextListener
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
@@ -25,8 +26,8 @@ import com.algorand.android.R
 import com.algorand.android.databinding.FragmentDiscoverHomeBinding
 import com.algorand.android.discover.common.ui.BaseDiscoverFragment
 import com.algorand.android.discover.common.ui.model.DappFavoriteElement
-import com.algorand.android.discover.common.ui.model.PeraWebChromeClient
 import com.algorand.android.discover.common.ui.model.PeraWebViewClient
+import com.algorand.android.discover.common.ui.model.PeraWebChromeClient
 import com.algorand.android.discover.common.ui.model.WebViewError
 import com.algorand.android.discover.dapp.ui.DiscoverDappFragment.Companion.ADD_FAVORITE_RESULT_KEY
 import com.algorand.android.discover.home.domain.PeraMobileWebInterface
@@ -59,6 +60,9 @@ class DiscoverHomeFragment : BaseDiscoverFragment(R.layout.fragment_discover_hom
     BottomNavBarFragmentDelegation by BottomNavBarFragmentDelegationImpl() {
 
     private val toolbarConfiguration = ToolbarConfiguration()
+
+    private lateinit var peraWebViewClient: PeraWebViewClient
+    private lateinit var peraWebChromeClient: PeraWebChromeClient
 
     override val discoverViewModel: DiscoverHomeViewModel by viewModels()
 
@@ -101,22 +105,24 @@ class DiscoverHomeFragment : BaseDiscoverFragment(R.layout.fragment_discover_hom
         }
     }
 
-    private val loadStateFlowCollector: suspend (CombinedLoadStates) -> Unit = { combinedLoadStates ->
-        val isListEmpty = discoverAssetSearchAdapter.itemCount == 0
-        val isCurrentStateError = combinedLoadStates.refresh is LoadState.Error
-        val isLoading = combinedLoadStates.refresh is LoadState.Loading
-        discoverViewModel.updateSearchScreenLoadState(
-            isListEmpty = isListEmpty,
-            isCurrentStateError = isCurrentStateError,
-            isLoading = isLoading
-        )
-    }
-
-    private val assetSearchAdapterListener = object : DiscoverAssetSearchAdapter.DiscoverAssetSearchAdapterListener {
-        override fun onNavigateToAssetDetail(assetId: Long) {
-            discoverViewModel.navigateToAssetDetail(assetId)
+    private val loadStateFlowCollector: suspend (CombinedLoadStates) -> Unit =
+        { combinedLoadStates ->
+            val isListEmpty = discoverAssetSearchAdapter.itemCount == 0
+            val isCurrentStateError = combinedLoadStates.refresh is LoadState.Error
+            val isLoading = combinedLoadStates.refresh is LoadState.Loading
+            discoverViewModel.updateSearchScreenLoadState(
+                isListEmpty = isListEmpty,
+                isCurrentStateError = isCurrentStateError,
+                isLoading = isLoading
+            )
         }
-    }
+
+    private val assetSearchAdapterListener =
+        object : DiscoverAssetSearchAdapter.DiscoverAssetSearchAdapterListener {
+            override fun onNavigateToAssetDetail(assetId: Long) {
+                discoverViewModel.navigateToAssetDetail(assetId)
+            }
+        }
 
     private val searchViewQueryTextListener = object : OnQueryTextListener {
         override fun onQueryTextSubmit(query: String?): Boolean {
@@ -195,7 +201,7 @@ class DiscoverHomeFragment : BaseDiscoverFragment(R.layout.fragment_discover_hom
     private fun initUi() {
         with(binding) {
             searchRecyclerView.adapter = discoverAssetSearchAdapter
-            initWebview()
+            initWebView()
             searchView.setOnQueryTextListener(searchViewQueryTextListener)
 
             searchIconView.setOnClickListener {
@@ -211,7 +217,7 @@ class DiscoverHomeFragment : BaseDiscoverFragment(R.layout.fragment_discover_hom
 
     private fun updateUi(preview: DiscoverHomePreview) {
         with(preview) {
-            updateSearchView(this)
+            updateSearchView(preview)
             updateSearchListState(isListEmpty)
             updateLoadingProgressBar(isLoading)
             updateWebViewVisibility(this)
@@ -220,11 +226,12 @@ class DiscoverHomeFragment : BaseDiscoverFragment(R.layout.fragment_discover_hom
 
     private fun updateSearchView(preview: DiscoverHomePreview) {
         with(binding) {
-            setSearchEnabled(true)
-            if (!preview.isLoading) {
-                searchActivatedGroup.isVisible = preview.isSearchActivated
-                searchDeactivatedGroup.isVisible = !preview.isSearchActivated
-            }
+            // Ensure search is always disabled and hidden
+            setSearchEnabled(false)
+            searchActivatedGroup.isVisible = false
+            searchDeactivatedGroup.isVisible = false
+            searchIconView.isVisible = false // Hide the search icon as well
+            cancelSearchButton.isVisible = false // Hide the cancel button
         }
     }
 
@@ -264,19 +271,48 @@ class DiscoverHomeFragment : BaseDiscoverFragment(R.layout.fragment_discover_hom
 
                 WebViewError.NO_CONNECTION -> {
                     errorTitleTextView.text = getString(R.string.no_internet_connection)
-                    errorDescriptionTextView.text = getString(R.string.you_dont_seem_to_be_connected)
+                    errorDescriptionTextView.text =
+                        getString(R.string.you_dont_seem_to_be_connected)
                 }
             }
         }
     }
 
+    private fun initWebView() {
+        val webViewClientListener = DiscoverWebViewClientListener()
+        with(binding.webView) {
+            peraWebViewClient = PeraWebViewClient(webViewClientListener)
+            peraWebChromeClient = PeraWebChromeClient(webViewClientListener)
+            initWebViewSettings(discoverViewModel.getDiscoverThemePreference())
+        }
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
-    private fun initWebview() {
-        with(binding) {
+    private fun initWebViewSettings(themePreference: ThemePreference) {
+        with(binding.webView) {
+            // Assign the client and chrome client instances to the WebView
+            webViewClient = peraWebViewClient
+            webChromeClient = peraWebChromeClient
+
+            // Setup Javascript interface
             val peraWebInterface = PeraMobileWebInterface.create(this@DiscoverHomeFragment)
-            webView.addJavascriptInterface(peraWebInterface, WEB_INTERFACE_NAME)
-            webView.webViewClient = PeraWebViewClient(peraWebViewClientListener)
-            webView.webChromeClient = PeraWebChromeClient(peraWebViewClientListener)
+            addJavascriptInterface(peraWebInterface, WEB_INTERFACE_NAME)
+
+            settings.javaScriptEnabled = true
+            settings.setSupportMultipleWindows(true)
+            settings.javaScriptCanOpenWindowsAutomatically = true
+        }
+    }
+
+    private fun loadAndEvaluateJavascript(webView: WebView?, assetPath: String) {
+        try {
+            val script = context?.assets?.open(assetPath)?.bufferedReader().use { it?.readText() }
+            if (script != null) {
+                webView?.evaluateJavascript(script, null)
+            }
+        } catch (e: Exception) {
+            // Handle exceptions like IOException or NullPointerException
+            // Example: Timber.e(e, "Error loading/evaluating JS from assets: $assetPath")
         }
     }
 
@@ -358,5 +394,58 @@ class DiscoverHomeFragment : BaseDiscoverFragment(R.layout.fragment_discover_hom
                 webUrl = url
             )
         )
+    }
+
+    private inner class DiscoverWebViewClientListener :
+        PeraWebViewClient.PeraWebViewClientListener {
+
+        override fun onPageStarted() {
+            // Delegate to ViewModel to handle loading state
+            discoverViewModel.onPageStarted()
+        }
+
+        // TODO: Implement necessary callbacks if needed. Most are handled by BaseDiscoverFragment or ViewModel
+        override fun onWalletConnectUrlDetected(url: String) { /* TODO: Check if handled by ViewModel */
+        }
+
+        override fun onEmailRequested(url: String) { /* TODO: Check if handled by ViewModel */
+        }
+
+        override fun onPageRequestedShouldOverrideUrlLoading(url: String): Boolean {
+            // Open all non-javascript links externally for now
+            if (!url.startsWith("javascript:")) {
+                // context?.openExternalBrowserApp(url)
+                navigateToSimpleUrlViewer(url) // Navigate internally
+                return true // Indicates we've handled the URL loading
+            }
+            return false // Let WebView handle javascript: links or others internally
+        }
+
+        override fun onPageFinished(title: String?, url: String?) {
+            // Delegate to ViewModel to handle loading state and potentially other actions
+            discoverViewModel.onPageFinished(title, url)
+            /* TODO: Check if BaseDiscoverFragment needs to be called super.onPageFinished? */
+        }
+
+        override fun onError() {
+            discoverViewModel.requestLoadHomepage() /* Or show specific error */
+        }
+
+        override fun onHttpError() {
+            discoverViewModel.requestLoadHomepage() /* Or show specific error */
+        }
+
+        override fun onPageUrlChanged() { /* Update UI if needed */
+        }
+
+        override fun onRenderProcessGone() {
+            discoverViewModel.requestLoadHomepage() /* Or show specific error */
+        }
+
+        override fun onTargetBlankLinkClicked(url: String) {
+            // Also open target=_blank links externally
+            // context?.openExternalBrowserApp(url)
+            navigateToSimpleUrlViewer(url) // Navigate internally
+        }
     }
 }

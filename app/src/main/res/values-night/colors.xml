@@ -30,11 +30,11 @@
 
     <!-- Link -->
     <color name="link_icon">@color/gray_100</color>
-    <color name="link_primary">@color/yellow_400</color>
+    <color name="link_primary">@color/purple_400</color>
 
     <!-- Primary Button -->
-    <color name="button_primary_bg">@color/yellow_400</color>
-    <color name="button_primary_focus_bg">@color/yellow_500</color>
+    <color name="button_primary_bg">@color/purple_400</color>
+    <color name="button_primary_focus_bg">@color/purple_500</color>
     <color name="button_primary_disabled_bg">@color/gray_800</color>
     <color name="button_primary_text">@color/gray_900</color>
     <color name="button_primary_disabled_text">@color/gray_500</color>
@@ -60,11 +60,11 @@
     <color name="button_float_icon_lighter">@color/gray_900</color>
 
     <!-- Helper Button -->
-    <color name="button_helper_bg">@color/yellow_400_alpha_10</color>
-    <color name="button_helper_focus_bg">@color/yellow_400_alpha_20</color>
-    <color name="button_helper_disabled_bg">@color/yellow_400_alpha_5</color>
-    <color name="button_helper_icon">@color/yellow_400</color>
-    <color name="button_helper_disabled_icon">@color/yellow_400_alpha_50</color>
+    <color name="button_helper_bg">@color/purple_400_alpha_10</color>
+    <color name="button_helper_focus_bg">@color/purple_400_alpha_20</color>
+    <color name="button_helper_disabled_bg">@color/purple_400_alpha_5</color>
+    <color name="button_helper_icon">@color/purple_400</color>
+    <color name="button_helper_disabled_icon">@color/purple_400_alpha_50</color>
     <color name="button_helper_pera_icon">@color/purple_700</color>
 
     <!-- Square Button -->
@@ -79,7 +79,7 @@
     <color name="negative_lighter">@color/salmon_500_alpha_12</color>
     <color name="positive">@color/turquoise_600</color>
     <color name="positive_lighter">@color/turquoise_500_alpha_12</color>
-    <color name="success">@color/yellow_400</color>
+    <color name="success">@color/purple_400</color>
     <color name="success_checkmark">@color/gray_900</color>
     <color name="hero_bg">@color/purple_900</color>
 
@@ -121,7 +121,7 @@
     <color name="modality_bg">@color/black</color>
 
     <!-- Switches -->
-    <color name="switch_bg">@color/yellow_500</color>
+    <color name="switch_bg">@color/purple_500</color>
     <color name="switch_off_bg">@color/gray_800</color>
 
     <!-- NFT Icons -->

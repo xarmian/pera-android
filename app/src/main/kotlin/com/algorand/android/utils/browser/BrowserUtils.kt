@@ -38,7 +38,7 @@ import com.algorand.android.utils.recordException
 
 const val PRIVACY_POLICY_URL = "https://perawallet.app/privacy-policy/"
 const val TERMS_AND_SERVICES_URL = "https://perawallet.app/terms-and-services/"
-private const val PERA_EXPLORER_URL = "explorer.voi.network"
+private const val PERA_EXPLORER_URL = "voiager.xyz"
 private const val MARKET_PAGE_URL = "https://play.google.com/store/apps/details?id=com.voi.android"
 private const val SUPPORT_CENTER_URL = "https://perawallet.app/support/"
 private const val TRANSACTION_INFO_URL = "https://perawallet.app/support/transactions/"
@@ -103,7 +103,7 @@ fun Context.openUrl(url: String) {
 // TODO Refactor here
 fun Context.openTransactionInPeraExplorer(transactionIdWithoutPrefix: String, networkSlug: String?) {
     val subDomain = createSubDomainWithNetworkSlug(networkSlug)
-    openUrl("https://$subDomain$PERA_EXPLORER_URL/tx/$transactionIdWithoutPrefix/")
+    openUrl("https://$subDomain$PERA_EXPLORER_URL/transaction/$transactionIdWithoutPrefix/")
 }
 
 fun Context.openAssetInPeraExplorer(assetId: Long?, networkSlug: String?) {
@@ -113,7 +113,7 @@ fun Context.openAssetInPeraExplorer(assetId: Long?, networkSlug: String?) {
 
 fun Context.openAccountAddressInPeraExplorer(accountAddress: String, networkSlug: String?) {
     val subDomain = createSubDomainWithNetworkSlug(networkSlug)
-    openUrl("https://$subDomain$PERA_EXPLORER_URL/address/$accountAddress/")
+    openUrl("https://$subDomain$PERA_EXPLORER_URL/account/$accountAddress/")
 }
 
 // TODO: 4.03.2022 The site is not supporting test net yet, so it's not tested on MainNet
@@ -183,7 +183,7 @@ fun Context.openVestigeTermsOfServiceUrl() {
 
 fun Context.openGroupTransactionInPeraExplorer(groupId: String?, networkSlug: String?) {
     val subDomain = createSubDomainWithNetworkSlug(networkSlug)
-    openUrl("https://$subDomain$PERA_EXPLORER_URL/tx-group/$groupId/")
+    openUrl("https://$subDomain$PERA_EXPLORER_URL/group/$groupId/")
 }
 
 fun Context.openTinymanFaqPriceImpactUrl() {
@@ -192,7 +192,7 @@ fun Context.openTinymanFaqPriceImpactUrl() {
 
 fun getPeraExplorerUrl(transactionId: String, networkSlug: String?): String {
     val subDomain = createSubDomainWithNetworkSlug(networkSlug)
-    return "$HTTPS_PROTOCOL$subDomain$PERA_EXPLORER_URL/tx/$transactionId/"
+    return "$HTTPS_PROTOCOL$subDomain$PERA_EXPLORER_URL/transaction/$transactionId/"
 }
 
 private fun createSubDomainWithNetworkSlug(networkSlug: String?): String {

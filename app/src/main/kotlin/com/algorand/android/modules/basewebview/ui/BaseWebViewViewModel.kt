@@ -21,21 +21,21 @@ import kotlinx.coroutines.launch
 
 abstract class BaseWebViewViewModel : BaseViewModel() {
 
-    private val _peraWebViewFlow: MutableStateFlow<PeraWebView?> = MutableStateFlow(null)
+    protected val peraWebViewFlow: MutableStateFlow<PeraWebView?> = MutableStateFlow(null)
 
     fun saveWebView(webView: PeraWebView?) {
         viewModelScope.launch(Dispatchers.IO) {
-            _peraWebViewFlow.emit(webView)
+            peraWebViewFlow.emit(webView)
         }
     }
 
     fun getWebView(): PeraWebView? {
-        return _peraWebViewFlow.value
+        return peraWebViewFlow.value
     }
 
-    fun destroyWebView() {
+    open fun destroyWebView() {
         viewModelScope.launch {
-            _peraWebViewFlow
+            peraWebViewFlow
                 .emit(null)
         }
     }
