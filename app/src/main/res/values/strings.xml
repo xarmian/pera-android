@@ -1421,7 +1421,7 @@
     <string name="when_you_have_an_asset">When you have an asset transfer request, you can view it here. Tap on the info icon to learn more about this feature.</string>
     <string name="you_dont_have_enough_algos">You don\'t have enough Voi to complete this operation. </string>
 
-    <string name="before_sending_an_asset">Before sending an asset or NFT through Asset Inbox, make sure the other party has the ability to access their inbox. In some instances, the other party will not have the ability to access their inbox and the asset or NFT will be unrecoverable. Some of these instances include sending to a exchange or sending to a wallet that can\'t be accessed by a user. Only send assets or NFTs to wallets that use Vera (or other compatible wallets). <annotation url="https://support.perawallet.app"><annotation type="bold"><annotation type="color">Read more</annotation></annotation></annotation></string>
+    <string name="before_sending_an_asset">Before sending an asset or NFT through Asset Inbox, make sure the other party has the ability to access their inbox. In some instances, the other party will not have the ability to access their inbox and the asset or NFT will be unrecoverable. Some of these instances include sending to a exchange or sending to a wallet that can\'t be accessed by a user. Only send assets or NFTs to wallets that use Vera (or other compatible wallets). <annotation url="https://getvera.app/support"><annotation type="bold"><annotation type="color">Read more</annotation></annotation></annotation></string>
     <string name="failed_to_map_the_response">Failed to map the response</string>
     <string name="failed_to_create_transactions">Failed to create transactions</string>
 

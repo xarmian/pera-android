@@ -414,8 +414,8 @@ class DiscoverHomeFragment : BaseDiscoverFragment(R.layout.fragment_discover_hom
         override fun onPageRequestedShouldOverrideUrlLoading(url: String): Boolean {
             // Open all non-javascript links externally for now
             if (!url.startsWith("javascript:")) {
-                // context?.openExternalBrowserApp(url)
-                navigateToSimpleUrlViewer(url) // Navigate internally
+                context?.openExternalBrowserApp(url)
+                // navigateToSimpleUrlViewer(url) // Navigate internally
                 return true // Indicates we've handled the URL loading
             }
             return false // Let WebView handle javascript: links or others internally
@@ -444,8 +444,8 @@ class DiscoverHomeFragment : BaseDiscoverFragment(R.layout.fragment_discover_hom
 
         override fun onTargetBlankLinkClicked(url: String) {
             // Also open target=_blank links externally
-            // context?.openExternalBrowserApp(url)
-            navigateToSimpleUrlViewer(url) // Navigate internally
+            context?.openExternalBrowserApp(url)
+            // navigateToSimpleUrlViewer(url) // Navigate internally
         }
     }
 }
