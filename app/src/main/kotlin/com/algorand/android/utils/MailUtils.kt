@@ -19,7 +19,7 @@ import android.net.Uri
 import com.algorand.android.R
 
 const val EMAIL_APPS_URI_SCHEME = "mailto:"
-const val PERA_VERIFICATION_MAIL_ADDRESS = "verification@perawallet.app"
+const val PERA_VERIFICATION_MAIL_ADDRESS = "verification@getvera.app"
 
 fun Context.composeReportAssetEmail(
     assetId: Long,

@@ -18,6 +18,8 @@ import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.core.os.bundleOf
+import com.algorand.android.BuildConfig
+import com.algorand.android.MainActivity
 import com.algorand.android.R
 import com.algorand.android.core.BaseFragment
 import com.algorand.android.models.FragmentConfiguration
@@ -44,8 +46,23 @@ class AccountNftPortfolioFragment : BaseFragment(R.layout.fragment_account_nft_p
             // Keep navigation within this WebView
             webViewClient = object : WebViewClient() {
                 override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
-                    url?.let { view?.loadUrl(it) }
-                    return true // Indicate we've handled the URL loading
+                    url?.let { safeUrl ->
+                        // Check for WalletConnect URLs first
+                        if (safeUrl.startsWith("wc:")) {
+                            (activity as? MainActivity)?.handleWalletConnectUrl(safeUrl)
+                            return true // WC URL handled
+                        }
+                        // Check for standard Pera deep links
+                        if (safeUrl.startsWith(BuildConfig.DEEPLINK_PREFIX)) {
+                            // Handle deep link within the app
+                            (activity as? MainActivity)?.handleDeepLink(safeUrl)
+                            return true // Indicate we've handled the URL loading
+                        }
+                        // For standard URLs, let the WebView handle it
+                        return false
+                    }
+                    // If url is null, let the default behavior handle it
+                    return super.shouldOverrideUrlLoading(view, url)
                 }
             }
             // Prevent opening new windows

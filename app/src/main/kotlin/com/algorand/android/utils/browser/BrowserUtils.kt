@@ -37,7 +37,7 @@ import com.algorand.android.utils.extensions.appendAt
 import com.algorand.android.utils.recordException
 
 const val PRIVACY_POLICY_URL = "https://getvera.app/privacy-policy/"
-const val TERMS_AND_SERVICES_URL = "https://getvera.app/terms-and-services/"
+const val TERMS_AND_SERVICES_URL = "https://getvera.app/terms-of-service/"
 private const val PERA_EXPLORER_URL = "voiager.xyz"
 private const val MARKET_PAGE_URL = "https://play.google.com/store/apps/details?id=com.voi.android"
 private const val SUPPORT_CENTER_URL = "https://getvera.app/support/"

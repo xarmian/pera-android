@@ -26,7 +26,7 @@ class WalletConnectUrlHandler @Inject constructor(
     suspend fun checkWalletConnectUrl(url: String, listener: Listener) {
         if (hasValidAccountForWalletConnect()) {
             if (!walletConnectManager.isValidWalletConnectUrl(url)) {
-                listener.onInvalidWalletConnectUrl(R.string.could_not_create_wallet_connect)
+                // listener.onInvalidWalletConnectUrl(R.string.could_not_create_wallet_connect)
                 return
             }
             listener.onValidWalletConnectUrl(url)

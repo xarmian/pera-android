@@ -1494,4 +1494,7 @@
     </plurals>
 
     <string name="select_the_rekeyed_accounts_you">Select the rekeyed accounts you want to add to your wallet:</string>
+
+    <!-- Discover URL Viewer -->
+    <string name="open_in_browser">Open in Browser</string>
 </resources>

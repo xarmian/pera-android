@@ -15,6 +15,10 @@ package com.algorand.android.discover.urlviewer.ui
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
+import android.view.MenuItem
+import android.view.LayoutInflater
+import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import com.algorand.android.R
@@ -26,6 +30,7 @@ import com.algorand.android.discover.common.ui.model.PeraWebViewClient
 import com.algorand.android.discover.common.ui.model.WebViewError
 import com.algorand.android.discover.dapp.ui.DiscoverDappFragment
 import com.algorand.android.discover.home.domain.PeraMobileWebInterface
+import com.algorand.android.MainActivity
 import com.algorand.android.discover.urlviewer.ui.model.DiscoverUrlViewerPreview
 import com.algorand.android.discover.utils.getDiscoverCustomUrl
 import com.algorand.android.models.FragmentConfiguration
@@ -34,13 +39,15 @@ import com.algorand.android.utils.extensions.collectLatestOnLifecycle
 import com.algorand.android.utils.extensions.hide
 import com.algorand.android.utils.extensions.show
 import com.algorand.android.utils.listenToNavigationResult
+import com.algorand.android.utils.browser.openExternalBrowserApp
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.Locale
 
 @AndroidEntryPoint
 class DiscoverUrlViewerFragment :
     BaseDiscoverFragment(R.layout.fragment_discover_url_viewer),
-    PeraMobileWebInterface.WebInterfaceListener {
+    PeraMobileWebInterface.WebInterfaceListener,
+    Toolbar.OnMenuItemClickListener {
 
     private val toolbarConfiguration = ToolbarConfiguration(
         startIconResId = R.drawable.ic_close,
@@ -71,11 +78,96 @@ class DiscoverUrlViewerFragment :
         }
     }
 
+    override val peraWebViewClientListener = object : PeraWebViewClient.PeraWebViewClientListener {
+        override fun onPageStarted() {
+            discoverViewModel.onPageStarted()
+        }
+
+        override fun onPageFinished(title: String?, url: String?) {
+            discoverViewModel.onPageFinished(title, url)
+            // Optionally update toolbar title?
+            // getToolbarConfiguration()?.title = title
+            // binding.toolbar.updateToolbarConfiguration(getToolbarConfiguration())
+        }
+
+        override fun onPageRequestedShouldOverrideUrlLoading(url: String): Boolean {
+            // Handle WalletConnect URLs first
+            if (url.startsWith("wc:")) {
+                (activity as? MainActivity)?.handleWalletConnectUrl(url)
+                return true // WC URL handled
+            }
+            // Handle standard Pera deep links
+            if (url.startsWith("perawallet-wc://")) {
+                (activity as? MainActivity)?.handleDeepLink(url)
+                return true // Deep link handled
+            }
+            // Let the default client handle other URLs (like http/https)
+            return false
+        }
+
+        override fun onWalletConnectUrlDetected(url: String) {
+            // This might be redundant now with the override, but keep for safety
+            (activity as? MainActivity)?.handleWalletConnectUrl(url)
+        }
+
+        override fun onError() {
+            discoverViewModel.onError()
+        }
+
+        override fun onHttpError() {
+            discoverViewModel.onHttpError()
+        }
+
+        override fun onPageUrlChanged() {
+            // Implement if needed
+        }
+
+        override fun onRenderProcessGone() {
+            discoverViewModel.onError()
+        }
+
+        override fun onTargetBlankLinkClicked(url: String) {
+            // Decide how to handle target=_blank links, e.g., open in the same view or external browser
+            // For now, let the WebView handle it by returning false from onPageRequestedShouldOverrideUrlLoading
+            // Or explicitly load in the current view: binding.webView.loadUrl(url)
+        }
+
+        override fun onEmailRequested(url: String) {
+            // Implement email handling if needed
+        }
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        // Ensure the fragment menu is considered
+        setHasOptionsMenu(true)
+        return super.onCreateView(inflater, container, savedInstanceState)
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setupToolbarMenu()
         initObservers()
         initWebview()
         initSavedStateListener()
+    }
+
+    private fun setupToolbarMenu() {
+        // Access the toolbar using its ID from the binding
+        (binding.root.findViewById<Toolbar>(R.id.toolbar))?.apply {
+            inflateMenu(R.menu.discover_url_viewer_menu)
+            setOnMenuItemClickListener(this@DiscoverUrlViewerFragment)
+        }
+    }
+
+    // Handle menu item clicks
+    override fun onMenuItemClick(item: MenuItem?): Boolean {
+        return when (item?.itemId) {
+            R.id.open_in_browser_menu_item -> {
+                onOpenInBrowserClick()
+                true
+            }
+            else -> false
+        }
     }
 
     override fun onReportActionFailed() {
@@ -165,5 +257,12 @@ class DiscoverUrlViewerFragment :
             discoverViewModel.discoverUrlViewerPreviewFlow,
             discoverUrlViewerPreviewCollector
         )
+    }
+
+    private fun onOpenInBrowserClick() {
+        val currentUrl = discoverViewModel.discoverUrlViewerPreviewFlow.value.url
+        if (currentUrl.isNotBlank()) {
+            context?.openExternalBrowserApp(currentUrl)
+        }
     }
 }
