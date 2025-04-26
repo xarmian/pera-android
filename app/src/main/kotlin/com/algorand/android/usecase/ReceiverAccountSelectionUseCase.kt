@@ -40,6 +40,7 @@ import com.algorand.wallet.account.detail.domain.model.AccountType.Companion.can
 import com.algorand.wallet.account.detail.domain.usecase.GetAccountState
 import com.algorand.wallet.account.info.domain.usecase.GetAccountInformation
 import com.algorand.wallet.asset.domain.util.AssetConstants.ALGO_ID
+import com.algorand.wallet.nameservice.domain.usecase.GetAccountNameService
 import java.math.BigInteger
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -58,6 +59,7 @@ class ReceiverAccountSelectionUseCase @Inject constructor(
     private val getAccountSelectionAccountItems: GetAccountSelectionAccountItems,
     private val getAccountInformation: GetAccountInformation,
     private val getAccountState: GetAccountState,
+    private val getAccountNameService: GetAccountNameService,
     getAccountAssetUseCase: GetAccountAssetUseCase
 ) : BaseSendAccountSelectionUseCase(getAccountAssetUseCase) {
 
@@ -245,10 +247,25 @@ class ReceiverAccountSelectionUseCase @Inject constructor(
         }
 
         val toAccountPublicKey = accountAssetDetail.address
-        val contact = getContactByAddressIfExists(toAccountPublicKey)
-        // TODO Will be implemented after transaction migration
+        val existingContact = getContactByAddressIfExists(toAccountPublicKey)
+        val nameService = getAccountNameService(toAccountPublicKey)
+
+        val targetUserContact = when {
+            // If we have name service info, use it primarily for the contact
+            nameService != null -> User(
+                name = nameService.nameServiceName ?: existingContact?.name ?: toAccountPublicKey,
+                publicKey = toAccountPublicKey,
+                imageUriAsString = nameService.nameServiceUri ?: existingContact?.imageUriAsString,
+                contactDatabaseId = existingContact?.contactDatabaseId ?: 0
+            )
+            // If no name service, use existing contact if available
+            existingContact != null -> existingContact
+            // Otherwise, no contact info available
+            else -> null
+        }
+
         val targetUser = TargetUser(
-            contact = contact,
+            contact = targetUserContact,
             publicKey = toAccountPublicKey,
             algoBalance = accountAssetDetail.algoAmount,
             minBalance = accountAssetDetail.minBalanceRequired,

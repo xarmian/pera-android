@@ -10,19 +10,16 @@
  * limitations under the License
  */
 
-
 package com.algorand.wallet.nameservice.data.model
 
 import com.google.gson.annotations.SerializedName
 
-internal data class NameServiceSearchResultResponse(
-
+// Note: Reuses NameServiceMetadata from NameServiceLookupResponse.kt
+internal data class NameServiceApiSearchResult(
     @SerializedName("name")
     val name: String?,
-
     @SerializedName("address")
-    val accountAddress: String?,
-
-    @SerializedName("service")
-    val nameServiceProviderDetailResponse: NameServiceProviderDetailResponse?
-)
+    val address: String?,
+    @SerializedName("metadata")
+    val metadata: NameServiceMetadata?
+) 

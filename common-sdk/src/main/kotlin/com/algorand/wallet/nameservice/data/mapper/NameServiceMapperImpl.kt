@@ -12,21 +12,20 @@
 
 package com.algorand.wallet.nameservice.data.mapper
 
-import com.algorand.wallet.nameservice.data.model.NameServicePayload
+import com.algorand.wallet.nameservice.data.model.NameServiceResult
 import com.algorand.wallet.nameservice.domain.model.NameService
+import com.algorand.wallet.nameservice.domain.model.NameServiceSource
 import javax.inject.Inject
 
-internal class NameServiceMapperImpl @Inject constructor(
-    private val nameServiceSourceMapper: NameServiceSourceMapper
-) : NameServiceMapper {
+internal class NameServiceMapperImpl @Inject constructor() : NameServiceMapper {
 
-    override fun invoke(responses: List<NameServicePayload>): List<NameService> {
-        return responses.mapNotNull {
+    override fun invoke(results: List<NameServiceResult>): List<NameService> {
+        return results.mapNotNull {
             NameService(
-                accountAddress = it.address ?: return@mapNotNull null,
-                nameServiceName = it.nameResponse?.name,
-                nameServiceSource = nameServiceSourceMapper(it.nameResponse?.source),
-                nameServiceUri = it.nameResponse?.imageUri
+                accountAddress = it.address,
+                nameServiceName = it.name,
+                nameServiceSource = NameServiceSource.NFDOMAIN,
+                nameServiceUri = it.metadata?.avatar
             )
         }
     }

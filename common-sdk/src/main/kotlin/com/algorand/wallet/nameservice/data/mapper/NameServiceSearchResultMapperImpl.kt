@@ -12,20 +12,19 @@
 
 package com.algorand.wallet.nameservice.data.mapper
 
-import com.algorand.wallet.nameservice.data.model.NameServiceSearchResultResponse
+import com.algorand.wallet.nameservice.data.model.NameServiceApiSearchResult
 import com.algorand.wallet.nameservice.domain.model.NameServiceProvider
 import com.algorand.wallet.nameservice.domain.model.NameServiceSearchResult
 import javax.inject.Inject
 
 internal class NameServiceSearchResultMapperImpl @Inject constructor() : NameServiceSearchResultMapper {
 
-    override fun invoke(response: NameServiceSearchResultResponse): NameServiceSearchResult? {
+    override fun invoke(response: NameServiceApiSearchResult): NameServiceSearchResult? {
         return NameServiceSearchResult(
             name = response.name ?: return null,
-            accountAddress = response.accountAddress ?: return null,
-            service = response.nameServiceProviderDetailResponse?.let {
-                NameServiceProvider(it.name, it.logoUrl)
-            }
+            accountAddress = response.address ?: return null,
+            nameServiceUri = response.metadata?.avatar,
+            service = null
         )
     }
 }

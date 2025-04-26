@@ -46,26 +46,26 @@ class AlgorandUserView @JvmOverloads constructor(
     private var onAddButtonClick: ((String) -> Unit?)? = null
 
     fun setContact(user: User, enableAddressCopy: Boolean = true, showTooltip: Boolean = false) {
-        with(binding) {
-            mainTextView.apply {
-                maxLines = MAX_LINES_FOR_CONTACT
-                text = user.name
-                changeTextAppearance(R.style.TextAppearance_Body_Sans)
-            }
-            accountIconImageView.apply {
-                setContactIconDrawable(
-                    uri = user.imageUriAsString?.toUri(),
-                    iconSize = R.dimen.account_icon_size_normal
-                )
-                show()
-            }
-            addContactButton.hide()
-        }
-        if (enableAddressCopy) enableLongPressToCopyText(user.publicKey)
-        if (showTooltip) showCopyTutorial()
+        setContactInternal(
+            name = user.name,
+            imageUriAsString = user.imageUriAsString?.toUri(),
+            publicKey = user.publicKey,
+            enableAddressCopy = enableAddressCopy,
+            showTooltip = showTooltip
+        )
     }
 
     fun setContact(
+        name: String,
+        imageUriAsString: Uri?,
+        publicKey: String,
+        enableAddressCopy: Boolean = true,
+        showTooltip: Boolean = false
+    ) {
+        setContactInternal(name, imageUriAsString, publicKey, enableAddressCopy, showTooltip)
+    }
+
+    private fun setContactInternal(
         name: String,
         imageUriAsString: Uri?,
         publicKey: String,
@@ -77,6 +77,10 @@ class AlgorandUserView @JvmOverloads constructor(
                 maxLines = MAX_LINES_FOR_CONTACT
                 text = name
                 changeTextAppearance(R.style.TextAppearance_Body_Sans)
+            }
+            addressTextView.apply {
+                text = publicKey.toShortenedAddress()
+                show()
             }
             accountIconImageView.apply {
                 setContactIconDrawable(
@@ -104,6 +108,7 @@ class AlgorandUserView @JvmOverloads constructor(
                 text = displayAddress
                 changeTextAppearance(R.style.TextAppearance_Body_Mono)
             }
+            addressTextView.hide()
             addContactButton.apply {
                 setOnClickListener { onAddButtonClick?.invoke(publicKey) }
                 isVisible = showAddButton
@@ -123,11 +128,16 @@ class AlgorandUserView @JvmOverloads constructor(
         if (showTooltip) showCopyTutorial()
     }
 
-    fun setNftDomainAddress(nftDomainAddress: String, nftDomainServiceLogoUrl: String?) {
+    fun setNftDomainAddress(nftDomainAddress: String, nftDomainServiceLogoUrl: String?, publicKey: String) {
         with(binding) {
             mainTextView.apply {
                 text = nftDomainAddress
                 maxLines = MAX_LINES_FOR_NFT_DOMAIN
+                changeTextAppearance(R.style.TextAppearance_Body_Sans)
+            }
+            addressTextView.apply {
+                text = publicKey.toShortenedAddress()
+                show()
             }
             accountIconImageView.apply {
                 context.loadImage(
@@ -137,6 +147,8 @@ class AlgorandUserView @JvmOverloads constructor(
                 )
                 show()
             }
+            addContactButton.hide()
+            enableLongPressToCopyText(publicKey)
         }
     }
 
@@ -145,28 +157,13 @@ class AlgorandUserView @JvmOverloads constructor(
         accountIconDrawablePreview: AccountIconDrawablePreview?,
         enableAddressCopy: Boolean = true
     ) {
-        with(binding) {
-            mainTextView.apply {
-                maxLines = MAX_LINES_FOR_ACCOUNT
-                text = accountDetail.customAccountInfo?.customName ?: accountDetail.address.toShortenedAddress()
-                changeTextAppearance(R.style.TextAppearance_Body_Sans)
-            }
-            if (accountDetail.accountType != null) {
-                if (accountIconDrawablePreview != null) {
-                    val accountIconDrawable = AccountIconDrawable.create(
-                        context,
-                        accountIconDrawablePreview = accountIconDrawablePreview,
-                        sizeResId = R.dimen.spacing_xlarge
-                    )
-                    accountIconImageView.apply {
-                        setImageDrawable(accountIconDrawable)
-                        show()
-                    }
-                }
-                if (enableAddressCopy) enableLongPressToCopyText(accountDetail.address)
-            }
-            addContactButton.hide()
-        }
+        setAccountInternal(
+            name = accountDetail.customAccountInfo?.customName ?: accountDetail.address.toShortenedAddress(),
+            publicKey = accountDetail.address,
+            accountIconDrawablePreview = accountIconDrawablePreview,
+            enableAddressCopy = enableAddressCopy,
+            showTooltip = false
+        )
     }
 
     fun setAccount(
@@ -176,11 +173,32 @@ class AlgorandUserView @JvmOverloads constructor(
         enableAddressCopy: Boolean = true,
         showTooltip: Boolean = false
     ) {
+        setAccountInternal(name, publicKey, accountIconDrawablePreview, enableAddressCopy, showTooltip)
+    }
+
+    private fun setAccountInternal(
+        name: String,
+        publicKey: String,
+        accountIconDrawablePreview: AccountIconDrawablePreview?,
+        enableAddressCopy: Boolean = true,
+        showTooltip: Boolean = false
+    ) {
         with(binding) {
+            val displayName = name.ifBlank { publicKey.toShortenedAddress() }
+            val showAddressBelow = name.isNotBlank() && name != publicKey.toShortenedAddress()
+
             mainTextView.apply {
                 maxLines = MAX_LINES_FOR_ACCOUNT
-                text = name
+                text = displayName
                 changeTextAppearance(R.style.TextAppearance_Body_Sans)
+            }
+            addressTextView.apply {
+                if (showAddressBelow) {
+                    text = publicKey.toShortenedAddress()
+                    show()
+                } else {
+                    hide()
+                }
             }
             accountIconDrawablePreview?.let {
                 val accountIconDrawable = AccountIconDrawable.create(

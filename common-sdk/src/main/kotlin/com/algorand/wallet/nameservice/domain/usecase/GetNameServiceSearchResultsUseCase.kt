@@ -14,7 +14,7 @@ package com.algorand.wallet.nameservice.domain.usecase
 
 import com.algorand.wallet.nameservice.domain.model.NameServiceSearchResult
 import com.algorand.wallet.nameservice.domain.repository.NameServiceRepository
-import com.algorand.wallet.nameservice.domain.util.NameServiceUtils.isValidNFTDomain
+// import com.algorand.wallet.nameservice.domain.util.NameServiceUtils.isValidNFTDomain
 import javax.inject.Inject
 
 internal class GetNameServiceSearchResultsUseCase @Inject constructor(
@@ -23,7 +23,7 @@ internal class GetNameServiceSearchResultsUseCase @Inject constructor(
 
     override suspend fun invoke(query: String): List<NameServiceSearchResult> {
         val normalizedQuery = query.trim().lowercase()
-        if (!normalizedQuery.isValidNFTDomain()) return emptyList()
+        // if (!normalizedQuery.isValidNFTDomain()) return emptyList()
         val nameServiceSearchResultList = mutableListOf<NameServiceSearchResult>()
         nameServiceRepository.getNameServiceSearchResults(normalizedQuery).map {
             nameServiceSearchResultList.addAll(it)

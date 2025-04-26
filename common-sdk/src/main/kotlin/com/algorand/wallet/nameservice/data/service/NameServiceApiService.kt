@@ -12,24 +12,22 @@
 
 package com.algorand.wallet.nameservice.data.service
 
-import com.algorand.wallet.nameservice.data.model.NameServiceSearchResponse
-import com.algorand.wallet.nameservice.data.model.SearchNameServiceRequestBody
-import com.algorand.wallet.nameservice.data.model.SearchNameServiceResponse
+import com.algorand.wallet.nameservice.data.model.NameServiceApiSearchResponse
+import com.algorand.wallet.nameservice.data.model.NameServiceLookupResponse
 import retrofit2.Response
-import retrofit2.http.Body
 import retrofit2.http.GET
-import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 internal interface NameServiceApiService {
 
-    @POST("v1/accounts/names/bulk-read/")
+    @GET("api/name/{addresses}")
     suspend fun fetchAccountsNameServices(
-        @Body body: SearchNameServiceRequestBody
-    ): Response<SearchNameServiceResponse>
+        @Path("addresses") addresses: String
+    ): Response<NameServiceLookupResponse>
 
-    @GET("v1/name-services/search/")
+    @GET("api/search")
     suspend fun getNameServiceAccountAddresses(
-        @Query("name") name: String
-    ): Response<NameServiceSearchResponse>
+        @Query("pattern") name: String
+    ): Response<NameServiceApiSearchResponse>
 }

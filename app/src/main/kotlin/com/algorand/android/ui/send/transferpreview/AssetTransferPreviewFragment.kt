@@ -258,7 +258,11 @@ class AssetTransferPreviewFragment : TransactionSignBaseFragment(R.layout.fragme
             toUserView.setOnAddButtonClickListener(::onAddButtonClicked)
             when {
                 targetUser.nftDomainAddress != null -> {
-                    toUserView.setNftDomainAddress(targetUser.nftDomainAddress, targetUser.nftDomainServiceLogoUrl)
+                    toUserView.setNftDomainAddress(
+                        targetUser.nftDomainAddress,
+                        targetUser.nftDomainServiceLogoUrl,
+                        targetUser.publicKey
+                    )
                 }
 
                 targetUser.contact != null -> toUserView.setContact(targetUser.contact)

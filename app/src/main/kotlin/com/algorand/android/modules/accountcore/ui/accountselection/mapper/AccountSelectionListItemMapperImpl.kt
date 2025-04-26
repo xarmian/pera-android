@@ -51,7 +51,7 @@ internal class AccountSelectionListItemMapperImpl @Inject constructor() : Accoun
         return NftDomainAccountItem(
             displayName = nameService.name,
             address = nameService.accountAddress,
-            serviceLogoUrl = nameService.service?.logoUrl
+            serviceLogoUrl = nameService.nameServiceUri?.takeIf { it.isNotBlank() } ?: nameService.service?.logoUrl
         )
     }
 }

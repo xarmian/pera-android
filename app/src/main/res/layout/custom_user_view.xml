@@ -18,33 +18,50 @@
     android:layout_height="wrap_content"
     tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
 
-    <androidx.appcompat.widget.AppCompatImageView
+    <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/accountIconImageView"
         android:layout_width="24dp"
         android:layout_height="24dp"
+        android:scaleType="centerCrop"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:shapeAppearanceOverlay="@style/ShapeAppearance.App.CircleImageView"
         tools:srcCompat="@drawable/ic_wallet" />
 
     <TextView
         android:id="@+id/mainTextView"
         style="@style/TextAppearance.Body.Sans"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/spacing_small"
         android:layout_marginEnd="@dimen/spacing_small"
         android:ellipsize="end"
         android:maxLines="1"
         app:layout_constrainedWidth="true"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/copyButton"
         app:layout_constraintHorizontal_bias="0"
         app:layout_constraintStart_toEndOf="@id/accountIconImageView"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_goneMarginEnd="0dp"
-        app:layout_goneMarginStart="0dp"
         tools:text="@tools:sample/lorem[23]" />
+
+    <TextView
+        android:id="@+id/addressTextView"
+        style="@style/TextAppearance.Footnote.Mono"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_xsmall"
+        android:ellipsize="middle"
+        android:maxLines="1"
+        android:visibility="gone"
+        android:textColor="?android:attr/textColorSecondary"
+        app:layout_constraintEnd_toEndOf="@id/mainTextView"
+        app:layout_constraintStart_toStartOf="@id/mainTextView"
+        app:layout_constraintTop_toBottomOf="@id/mainTextView"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:text="ABCDEF...UVWXYZ"
+        tools:visibility="visible"/>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/copyButton"

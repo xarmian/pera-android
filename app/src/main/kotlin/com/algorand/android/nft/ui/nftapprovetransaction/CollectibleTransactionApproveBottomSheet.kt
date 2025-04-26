@@ -88,7 +88,8 @@ class CollectibleTransactionApproveBottomSheet :
                 } else {
                     toAlgorandUserView.setNftDomainAddress(
                         nftDomainAddress = it.nftDomainName,
-                        nftDomainServiceLogoUrl = it.nftDomainLogoUrl
+                        nftDomainServiceLogoUrl = it.nftDomainLogoUrl,
+                        publicKey = it.receiverAccountPublicKey
                     )
                 }
                 transactionFeeTextView.text = it.formattedTransactionFee

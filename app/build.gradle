@@ -146,6 +146,8 @@ android {
             buildConfigField "String", "DISCOVER_MAINNET_URL", '"https://discover-mobile-staging.perawallet.app"'
             buildConfigField "String", "CARDS_MAINNET_URL", '"https://cards-mobile-staging-mainnet.perawallet.app"'
             buildConfigField "String", "STAKING_MAINNET_URL", '"https://staking-mobile-staging.perawallet.app"'
+
+            buildConfigField "String", "ENVOI_MAINNET_BASE_URL", '"https://api.envoi.sh/"'
         }
 
         prod {
@@ -183,6 +185,8 @@ android {
             buildConfigField "String", "DISCOVER_MAINNET_URL", '"https://voirewards.com/discover"'
             buildConfigField "String", "CARDS_MAINNET_URL", '"https://cards-mobile.perawallet.app"'
             buildConfigField "String", "STAKING_MAINNET_URL", '"https://staking-mobile.perawallet.app"'
+
+            buildConfigField "String", "ENVOI_MAINNET_BASE_URL", '"https://api.envoi.sh/"'
         }
     }
 

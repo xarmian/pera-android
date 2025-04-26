@@ -14,11 +14,30 @@ package com.algorand.wallet.nameservice.data.model
 
 import com.google.gson.annotations.SerializedName
 
-internal data class NameServiceSearchResponse(
-
-    @SerializedName("count")
-    val count: Int?,
-
+data class NameServiceLookupResponse(
     @SerializedName("results")
-    val results: List<NameServiceSearchResultResponse>?
+    val results: List<NameServiceResult>
 )
+
+data class NameServiceResult(
+    @SerializedName("address")
+    val address: String,
+    @SerializedName("type")
+    val type: String,
+    @SerializedName("name")
+    val name: String?,
+    @SerializedName("metadata")
+    val metadata: NameServiceMetadata?,
+    @SerializedName("cached")
+    val cached: Boolean
+)
+
+data class NameServiceMetadata(
+    @SerializedName("avatar")
+    val avatar: String?,
+    @SerializedName("com.github")
+    val github: String?,
+    @SerializedName("com.twitter")
+    val twitter: String?
+    // Add other potential metadata fields here if needed
+) 

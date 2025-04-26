@@ -12,9 +12,9 @@
 
 package com.algorand.wallet.nameservice.data.mapper
 
-import com.algorand.wallet.nameservice.data.model.NameServiceSearchResultResponse
+import com.algorand.wallet.nameservice.data.model.NameServiceApiSearchResult
 import com.algorand.wallet.nameservice.domain.model.NameServiceSearchResult
 
 internal interface NameServiceSearchResultMapper {
-    operator fun invoke(response: NameServiceSearchResultResponse): NameServiceSearchResult?
+    operator fun invoke(response: NameServiceApiSearchResult): NameServiceSearchResult?
 }

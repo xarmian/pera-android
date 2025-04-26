@@ -15,5 +15,6 @@ package com.algorand.wallet.nameservice.domain.model
 data class NameServiceSearchResult(
     val name: String,
     val accountAddress: String,
+    val nameServiceUri: String?,
     val service: NameServiceProvider?
 )

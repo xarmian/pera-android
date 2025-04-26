@@ -173,6 +173,22 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    @Named("envoiHttpClient")
+    fun provideEnvoiHttpClient(
+        mobileHeaderInterceptor: MobileHeaderInterceptor,
+        loggingInterceptor: HttpLoggingInterceptor
+    ): OkHttpClient {
+        return OkHttpClient.Builder()
+            .addInterceptor(mobileHeaderInterceptor)
+            .addInterceptor(loggingInterceptor)
+            .connectTimeout(TIMEOUT_CONSTANT, TimeUnit.SECONDS)
+            .readTimeout(TIMEOUT_CONSTANT, TimeUnit.SECONDS)
+            .writeTimeout(TIMEOUT_CONSTANT, TimeUnit.SECONDS)
+            .build()
+    }
+
+    @Provides
+    @Singleton
     internal fun provideGson(): Gson {
         return GsonBuilder().registerTypeAdapter(Account::class.java, AccountDeserializer()).create()
     }
@@ -273,5 +289,19 @@ object NetworkModule {
         @Named("mobileAlgorandRetrofitInterface") mobileAlgorandRetrofitInterface: Retrofit
     ): MobileAlgorandApi {
         return mobileAlgorandRetrofitInterface.create(MobileAlgorandApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    @Named("envoiRetrofitInterface")
+    internal fun provideEnvoiRetrofitInterface(
+        @Named("envoiHttpClient") envoiHttpClient: OkHttpClient,
+        gson: Gson
+    ): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl(BuildConfig.ENVOI_MAINNET_BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .client(envoiHttpClient)
+            .build()
     }
 }

@@ -18,8 +18,6 @@ import com.algorand.wallet.nameservice.data.mapper.NameServiceMapper
 import com.algorand.wallet.nameservice.data.mapper.NameServiceMapperImpl
 import com.algorand.wallet.nameservice.data.mapper.NameServiceSearchResultMapper
 import com.algorand.wallet.nameservice.data.mapper.NameServiceSearchResultMapperImpl
-import com.algorand.wallet.nameservice.data.mapper.NameServiceSourceMapper
-import com.algorand.wallet.nameservice.data.mapper.NameServiceSourceMapperImpl
 import com.algorand.wallet.nameservice.data.repository.NameServiceRepositoryImpl
 import com.algorand.wallet.nameservice.data.service.NameServiceApiService
 import com.algorand.wallet.nameservice.domain.manager.LocalAccountsNameServiceManager
@@ -51,9 +49,6 @@ internal object NameServiceModule {
     fun provideNameServiceMapper(impl: NameServiceMapperImpl): NameServiceMapper = impl
 
     @Provides
-    fun provideNameServiceSourceMapper(impl: NameServiceSourceMapperImpl): NameServiceSourceMapper = impl
-
-    @Provides
     fun provideInitializeAccountNameService(
         repository: NameServiceRepository
     ): InitializeAccountNameService = InitializeAccountNameService(repository::initializeNameServiceCache)
@@ -81,7 +76,7 @@ internal object NameServiceModule {
     @Provides
     @Singleton
     fun provideNameServiceApiService(
-        @Named("mobileAlgorandRetrofitInterface") retrofit: Retrofit
+        @Named("envoiRetrofitInterface") retrofit: Retrofit
     ): NameServiceApiService = retrofit.create(NameServiceApiService::class.java)
 
     @Provides

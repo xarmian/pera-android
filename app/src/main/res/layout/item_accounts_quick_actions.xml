@@ -69,6 +69,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/receive"
-        app:icon="@drawable/ic_receive_helper_button" />
+        app:icon="@drawable/ic_receive_helper_button_bg_ghost" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

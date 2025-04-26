@@ -12,6 +12,7 @@
 
 package com.algorand.wallet.nameservice.domain.manager
 
+import android.util.Log
 import androidx.lifecycle.Lifecycle
 import com.algorand.wallet.account.local.domain.usecase.GetLocalAccountCountFlow
 import com.algorand.wallet.account.local.domain.usecase.GetLocalAccountsAddresses
@@ -47,7 +48,13 @@ internal class LocalAccountsNameServiceManagerImpl @Inject constructor(
 
     private suspend fun initialize() {
         combine(getLocalAccountCountFlow(), getFirebaseTokenStatusFlow()) { localAccountCount, firebaseTokenStatus ->
-            if (localAccountCount > 0 && firebaseTokenStatus is FirebaseTokenStatus.Success) {
+            Log.d(
+                "NameServiceDebug",
+                "LocalAccountsNameServiceManagerImpl: initialize combine block. Count: $localAccountCount, TokenStatus: $firebaseTokenStatus"
+            )
+            val conditionMet = localAccountCount > 0
+            Log.d("NameServiceDebug", "LocalAccountsNameServiceManagerImpl: initialize condition met = $conditionMet")
+            if (conditionMet) {
                 cacheManager.stopCurrentJob()
                 cacheManager.startJob()
             } else {
@@ -58,6 +65,7 @@ internal class LocalAccountsNameServiceManagerImpl @Inject constructor(
 
     private suspend fun runManagerJob() {
         val localAccountAddresses = getLocalAccountAddresses()
+        Log.d("NameServiceDebug", "LocalAccountsNameServiceManagerImpl: runManagerJob called. Addresses: $localAccountAddresses")
         initializeAccountNameService(localAccountAddresses)
     }
 }

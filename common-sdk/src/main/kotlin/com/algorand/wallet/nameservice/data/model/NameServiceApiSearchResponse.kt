@@ -14,10 +14,7 @@ package com.algorand.wallet.nameservice.data.model
 
 import com.google.gson.annotations.SerializedName
 
-internal data class NameServiceProviderDetailResponse(
-    @SerializedName("name")
-    val name: String?,
-
-    @SerializedName("logo")
-    val logoUrl: String?
-)
+internal data class NameServiceApiSearchResponse(
+    @SerializedName("results")
+    val results: List<NameServiceApiSearchResult>?
+) 

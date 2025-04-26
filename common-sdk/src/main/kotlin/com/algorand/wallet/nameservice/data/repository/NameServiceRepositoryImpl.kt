@@ -12,13 +12,13 @@
 
 package com.algorand.wallet.nameservice.data.repository
 
+import android.util.Log
 import com.algorand.wallet.foundation.PeraResult
 import com.algorand.wallet.foundation.cache.InMemoryLocalCache
 import com.algorand.wallet.foundation.network.exceptions.PeraRetrofitErrorHandler
 import com.algorand.wallet.foundation.network.utils.requestWithHipoErrorHandler
 import com.algorand.wallet.nameservice.data.mapper.NameServiceMapper
 import com.algorand.wallet.nameservice.data.mapper.NameServiceSearchResultMapper
-import com.algorand.wallet.nameservice.data.model.SearchNameServiceRequestBody
 import com.algorand.wallet.nameservice.data.service.NameServiceApiService
 import com.algorand.wallet.nameservice.domain.model.NameService
 import com.algorand.wallet.nameservice.domain.model.NameServiceSearchResult
@@ -34,12 +34,16 @@ internal class NameServiceRepositoryImpl @Inject constructor(
 ) : NameServiceRepository {
 
     override suspend fun initializeNameServiceCache(addresses: List<String>): PeraResult<List<NameService>> {
+        Log.d("NameServiceDebug", "NameServiceRepositoryImpl: initializeNameServiceCache called. Addresses: $addresses")
+        val isEmpty = addresses.isEmpty()
+        Log.d("NameServiceDebug", "NameServiceRepositoryImpl: addresses.isEmpty() = $isEmpty")
+        if (isEmpty) return PeraResult.Success(emptyList())
         return requestWithHipoErrorHandler(peraApiErrorHandler) {
-            nameServiceApiService.fetchAccountsNameServices(SearchNameServiceRequestBody(addresses))
+            nameServiceApiService.fetchAccountsNameServices(addresses.joinToString(","))
         }.use(
             onSuccess = {
-                val nameServices = nameServiceMapper(it.results.orEmpty())
-                inMemoryLocalCache.putAll(nameServices.map { it.accountAddress to it })
+                val nameServices = nameServiceMapper(it.results)
+                inMemoryLocalCache.putAll(nameServices.map { ns -> ns.accountAddress to ns })
                 PeraResult.Success(nameServices)
             },
             onFailed = { exception, code ->
@@ -51,9 +55,9 @@ internal class NameServiceRepositoryImpl @Inject constructor(
     override suspend fun getNameServiceSearchResults(query: String): PeraResult<List<NameServiceSearchResult>> {
         return requestWithHipoErrorHandler(peraApiErrorHandler) {
             nameServiceApiService.getNameServiceAccountAddresses(query)
-        }.map { searchResponses ->
-            searchResponses.results?.mapNotNull { response ->
-                nameServiceSearchResultMapper(response)
+        }.map { searchApiResponse ->
+            searchApiResponse.results?.mapNotNull { apiResult ->
+                nameServiceSearchResultMapper(apiResult)
             }.orEmpty()
         }
     }

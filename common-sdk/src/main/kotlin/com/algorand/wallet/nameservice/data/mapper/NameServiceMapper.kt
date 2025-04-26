@@ -12,9 +12,9 @@
 
 package com.algorand.wallet.nameservice.data.mapper
 
-import com.algorand.wallet.nameservice.data.model.NameServicePayload
+import com.algorand.wallet.nameservice.data.model.NameServiceResult
 import com.algorand.wallet.nameservice.domain.model.NameService
 
 internal interface NameServiceMapper {
-    operator fun invoke(responses: List<NameServicePayload>): List<NameService>
+    operator fun invoke(results: List<NameServiceResult>): List<NameService>
 }

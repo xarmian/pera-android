@@ -30,7 +30,8 @@ class AccountDetailAssetsTitleViewHolder(
             setTitle(item.titleRes)
             setPrimaryButtonClickListener { listener.onManageAssetsClick() }
             setSecondaryButtonClickListener { listener.onAddAssetClick() }
-            setSecondaryButtonVisibility(item.isAddAssetButtonVisible)
+            // setSecondaryButtonVisibility(item.isAddAssetButtonVisible)
+            setSecondaryButtonVisibility(false)
         }
     }
 
