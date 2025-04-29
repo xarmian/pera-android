@@ -15,6 +15,7 @@ package com.algorand.wallet.account.info.data.mapper.entity
 import com.algorand.wallet.account.info.data.database.model.AssetHoldingEntity
 import com.algorand.wallet.account.info.data.model.AssetHoldingResponse
 import com.algorand.wallet.account.info.domain.model.AssetStatus
+import com.algorand.wallet.foundation.database.model.DbAssetType
 import java.math.BigInteger
 import javax.inject.Inject
 
@@ -31,7 +32,8 @@ internal class AssetHoldingEntityMapperImpl @Inject constructor(
             isFrozen = response.isFrozen ?: false,
             optedInAtRound = response.optedInAtRound,
             optedOutAtRound = response.optedOutAtRound,
-            assetStatusEntity = assetStatusEntityMapper(status)
+            assetStatusEntity = assetStatusEntityMapper(status),
+            assetType = DbAssetType.ASA
         )
     }
 
@@ -44,7 +46,8 @@ internal class AssetHoldingEntityMapperImpl @Inject constructor(
             isFrozen = false,
             optedInAtRound = null,
             optedOutAtRound = null,
-            assetStatusEntity = assetStatusEntityMapper(status)
+            assetStatusEntity = assetStatusEntityMapper(status),
+            assetType = DbAssetType.ASA
         )
     }
 }

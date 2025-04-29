@@ -20,6 +20,7 @@ import com.algorand.android.modules.sorting.core.SortableItemPriority
 import com.algorand.android.utils.AssetName
 import com.algorand.android.utils.assetdrawable.BaseAssetDrawableProvider
 import com.algorand.android.utils.nftindicatordrawable.BaseNFTIndicatorDrawable
+import com.algorand.wallet.asset.domain.model.AssetType
 import com.algorand.wallet.asset.domain.util.AssetConstants
 import java.math.BigDecimal
 
@@ -141,7 +142,8 @@ sealed class AccountDetailAssetsItem : RecyclerListItem {
                 val verificationTierConfiguration: VerificationTierConfiguration,
                 val amountInSelectedCurrency: BigDecimal?,
                 val isAmountInDisplayedCurrencyVisible: Boolean,
-                val formattedDisplayedCurrencyValue: String
+                val formattedDisplayedCurrencyValue: String,
+                val assetType: AssetType
             ) : BaseOwnedItem() {
 
                 override val itemType: ItemType

@@ -20,6 +20,9 @@ import com.algorand.wallet.account.info.data.mapper.model.AccountInformationMapp
 import com.algorand.wallet.account.info.data.model.AccountInformationResponse
 import com.algorand.wallet.account.info.domain.model.AccountInformation
 import com.algorand.wallet.account.info.domain.model.AssetHolding
+import com.algorand.wallet.account.custom.domain.model.CustomAccountInfo
+import com.algorand.wallet.account.custom.domain.usecase.GetAccountCustomInfoOrNull
+import com.algorand.wallet.account.custom.domain.usecase.SetAccountCustomInfo
 import javax.inject.Inject
 
 internal class AccountInformationCacheHelperImpl @Inject constructor(
@@ -27,7 +30,9 @@ internal class AccountInformationCacheHelperImpl @Inject constructor(
     private val accountInformationMapper: AccountInformationMapper,
     private val accountInformationDao: AccountInformationDao,
     private val assetHoldingCacheHelper: AssetHoldingCacheHelper,
-    private val accountInformationErrorCache: AccountInformationErrorCache
+    private val accountInformationErrorCache: AccountInformationErrorCache,
+    private val getAccountCustomInfoOrNull: GetAccountCustomInfoOrNull,
+    private val setAccountCustomInfo: SetAccountCustomInfo
 ) : AccountInformationCacheHelper {
 
     override suspend fun cacheAccountInformation(
@@ -55,6 +60,23 @@ internal class AccountInformationCacheHelperImpl @Inject constructor(
         assetHoldings: List<AssetHolding>
     ): AccountInformation {
         accountInformationDao.insert(entity)
-        return accountInformationMapper(entity, assetHoldings)
+
+        ensureCustomAccountInfoExists(entity.algoAddress)
+
+        val mappedAccountInfo = accountInformationMapper(entity, assetHoldings)
+        return mappedAccountInfo
+    }
+
+    private suspend fun ensureCustomAccountInfoExists(address: String) {
+        val existingCustomInfo = getAccountCustomInfoOrNull(address)
+        if (existingCustomInfo == null) {
+            val defaultCustomInfo = CustomAccountInfo(
+                address = address,
+                customName = null,
+                orderIndex = 0,
+                isBackedUp = false
+            )
+            setAccountCustomInfo(defaultCustomInfo)
+        }
     }
 }

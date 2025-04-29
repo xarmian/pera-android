@@ -17,5 +17,6 @@ data class UnsupportedCollectibleDetail(
     override val collectibleInfo: CollectibleDetail.CollectibleInfo,
     override val collectibleMedias: List<BaseCollectibleMedia>,
     override val assetInfo: Asset.AssetInfo?,
-    override val verificationTier: VerificationTier
+    override val verificationTier: VerificationTier,
+    override val assetType: AssetType = AssetType.ASA
 ) : CollectibleDetail

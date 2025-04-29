@@ -12,7 +12,6 @@
 
 package com.algorand.wallet.nameservice.domain.manager
 
-import android.util.Log
 import androidx.lifecycle.Lifecycle
 import com.algorand.wallet.account.local.domain.usecase.GetLocalAccountCountFlow
 import com.algorand.wallet.account.local.domain.usecase.GetLocalAccountsAddresses
@@ -24,6 +23,9 @@ import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 internal class LocalAccountsNameServiceManagerImpl @Inject constructor(
     private val cacheManager: LifecycleAwareCacheManager,
@@ -48,24 +50,21 @@ internal class LocalAccountsNameServiceManagerImpl @Inject constructor(
 
     private suspend fun initialize() {
         combine(getLocalAccountCountFlow(), getFirebaseTokenStatusFlow()) { localAccountCount, firebaseTokenStatus ->
-            Log.d(
-                "NameServiceDebug",
-                "LocalAccountsNameServiceManagerImpl: initialize combine block. Count: $localAccountCount, TokenStatus: $firebaseTokenStatus"
-            )
-            val conditionMet = localAccountCount > 0
-            Log.d("NameServiceDebug", "LocalAccountsNameServiceManagerImpl: initialize condition met = $conditionMet")
+            localAccountCount > 0
+        }
+        .distinctUntilChanged()
+        .collect { conditionMet ->
             if (conditionMet) {
                 cacheManager.stopCurrentJob()
                 cacheManager.startJob()
             } else {
                 cacheManager.stopCurrentJob()
             }
-        }.collect()
+        }
     }
 
     private suspend fun runManagerJob() {
         val localAccountAddresses = getLocalAccountAddresses()
-        Log.d("NameServiceDebug", "LocalAccountsNameServiceManagerImpl: runManagerJob called. Addresses: $localAccountAddresses")
         initializeAccountNameService(localAccountAddresses)
     }
 }

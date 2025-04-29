@@ -15,7 +15,7 @@ package com.algorand.wallet.account.local.domain.repository
 import com.algorand.wallet.account.local.domain.model.LocalAccount
 import kotlinx.coroutines.flow.Flow
 
-internal interface NoAuthAccountRepository {
+interface NoAuthAccountRepository {
 
     fun getAllAsFlow(): Flow<List<LocalAccount.NoAuth>>
 

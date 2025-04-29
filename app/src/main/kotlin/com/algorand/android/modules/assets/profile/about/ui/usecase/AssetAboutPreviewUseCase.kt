@@ -20,12 +20,15 @@ import com.algorand.android.modules.assets.profile.about.ui.mapper.BaseAssetAbou
 import com.algorand.android.modules.assets.profile.about.ui.model.AssetAboutPreview
 import com.algorand.android.modules.assets.profile.about.ui.model.BaseAssetAboutListItem
 import com.algorand.android.modules.assets.profile.asaprofile.ui.usecase.AsaProfilePreviewUseCase.Companion.MINIMUM_CURRENCY_VALUE_TO_DISPLAY_EXACT_AMOUNT
+import com.algorand.android.models.Result
+import com.algorand.android.repository.Arc200Repository
 import com.algorand.android.utils.AssetName
 import com.algorand.android.utils.DEFAULT_ASSET_DECIMAL
 import com.algorand.android.utils.browser.addProtocolIfNeed
 import com.algorand.android.utils.browser.removeProtocolIfNeed
 import com.algorand.android.utils.formatAmount
 import com.algorand.wallet.asset.domain.model.Asset
+import com.algorand.wallet.asset.domain.model.AssetType
 import com.algorand.wallet.asset.domain.model.VerificationTier
 import com.algorand.wallet.asset.domain.model.VerificationTier.SUSPICIOUS
 import com.algorand.wallet.asset.domain.model.VerificationTier.TRUSTED
@@ -39,6 +42,9 @@ import com.algorand.wallet.asset.domain.usecase.GetSingleAssetDetailFlow
 import com.algorand.wallet.asset.domain.util.AssetConstants.ALGO_ID
 import java.math.BigDecimal
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 
 class AssetAboutPreviewUseCase @Inject constructor(
@@ -48,7 +54,8 @@ class AssetAboutPreviewUseCase @Inject constructor(
     private val getSelectedAssetExchangeValueUseCase: GetSelectedAssetExchangeValueUseCase,
     private val clearSingleAssetCache: ClearSingleAssetCache,
     private val getSingleAssetDetailFlow: GetSingleAssetDetailFlow,
-    private val getAsset: GetAsset
+    private val getAsset: GetAsset,
+    private val arc200Repository: Arc200Repository
 ) {
 
     suspend fun clearAsaProfileLocalCache() {
@@ -56,18 +63,69 @@ class AssetAboutPreviewUseCase @Inject constructor(
     }
 
     suspend fun cacheAssetDetailToAsaProfileLocalCache(assetId: Long) {
-        cacheSingleAssetDetail(assetId)
+        val asset = getAsset(assetId)
+        if (asset?.assetType != AssetType.ARC200) {
+            cacheSingleAssetDetail(assetId)
+        }
     }
 
-    fun getAssetAboutPreview(assetId: Long) = flow {
+    fun getAssetAboutPreview(assetId: Long): Flow<AssetAboutPreview> = flow {
         emit(assetAboutPreviewMapper.mapToAssetAboutPreviewInitialState())
         if (assetId == ALGO_ID) {
             val algoAssetDetail = getAsset(ALGO_ID) ?: return@flow
             val algoAboutPreview = createAlgoAboutPreview(algoAssetDetail)
             emit(algoAboutPreview)
         } else {
-            getSingleAssetDetailFlow().collect { assetDetail ->
-                emit(createAssetAboutPreview(assetDetail))
+            val asset = getAsset(assetId)
+            if (asset == null) {
+                arc200Repository.getArc200AssetDetail(assetId).run {
+                    when (this) {
+                        is Result.Success -> {
+                            val arc200Preview = createArc200AssetAboutPreview(data)
+                            emit(arc200Preview)
+                            return@flow
+                        }
+
+                        is Result.Error -> {
+                            getSingleAssetDetailFlow().filterNotNull()
+                                .collectLatest { fetchedAssetDetail ->
+                                    emit(createAssetAboutPreview(fetchedAssetDetail))
+                                }
+                        }
+                    }
+                }
+            } else {
+                when (asset.assetType) {
+                    AssetType.ARC200 -> {
+                        arc200Repository.getArc200AssetDetail(assetId).run {
+                            when (this) {
+                                is Result.Success -> {
+                                    val arc200Preview = createArc200AssetAboutPreview(data)
+                                    emit(arc200Preview)
+                                }
+
+                                is Result.Error -> {
+                                    val preview = createArc200AssetAboutPreview(asset)
+                                    emit(preview)
+                                }
+                            }
+                        }
+                    }
+
+                    AssetType.ASA -> {
+                        getSingleAssetDetailFlow().filterNotNull()
+                            .collectLatest { fetchedAssetDetail ->
+                                emit(createAssetAboutPreview(fetchedAssetDetail))
+                            }
+                    }
+
+                    else -> {
+                        getSingleAssetDetailFlow().filterNotNull()
+                            .collectLatest { fetchedAssetDetail ->
+                                emit(createAssetAboutPreview(fetchedAssetDetail))
+                            }
+                    }
+                }
             }
         }
     }
@@ -120,6 +178,27 @@ class AssetAboutPreviewUseCase @Inject constructor(
         return assetAboutPreviewMapper.mapToAssetAboutPreview(assetAboutListItems = assetAboutList)
     }
 
+    private fun createArc200AssetAboutPreview(assetDetail: Asset): AssetAboutPreview {
+        val assetAboutList = mutableListOf<BaseAssetAboutListItem>().apply {
+            with(assetDetail) {
+                add(createStatisticsItem(this))
+                add(BaseAssetAboutListItem.DividerItem)
+
+                add(createAboutAssetItem(assetDetail.id, assetInfo))
+
+                createAssetDescriptionItem(assetInfo?.description)?.run {
+                    add(BaseAssetAboutListItem.DividerItem)
+                    add(this)
+                }
+
+                addVerificationTierDescriptionIfNeed(this@apply, verificationTier)
+
+                addReportItemIfNeed(this@apply, verificationTier, assetDetail.id, shortName)
+            }
+        }
+        return assetAboutPreviewMapper.mapToAssetAboutPreview(assetAboutListItems = assetAboutList)
+    }
+
     private fun addVerificationTierDescriptionIfNeed(
         assetAboutList: MutableList<BaseAssetAboutListItem>,
         verificationTier: VerificationTier
@@ -135,8 +214,10 @@ class AssetAboutPreviewUseCase @Inject constructor(
             SUSPICIOUS -> BaseAssetAboutListItem.BadgeDescriptionItem.SuspiciousBadgeItem
             UNVERIFIED, UNKNOWN -> null
         }
-        if (item != null && position != null) {
-            assetAboutList.add(position, item)
+        if (item != null && position != null && position != -1) {
+            if (position <= assetAboutList.size) {
+                assetAboutList.add(position, item)
+            }
         }
     }
 
@@ -154,7 +235,8 @@ class AssetAboutPreviewUseCase @Inject constructor(
 
     private fun createStatisticsItem(assetDetail: Asset): BaseAssetAboutListItem.StatisticsItem {
         with(assetDetail) {
-            val minAmountToDisplay = BigDecimal.valueOf(MINIMUM_CURRENCY_VALUE_TO_DISPLAY_EXACT_AMOUNT)
+            val minAmountToDisplay =
+                BigDecimal.valueOf(MINIMUM_CURRENCY_VALUE_TO_DISPLAY_EXACT_AMOUNT)
             val formattedAssetPrice = getSelectedAssetExchangeValueUseCase
                 .getSelectedAssetExchangeValue(assetDetail = this)
                 ?.getFormattedValue(minValueToDisplayExactAmount = minAmountToDisplay)
@@ -226,7 +308,10 @@ class AssetAboutPreviewUseCase @Inject constructor(
         }
     }
 
-    private fun createReportItem(assetId: Long, shortName: String?): BaseAssetAboutListItem.ReportItem {
+    private fun createReportItem(
+        assetId: Long,
+        shortName: String?
+    ): BaseAssetAboutListItem.ReportItem {
         return baseAssetAboutListItemMapper.mapToReportItem(
             assetName = AssetName.createShortName(shortName),
             assetId = assetId

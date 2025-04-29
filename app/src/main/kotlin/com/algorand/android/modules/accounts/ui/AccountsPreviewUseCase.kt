@@ -29,8 +29,8 @@ import com.algorand.android.usecase.NodeSettingsUseCase
 import com.algorand.android.utils.CacheResult
 import com.algorand.android.utils.Event
 import com.algorand.android.utils.combine
+import com.algorand.wallet.account.info.domain.model.AccountInformation
 import com.algorand.wallet.account.info.domain.usecase.GetAllAccountInformationFlow
-import com.algorand.wallet.account.local.domain.usecase.GetLocalAccounts
 import com.algorand.wallet.asset.assetinbox.domain.usecase.GetAssetInboxRequestCountFlow
 import com.algorand.wallet.cache.domain.model.AppCacheStatus
 import com.algorand.wallet.cache.domain.usecase.GetAppCacheStatusFlow
@@ -51,7 +51,6 @@ class AccountsPreviewUseCase @Inject constructor(
     private val peraConnectivityManager: PeraConnectivityManager,
     private val getAppCacheStatusFlow: GetAppCacheStatusFlow,
     private val accountPreviewProcessor: AccountPreviewProcessor,
-    private val getLocalAccounts: GetLocalAccounts,
     private val getAllAccountInformationFlow: GetAllAccountInformationFlow
 ) {
 
@@ -85,16 +84,15 @@ class AccountsPreviewUseCase @Inject constructor(
             tutorialUseCase.getTutorial(),
             getAskNotificationPermissionEventFlowUseCase.invoke(),
             nodeSettingsUseCase.getAllNodeAsFlow()
-        ) { _, selectedCurrencyParityCache, appCacheStatusFlow, banner, assetInboxCount, tutorial,
+        ) { accountInfoMap, selectedCurrencyParityCache, appCacheStatusFlow, banner, assetInboxCount, tutorial,
             notificationPermissionEvent, _ ->
+
             val isTestnetBadgeVisible = false
-            if (getLocalAccounts().isEmpty()) {
-                return@combine accountPreviewMapper.getEmptyAccountListState(isTestnetBadgeVisible)
-            }
             when (selectedCurrencyParityCache) {
                 is CacheResult.Success -> {
                     processAccountsAndAssets(
-                        appCacheStatusFlow,
+                        accountInfoMap = accountInfoMap,
+                        cacheStatus = appCacheStatusFlow,
                         banner = banner,
                         assetInboxCount = assetInboxCount,
                         isTestnetBadgeVisible = isTestnetBadgeVisible,
@@ -162,6 +160,7 @@ class AccountsPreviewUseCase @Inject constructor(
     }
 
     private suspend fun processAccountsAndAssets(
+        accountInfoMap: Map<String, AccountInformation?>,
         cacheStatus: AppCacheStatus,
         banner: BaseBanner?,
         assetInboxCount: Int,
@@ -174,6 +173,7 @@ class AccountsPreviewUseCase @Inject constructor(
             accountPreviewMapper.getFullScreenLoadingState(isTestnetBadgeVisible)
         } else {
             accountPreviewProcessor.prepareAccountPreview(
+                accountInfoMap = accountInfoMap,
                 banner = banner,
                 isTestnetBadgeVisible = isTestnetBadgeVisible,
                 tutorial = tutorial,

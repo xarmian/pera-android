@@ -19,7 +19,7 @@ import androidx.room.Query
 import com.algorand.wallet.asset.data.database.model.AssetDetailEntity
 
 @Dao
-internal interface AssetDetailDao {
+interface AssetDetailDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entity: AssetDetailEntity)

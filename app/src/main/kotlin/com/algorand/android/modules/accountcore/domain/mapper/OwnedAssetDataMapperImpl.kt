@@ -48,7 +48,8 @@ internal class OwnedAssetDataMapperImpl @Inject constructor(
             parityValueInSecondaryCurrency = parityValueInSecondaryCurrency,
             prismUrl = assetDetail.logoUri,
             verificationTier = legacyVerificationTierMapper(assetDetail.verificationTier),
-            optedInAtRound = optedInAtRound
+            optedInAtRound = optedInAtRound,
+            assetType = assetDetail.assetType
         )
     }
 }

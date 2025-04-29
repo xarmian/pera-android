@@ -55,13 +55,16 @@ internal class GetAccountDisplayNameUseCase @Inject constructor(
 ) : GetAccountDisplayName {
 
     override suspend fun invoke(address: String): AccountDisplayName {
-        val customAccountName = getCustomInfoOrNull(address)?.customName
-            ?: return getAccountDisplayNameWithAccountAddressOnly(address)
+        val customInfo = getCustomInfoOrNull(address)
+        val customAccountName = customInfo?.customName
+
         val nameService = getAccountNameService(address)
+        val primaryName = getPrimaryName(address, customAccountName, nameService)
+        val secondaryName = getSecondaryName(address, customAccountName, nameService)
         return AccountDisplayName(
             accountAddress = address,
-            primaryDisplayName = getPrimaryName(address, customAccountName, nameService),
-            secondaryDisplayName = getSecondaryName(address, customAccountName, nameService)
+            primaryDisplayName = primaryName,
+            secondaryDisplayName = secondaryName
         )
     }
 
@@ -86,11 +89,11 @@ internal class GetAccountDisplayNameUseCase @Inject constructor(
     }
 
     private fun getPrimaryName(address: String, customAccountName: String?, nameService: NameService?): String {
-        val isAccountRenamed = customAccountName != address.toShortenedAddress() && !customAccountName.isNullOrBlank()
+        val isAccountRenamed = !customAccountName.isNullOrBlank() && customAccountName != address.toShortenedAddress()
         val nameServiceName = nameService?.nameServiceName.orEmpty()
         val isAccountMatchedNfDomain = nameServiceName.isNotBlank()
         return when {
-            isAccountRenamed -> customAccountName.orEmpty()
+            isAccountRenamed -> customAccountName!!
             isAccountMatchedNfDomain -> nameServiceName
             else -> address.toShortenedAddress()
         }
@@ -101,7 +104,7 @@ internal class GetAccountDisplayNameUseCase @Inject constructor(
         customAccountName: String?,
         nameService: NameService?
     ): String? {
-        val isAccountRenamed = customAccountName != address.toShortenedAddress() && !customAccountName.isNullOrBlank()
+        val isAccountRenamed = !customAccountName.isNullOrBlank() && customAccountName != address.toShortenedAddress()
         val nameServiceName = nameService?.nameServiceName.orEmpty()
         val isAccountMatchedNfDomain = nameServiceName.isNotBlank()
         return when {

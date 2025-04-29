@@ -15,6 +15,8 @@ package com.algorand.wallet.foundation.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.algorand.wallet.account.custom.data.database.dao.CustomAccountInfoDao
 import com.algorand.wallet.account.custom.data.database.dao.CustomHdSeedInfoDao
 import com.algorand.wallet.account.custom.data.database.model.CustomAccountInfoEntity
@@ -68,8 +70,15 @@ internal abstract class PeraDatabase : RoomDatabase() {
     abstract fun customAccountInfoDao(): CustomAccountInfoDao
     abstract fun customHdSeedInfoDao(): CustomHdSeedInfoDao
 
-    companion object {
-        const val DATABASE_VERSION = 1
-        const val DATABASE_NAME = "pera_database"
+    internal companion object {
+        private const val DATABASE_VERSION = 2
+        internal const val DATABASE_NAME = "pera-database"
+
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE asset_holding_table ADD COLUMN asset_type TEXT NOT NULL DEFAULT 'ASA'")
+                db.execSQL("ALTER TABLE asset_detail ADD COLUMN asset_type TEXT NOT NULL DEFAULT 'ASA'")
+            }
+        }
     }
 }

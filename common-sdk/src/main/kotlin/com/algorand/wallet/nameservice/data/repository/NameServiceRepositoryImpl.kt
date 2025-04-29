@@ -12,7 +12,6 @@
 
 package com.algorand.wallet.nameservice.data.repository
 
-import android.util.Log
 import com.algorand.wallet.foundation.PeraResult
 import com.algorand.wallet.foundation.cache.InMemoryLocalCache
 import com.algorand.wallet.foundation.network.exceptions.PeraRetrofitErrorHandler
@@ -34,15 +33,13 @@ internal class NameServiceRepositoryImpl @Inject constructor(
 ) : NameServiceRepository {
 
     override suspend fun initializeNameServiceCache(addresses: List<String>): PeraResult<List<NameService>> {
-        Log.d("NameServiceDebug", "NameServiceRepositoryImpl: initializeNameServiceCache called. Addresses: $addresses")
         val isEmpty = addresses.isEmpty()
-        Log.d("NameServiceDebug", "NameServiceRepositoryImpl: addresses.isEmpty() = $isEmpty")
         if (isEmpty) return PeraResult.Success(emptyList())
         return requestWithHipoErrorHandler(peraApiErrorHandler) {
             nameServiceApiService.fetchAccountsNameServices(addresses.joinToString(","))
         }.use(
-            onSuccess = {
-                val nameServices = nameServiceMapper(it.results)
+            onSuccess = { responsePayload ->
+                val nameServices = nameServiceMapper(responsePayload.results)
                 inMemoryLocalCache.putAll(nameServices.map { ns -> ns.accountAddress to ns })
                 PeraResult.Success(nameServices)
             },

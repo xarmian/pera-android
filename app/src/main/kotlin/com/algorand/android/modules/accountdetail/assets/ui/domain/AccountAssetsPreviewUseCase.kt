@@ -110,7 +110,9 @@ class AccountAssetsPreviewUseCase @Inject constructor(
                 val hasAccountAuthority = accountDetail.accountType?.canSignTransaction() == true
                 val isBackedUp = accountDetail.customAccountInfo?.isBackedUp ?: false
                 val totalValue = getAccountTotalValue(accountAddress, true).primaryAccountValue
-                if (!isBackedUp && totalValue > BigDecimal.ZERO) {
+                val shouldShowBackupWarning = !isBackedUp && totalValue > BigDecimal.ZERO &&
+                        (accountDetail.accountType == AccountType.Algo25 || accountDetail.accountType == AccountType.HdKey)
+                if (shouldShowBackupWarning) {
                     add(accountDetailAssetItemMapper.mapToBackupWarningItem(isBackedUp = false))
                 }
                 add(accountDetailAssetItemMapper.mapToTitleItem(R.string.assets, hasAccountAuthority))

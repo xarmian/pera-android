@@ -119,7 +119,7 @@ class AssetActivityFragment : BaseFragment(R.layout.fragment_asset_activity) {
 
     override fun onStart() {
         super.onStart()
-        assetActivityViewModel.activatePendingTransaction()
+        // assetActivityViewModel.activatePendingTransaction()
     }
 
     override fun onPause() {

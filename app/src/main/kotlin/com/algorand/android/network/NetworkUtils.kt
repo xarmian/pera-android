@@ -16,6 +16,7 @@ import com.algorand.android.models.Result
 import com.algorand.android.exceptions.RetrofitErrorHandler
 import java.io.IOException
 import retrofit2.Response
+import kotlin.Result as KotlinResult // Alias to avoid clash with local Result
 
 /**
  * Wrap a suspending API [call] in try/catch. In case an exception is thrown, a [Result.Error] is
@@ -57,4 +58,41 @@ suspend fun <T : Any> requestWithHipoErrorHandler(
 
 fun <T> RetrofitErrorHandler.getMessageAsResultError(response: Response<T>): Result.Error {
     return Result.Error(Exception(parse(response).message), response.code())
+}
+
+/**
+ * Helper function to handle API calls with cursor-based pagination.
+ *
+ * @param R The type of the successful Response body.
+ * @param T The type of the pagination token (e.g., String, Long).
+ * @param request A suspending lambda that takes the current token (or null for the first call)
+ *                and returns the Retrofit Response.
+ * @param onResult A lambda to process the successful response body (e.g., add items to a list).
+ * @param getNextToken A lambda to extract the next pagination token from the response body.
+ * @return A Kotlin Result indicating success (Unit) or failure (Exception).
+ */
+suspend inline fun <R : Any, T> requestWithPagination(
+    crossinline request: suspend (nextToken: T?) -> Response<R>,
+    crossinline onResult: (response: R) -> Unit,
+    crossinline getNextToken: (response: R) -> T?
+): KotlinResult<Unit> {
+    var nextToken: T? = null
+    var isFirstRequest = true
+    return try {
+        while (nextToken != null || isFirstRequest) {
+            isFirstRequest = false
+            val response = request(nextToken)
+            if (!response.isSuccessful || response.body() == null) {
+                // TODO: Improve error creation/propagation from Response
+                val errorBody = response.errorBody()?.string() ?: "Unknown pagination error"
+                return KotlinResult.failure(IOException("Pagination request failed: code=${response.code()}, $errorBody"))
+            }
+            val responseBody = response.body()!!
+            onResult(responseBody)
+            nextToken = getNextToken(responseBody)
+        }
+        KotlinResult.success(Unit)
+    } catch (e: Exception) {
+        KotlinResult.failure(e)
+    }
 }

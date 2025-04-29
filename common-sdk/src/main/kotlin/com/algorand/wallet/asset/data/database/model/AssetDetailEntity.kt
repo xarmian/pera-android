@@ -17,9 +17,10 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.algorand.wallet.asset.data.database.model.AssetDetailEntity.Companion.ASSET_DETAIL_TABLE_NAME
 import java.math.BigDecimal
+import com.algorand.wallet.foundation.database.model.DbAssetType
 
 @Entity(tableName = ASSET_DETAIL_TABLE_NAME)
-internal data class AssetDetailEntity(
+data class AssetDetailEntity(
     @PrimaryKey
     @ColumnInfo("asset_id")
     val assetId: Long,
@@ -88,7 +89,10 @@ internal data class AssetDetailEntity(
     val isVerifiedAssetCreator: Boolean?,
 
     @ColumnInfo("verification_tier")
-    val verificationTier: VerificationTierEntity
+    val verificationTier: VerificationTierEntity,
+
+    @ColumnInfo(name = "asset_type", defaultValue = "ASA")
+    val assetType: DbAssetType
 ) {
 
     internal companion object {

@@ -34,6 +34,8 @@ internal object PeraDatabaseModule {
             context = context,
             klass = PeraDatabase::class.java,
             name = PeraDatabase.DATABASE_NAME
-        ).build()
+        ).fallbackToDestructiveMigration()
+            .addMigrations(PeraDatabase.MIGRATION_1_2)
+            .build()
     }
 }

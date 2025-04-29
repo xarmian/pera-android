@@ -22,6 +22,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import android.util.Log
 
 internal class CustomAccountInfoRepositoryImpl @Inject constructor(
     private val customAccountInfoDao: CustomAccountInfoDao,
@@ -95,7 +96,8 @@ internal class CustomAccountInfoRepositoryImpl @Inject constructor(
 
     override suspend fun getAllAccountOrderIndexes(): List<AccountOrderIndex> {
         return withContext(coroutineDispatcher) {
-            customAccountInfoDao.getAll().map {
+            val allCustomInfo = customAccountInfoDao.getAll()
+            allCustomInfo.map {
                 AccountOrderIndex(it.algoAddress, it.orderIndex)
             }
         }
@@ -111,5 +113,10 @@ internal class CustomAccountInfoRepositoryImpl @Inject constructor(
         withContext(coroutineDispatcher) {
             customAccountInfoDao.clearAll()
         }
+    }
+
+    // Keep TAG for potential future use, or remove if desired
+    companion object {
+        private val TAG = CustomAccountInfoRepositoryImpl::class.java.simpleName
     }
 }

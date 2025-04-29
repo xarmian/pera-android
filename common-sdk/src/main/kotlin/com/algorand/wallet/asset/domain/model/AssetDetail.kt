@@ -15,5 +15,6 @@ package com.algorand.wallet.asset.domain.model
 data class AssetDetail(
     override val id: Long,
     override val assetInfo: Asset.AssetInfo?,
-    override val verificationTier: VerificationTier
+    override val verificationTier: VerificationTier,
+    override val assetType: AssetType
 ) : Asset

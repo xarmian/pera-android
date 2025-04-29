@@ -12,7 +12,7 @@
 
 package com.algorand.wallet.account.info.data.database.model
 
-internal enum class AssetStatusEntity {
+enum class AssetStatusEntity {
     PENDING_FOR_REMOVAL,
     PENDING_FOR_ADDITION,
     OWNED_BY_ACCOUNT

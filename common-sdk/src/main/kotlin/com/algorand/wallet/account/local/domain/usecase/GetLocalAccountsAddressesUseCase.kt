@@ -22,7 +22,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 
-internal class GetLocalAccountsAddressesUseCase @Inject constructor(
+class GetLocalAccountsAddressesUseCase @Inject constructor(
     private val hdKeyAccountRepository: HdKeyAccountRepository,
     private val algo25AccountRepository: Algo25AccountRepository,
     private val ledgerBleAccountRepository: LedgerBleAccountRepository,

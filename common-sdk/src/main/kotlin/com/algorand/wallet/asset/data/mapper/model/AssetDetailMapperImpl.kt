@@ -17,18 +17,22 @@ import com.algorand.wallet.asset.data.model.NodeAssetDetailResponse
 import com.algorand.wallet.asset.domain.model.AssetDetail
 import com.algorand.wallet.asset.domain.model.VerificationTier
 import com.algorand.wallet.asset.data.database.model.AssetDetailEntity
+import com.algorand.wallet.asset.domain.model.AssetType
+import com.algorand.wallet.foundation.database.model.DbAssetType
 import javax.inject.Inject
 
 internal class AssetDetailMapperImpl @Inject constructor(
     private val assetInfoMapper: AssetInfoMapper,
-    private val verificationTierMapper: VerificationTierMapper
+    private val verificationTierMapper: VerificationTierMapper,
+    private val assetTypeMapper: AssetTypeMapper
 ) : AssetDetailMapper {
 
     override fun invoke(response: AssetResponse): AssetDetail? {
         return AssetDetail(
             id = response.assetId ?: return null,
             assetInfo = assetInfoMapper(response),
-            verificationTier = verificationTierMapper(response.verificationTier)
+            verificationTier = verificationTierMapper(response.verificationTier),
+            assetType = AssetType.ASA
         )
     }
 
@@ -36,7 +40,8 @@ internal class AssetDetailMapperImpl @Inject constructor(
         return AssetDetail(
             id = assetId,
             verificationTier = VerificationTier.UNKNOWN,
-            assetInfo = assetInfoMapper(nodeResponse)
+            assetInfo = assetInfoMapper(nodeResponse),
+            assetType = AssetType.ASA
         )
     }
 
@@ -44,7 +49,8 @@ internal class AssetDetailMapperImpl @Inject constructor(
         return AssetDetail(
             id = entity.assetId,
             verificationTier = verificationTierMapper(entity.verificationTier),
-            assetInfo = assetInfoMapper(entity)
+            assetInfo = assetInfoMapper(entity),
+            assetType = assetTypeMapper(entity.assetType)
         )
     }
 }

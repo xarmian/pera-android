@@ -82,7 +82,7 @@ class AccountPreviewMapper @Inject constructor(
         assetInboxCount: Int
     ): AccountPreview {
         return AccountPreview(
-            isEmptyStateVisible = false,
+            isEmptyStateVisible = accountListItems.isEmpty(),
             isFullScreenAnimatedLoadingVisible = false,
             isBlockingLoadingVisible = false,
             accountListItems = accountListItems,

@@ -148,6 +148,8 @@ android {
             buildConfigField "String", "STAKING_MAINNET_URL", '"https://staking-mobile-staging.perawallet.app"'
 
             buildConfigField "String", "ENVOI_MAINNET_BASE_URL", '"https://api.envoi.sh/"'
+            buildConfigField "String", "MIMIR_MAINNET_API_URL", '"https://voi-mainnet-mimirapi.voirewards.com/"'
+            buildConfigField "String", "ARC200_MAINNET_IMAGE_URL", '"https://asset-verification.nautilus.sh/icons/"'
         }
 
         prod {
@@ -187,6 +189,8 @@ android {
             buildConfigField "String", "STAKING_MAINNET_URL", '"https://staking-mobile.perawallet.app"'
 
             buildConfigField "String", "ENVOI_MAINNET_BASE_URL", '"https://api.envoi.sh/"'
+            buildConfigField "String", "MIMIR_MAINNET_API_URL", '"https://voi-mainnet-mimirapi.voirewards.com/"'
+            buildConfigField "String", "ARC200_MAINNET_IMAGE_URL", '"https://asset-verification.nautilus.sh/icons/"'
         }
     }
 

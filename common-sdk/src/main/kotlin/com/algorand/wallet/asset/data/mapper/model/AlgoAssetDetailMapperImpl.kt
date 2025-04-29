@@ -24,6 +24,7 @@ import com.algorand.wallet.asset.domain.util.AssetConstants.ALGO_TOTAL_SUPPLY
 import com.algorand.wallet.asset.domain.model.Asset
 import com.algorand.wallet.asset.domain.model.AssetDetail
 import com.algorand.wallet.asset.domain.model.VerificationTier
+import com.algorand.wallet.asset.domain.model.AssetType
 import javax.inject.Inject
 
 internal class AlgoAssetDetailMapperImpl @Inject constructor() : AlgoAssetDetailMapper {
@@ -55,7 +56,8 @@ internal class AlgoAssetDetailMapperImpl @Inject constructor() : AlgoAssetDetail
                 ),
                 url = ALGORAND_WEBSITE_URL,
                 isAvailableOnDiscoverMobile = true
-            )
+            ),
+            assetType = AssetType.ASA
         )
     }
 }
