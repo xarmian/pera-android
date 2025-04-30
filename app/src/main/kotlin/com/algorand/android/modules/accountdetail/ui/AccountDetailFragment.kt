@@ -70,6 +70,7 @@ import com.algorand.wallet.asset.domain.util.AssetConstants.ALGO_ID
 import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.map
+import com.algorand.android.models.ui.nft.NftDomainItem
 
 @AndroidEntryPoint
 class AccountDetailFragment :
@@ -160,7 +161,7 @@ class AccountDetailFragment :
     }
 
     override fun onNFTClick(nftId: Long) {
-        navToCollectibleDetailFragment(nftId)
+        // Remove body - navigation handled by onCollectibleClick
     }
 
     override fun onNFTLongClick(nftId: Long) {
@@ -228,45 +229,58 @@ class AccountDetailFragment :
     }
 
     override fun onImageItemClick(nftAssetId: Long) {
-        navToCollectibleDetailFragment(nftAssetId)
+        // Remove body - navigation handled by onCollectibleClick
     }
 
     override fun onVideoItemClick(nftAssetId: Long) {
-        navToCollectibleDetailFragment(nftAssetId)
+        // Remove body - navigation handled by onCollectibleClick
     }
 
     override fun onSoundItemClick(nftAssetId: Long) {
-        navToCollectibleDetailFragment(nftAssetId)
+        // Remove body - navigation handled by onCollectibleClick
     }
 
     override fun onGifItemClick(nftAssetId: Long) {
-        // TODO "Not yet implemented"
+        // Remove body - navigation handled by onCollectibleClick
     }
 
     override fun onNotSupportedItemClick(nftAssetId: Long) {
-        navToCollectibleDetailFragment(nftAssetId)
+        // Remove body - navigation handled by onCollectibleClick
     }
 
     override fun onMixedItemClick(nftAssetId: Long) {
-        navToCollectibleDetailFragment(nftAssetId)
+        // Remove body - navigation handled by onCollectibleClick
     }
 
-    private fun navToCollectibleDetailFragment(collectibleId: Long) {
+    override fun onCollectibleClick(collectibleAssetId: Long, tokenId: String) {
+        val ownerPublicKey = args.publicKey
         nav(
             AccountDetailFragmentDirections.actionAccountDetailFragmentToCollectibleDetailFragment(
-                collectibleId,
-                accountDetailViewModel.accountAddress
+                collectibleAssetId = collectibleAssetId,
+                tokenId = tokenId,
+                publicKey = ownerPublicKey
             )
         )
     }
 
+    override fun onSendNFTClick(nftId: Long, nftDomain: NftDomainItem) {
+        // TODO: Implement if needed, or leave empty if handled elsewhere
+    }
+
+    override fun onCollectiblesFilterClick() {
+        // TODO: Implement if needed, or leave empty if handled elsewhere
+    }
+
+    override fun onReceiveNFTsClick() {
+        // TODO: Implement if needed, or leave empty if handled elsewhere
+    }
+
     override fun onReceiveCollectibleClick() {
-        nav(AccountDetailFragmentDirections
-            .actionAccountDetailFragmentToReceiveCollectibleFragment(accountDetailViewModel.accountAddress))
+        // TODO: Implement if needed, or leave empty if handled elsewhere
     }
 
     override fun onManageCollectiblesClick() {
-        nav(AccountDetailFragmentDirections.actionAccountDetailFragmentToManageAccountNFTsBottomSheet())
+        // TODO: Implement if needed, or leave empty if handled elsewhere
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

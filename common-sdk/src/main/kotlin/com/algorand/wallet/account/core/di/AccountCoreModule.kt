@@ -64,9 +64,6 @@ internal object AccountCoreModule {
     fun provideDeleteAccount(useCase: DeleteAccountUseCase): DeleteAccount = useCase
 
     @Provides
-    fun provideGetAccountDetailFlow(useCase: GetAccountDetailFlowUseCase): GetAccountDetailFlow = useCase
-
-    @Provides
     fun provideGetAccountsDetailsFlow(useCase: GetAccountsDetailsFlowUseCase): GetAccountsDetailsFlow = useCase
 
     @Provides

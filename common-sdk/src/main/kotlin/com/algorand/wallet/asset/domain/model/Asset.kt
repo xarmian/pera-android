@@ -20,6 +20,7 @@ sealed interface Asset {
     val id: Long
     val assetInfo: AssetInfo?
     val verificationTier: VerificationTier
+    val assetType: AssetType
 
     val isAlgo
         get() = id == ALGO_ID

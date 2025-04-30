@@ -20,6 +20,7 @@ import com.algorand.android.utils.isGreaterThan
 import java.math.BigDecimal
 import java.math.BigInteger
 import kotlinx.parcelize.Parcelize
+import com.algorand.wallet.asset.domain.model.AssetType
 
 sealed class BaseAccountAssetData : Parcelable {
 
@@ -41,6 +42,7 @@ sealed class BaseAccountAssetData : Parcelable {
         abstract val parityValueInSecondaryCurrency: ParityValue
         abstract val isAmountInSelectedCurrencyVisible: Boolean
         abstract val prismUrl: String?
+        abstract val assetType: AssetType
 
         fun getSelectedCurrencyParityValue(): ParityValue {
             return if (isAlgo && parityValueInSelectedCurrency.selectedCurrencySymbol == Currency.ALGO.symbol) {
@@ -67,7 +69,8 @@ sealed class BaseAccountAssetData : Parcelable {
             override val parityValueInSecondaryCurrency: ParityValue,
             override val prismUrl: String?,
             override val verificationTier: VerificationTier,
-            override val optedInAtRound: Long?
+            override val optedInAtRound: Long?,
+            override val assetType: AssetType
         ) : BaseOwnedAssetData()
 
         sealed class BaseOwnedCollectibleData : BaseOwnedAssetData() {
@@ -79,6 +82,8 @@ sealed class BaseAccountAssetData : Parcelable {
 
             override val verificationTier: VerificationTier?
                 get() = null
+
+            override val assetType: AssetType = AssetType.ASA
 
             @Parcelize
             data class OwnedCollectibleImageData(
@@ -119,7 +124,7 @@ sealed class BaseAccountAssetData : Parcelable {
                 override val parityValueInSelectedCurrency: ParityValue,
                 override val parityValueInSecondaryCurrency: ParityValue,
                 override val prismUrl: String?,
-                override val optedInAtRound: Long?,
+                override val optedInAtRound: Long?
             ) : BaseOwnedCollectibleData()
 
             @Parcelize
@@ -140,7 +145,7 @@ sealed class BaseAccountAssetData : Parcelable {
                 override val parityValueInSelectedCurrency: ParityValue,
                 override val parityValueInSecondaryCurrency: ParityValue,
                 override val prismUrl: String?,
-                override val optedInAtRound: Long?,
+                override val optedInAtRound: Long?
             ) : BaseOwnedCollectibleData()
 
             @Parcelize
@@ -161,7 +166,7 @@ sealed class BaseAccountAssetData : Parcelable {
                 override val parityValueInSelectedCurrency: ParityValue,
                 override val parityValueInSecondaryCurrency: ParityValue,
                 override val prismUrl: String?,
-                override val optedInAtRound: Long?,
+                override val optedInAtRound: Long?
             ) : BaseOwnedCollectibleData()
 
             @Parcelize

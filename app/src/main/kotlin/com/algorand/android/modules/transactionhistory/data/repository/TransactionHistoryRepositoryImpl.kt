@@ -13,18 +13,25 @@
 package com.algorand.android.modules.transactionhistory.data.repository
 
 import com.algorand.android.models.Result
+import com.algorand.android.modules.transactionhistory.data.mapper.Arc200TransferMapper
 import com.algorand.android.modules.transactionhistory.data.mapper.PaginatedTransactionsDTOMapper
 import com.algorand.android.modules.transactionhistory.domain.model.PaginatedTransactionsDTO
 import com.algorand.android.modules.transactionhistory.domain.repository.TransactionHistoryRepository
 import com.algorand.android.network.IndexerApi
+import com.algorand.android.network.MimirApi
 import com.algorand.android.network.request
 import com.algorand.android.utils.recordException
+import com.algorand.wallet.asset.domain.model.AssetType
+import com.algorand.wallet.asset.domain.usecase.GetAssetDetail
 import com.algorand.wallet.asset.domain.util.AssetConstants.ALGO_ID
 import javax.inject.Inject
 
 class TransactionHistoryRepositoryImpl @Inject constructor(
     private val indexerApi: IndexerApi,
-    private val paginatedTransactionsMapper: PaginatedTransactionsDTOMapper
+    private val mimirApi: MimirApi,
+    private val paginatedTransactionsMapper: PaginatedTransactionsDTOMapper,
+    private val arc200TransferMapper: Arc200TransferMapper,
+    private val getAssetDetailUseCase: GetAssetDetail
 ) : TransactionHistoryRepository {
     override suspend fun getTransactionHistory(
         assetId: Long?,
@@ -35,25 +42,60 @@ class TransactionHistoryRepositoryImpl @Inject constructor(
         limit: Int?,
         txnType: String?
     ): Result<PaginatedTransactionsDTO> {
-        return request {
-            val safeAssetId = if (assetId == ALGO_ID) null else assetId
-            indexerApi.getTransactions(
-                publicKey = publicKey,
-                assetId = safeAssetId,
-                afterTime = fromDate,
-                beforeTime = toDate,
-                nextToken = nextToken,
-                limit = limit,
-                transactionType = txnType
-            )
-        }.run {
-            when (this) {
-                is Result.Success -> Result.Success(paginatedTransactionsMapper.mapToPaginatedTransactionsDTO(data))
-                is Result.Error -> {
-                    recordException(exception)
-                    Result.Error(exception)
+        val isArc200Asset = assetId?.let {
+            val assetDetail = getAssetDetailUseCase.invoke(it)
+            assetDetail?.assetType == AssetType.ARC200
+        } ?: false
+
+        return if (isArc200Asset && assetId != null) {
+            request {
+                mimirApi.getArc200Transfers(
+                    contractId = assetId,
+                    userAddress = publicKey,
+                    limit = limit ?: DEFAULT_TRANSACTION_COUNT
+                )
+            }.run {
+                when (this) {
+                    is Result.Success -> {
+                        Result.Success(arc200TransferMapper.mapToPaginatedTransactionsDTO(data))
+                    }
+
+                    is Result.Error -> {
+                        recordException(exception)
+                        Result.Success(PaginatedTransactionsDTO(null, emptyList()))
+                    }
+                }
+            }
+        } else {
+            request {
+                val safeAssetId = if (assetId == ALGO_ID) null else assetId
+                indexerApi.getTransactions(
+                    publicKey = publicKey,
+                    assetId = safeAssetId,
+                    afterTime = fromDate,
+                    beforeTime = toDate,
+                    nextToken = nextToken,
+                    limit = limit,
+                    transactionType = txnType
+                )
+            }.run {
+                when (this) {
+                    is Result.Success -> Result.Success(
+                        paginatedTransactionsMapper.mapToPaginatedTransactionsDTO(
+                            data
+                        )
+                    )
+
+                    is Result.Error -> {
+                        recordException(exception)
+                        Result.Error(exception)
+                    }
                 }
             }
         }
+    }
+
+    companion object {
+        private const val DEFAULT_TRANSACTION_COUNT = 50
     }
 }

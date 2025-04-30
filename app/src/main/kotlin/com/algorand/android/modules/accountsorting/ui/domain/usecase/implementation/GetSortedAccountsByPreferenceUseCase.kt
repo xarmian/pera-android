@@ -32,7 +32,7 @@ internal class GetSortedAccountsByPreferenceUseCase @Inject constructor(
     private val sortAccountsBySortingPreference: SortAccountsBySortingPreference
 ) : GetSortedAccountsByPreference {
 
-    override suspend fun invoke(
+    override suspend operator fun invoke(
         excludedAccountTypes: List<AccountType>?,
         onLoadedAccountConfiguration: suspend AccountDetail.() -> BaseItemConfiguration.AccountItemConfiguration,
         onFailedAccountConfiguration: suspend String.() -> BaseItemConfiguration.AccountItemConfiguration?
@@ -45,7 +45,7 @@ internal class GetSortedAccountsByPreferenceUseCase @Inject constructor(
         return sortAccountsBySortingPreference.sortAccountAndAssetListItem(accountListItems)
     }
 
-    override suspend fun invoke(
+    override suspend operator fun invoke(
         sortingIdentifier: AccountSortingTypeIdentifier,
         excludedAccountTypes: List<AccountType>?,
         onLoadedAccountConfiguration: suspend AccountDetail.() -> BaseItemConfiguration.AccountItemConfiguration,
@@ -65,9 +65,12 @@ internal class GetSortedAccountsByPreferenceUseCase @Inject constructor(
         onFailedAccountConfiguration: suspend String.() -> BaseItemConfiguration.AccountItemConfiguration?
     ): List<AccountAndAssetListItem.AccountListItem> {
         val localAccounts = getSortedLocalAccounts()
+
         return localAccounts.mapIndexedNotNull { _, account ->
             val accountDetail = getAccountDetail(account.address)
-            val isAccountTypeValid = isAccountTypeValid(excludedAccountTypes, accountDetail.accountType)
+            val accountType = accountDetail.accountType
+            val isAccountTypeValid = isAccountTypeValid(excludedAccountTypes, accountType)
+
             if (isAccountTypeValid) {
                 val accountItemConfiguration = ItemConfigurationHelper.configureListItem(
                     accountDetail = accountDetail,
@@ -83,8 +86,12 @@ internal class GetSortedAccountsByPreferenceUseCase @Inject constructor(
     }
 
     private fun isAccountTypeValid(excludedAccountTypes: List<AccountType>?, accountType: AccountType?): Boolean {
-        // This means, there is no filter
         if (excludedAccountTypes.isNullOrEmpty()) return true
         return accountType !in excludedAccountTypes
+    }
+
+    // Add TAG for Log
+    companion object {
+        private val TAG = GetSortedAccountsByPreferenceUseCase::class.java.simpleName
     }
 }

@@ -42,6 +42,20 @@ class MobileHeaderInterceptor(
 
     var currentActiveNode: Node? = null
 
+    // Extract Mimir host
+    private val mimirHost = try {
+        BuildConfig.MIMIR_MAINNET_API_URL.toHttpUrlOrNull()?.host
+    } catch (e: Exception) {
+        null
+    }
+
+    // Extract Envoi host
+    private val envoiHost = try {
+        BuildConfig.ENVOI_MAINNET_BASE_URL.toHttpUrlOrNull()?.host
+    } catch (e: Exception) {
+        null
+    }
+
     override fun safeIntercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val requestBuilder = request.newBuilder()
@@ -49,16 +63,12 @@ class MobileHeaderInterceptor(
         // Get the host of the original request
         val originalHost = request.url.host
 
-        // Extract the host from the Envoi Base URL (assuming it's stored correctly in BuildConfig)
-        val envoiHost = try {
-            BuildConfig.ENVOI_MAINNET_BASE_URL.toHttpUrlOrNull()?.host
-        } catch (e: Exception) {
-            // Handle potential parsing errors if the BuildConfig value is malformed
-            null
-        }
+        // Only rewrite URL if currentActiveNode is set AND the original host is NOT the Envoi host OR Mimir host
+        val shouldRewriteUrl = currentActiveNode != null &&
+            (envoiHost == null || originalHost != envoiHost) &&
+            (mimirHost == null || originalHost != mimirHost)
 
-        // Only rewrite URL if currentActiveNode is set AND the original host is NOT the Envoi host
-        if (currentActiveNode != null && envoiHost != null && originalHost != envoiHost) {
+        if (shouldRewriteUrl) {
             currentActiveNode?.let { activeNode ->
                 val baseUrl = activeNode.mobileAlgorandAddress.toHttpUrlOrNull()
                 if (baseUrl != null) {

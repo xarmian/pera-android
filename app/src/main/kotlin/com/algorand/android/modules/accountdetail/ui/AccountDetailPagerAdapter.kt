@@ -17,10 +17,9 @@ import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.algorand.android.R
 import com.algorand.android.modules.accountdetail.assets.ui.AccountAssetsFragment
-// import com.algorand.android.modules.accountdetail.collectibles.ui.AccountCollectiblesFragment
+import com.algorand.android.modules.accountdetail.collectibles.ui.AccountCollectiblesFragment
 import com.algorand.android.modules.accountdetail.history.ui.AccountHistoryFragment
 import com.algorand.android.modules.accountdetail.ui.model.AccountDetailPagerAdapterItem
-import com.algorand.android.modules.accountdetail.nftportfolio.ui.AccountNftPortfolioFragment
 
 class AccountDetailPagerAdapter(
     fragment: Fragment,
@@ -35,8 +34,7 @@ class AccountDetailPagerAdapter(
             titleResId = R.string.overview
         ),
         AccountDetailPagerAdapterItem(
-            // fragmentInstance = AccountCollectiblesFragment.newInstance(address),
-            fragmentInstance = AccountNftPortfolioFragment.newInstance(address),
+            fragmentInstance = AccountCollectiblesFragment.newInstance(address),
             titleResId = R.string.nfts
         ),
         AccountDetailPagerAdapterItem(

@@ -20,6 +20,7 @@ import com.algorand.wallet.asset.domain.util.AssetConstants.ALGO_DECIMALS
 import com.algorand.wallet.asset.domain.util.AssetConstants.ALGO_FULL_NAME
 import com.algorand.wallet.asset.domain.util.AssetConstants.ALGO_ID
 import com.algorand.wallet.asset.domain.util.AssetConstants.ALGO_SHORT_NAME
+import com.algorand.wallet.asset.domain.model.AssetType
 import java.math.BigDecimal
 import java.math.BigInteger
 import javax.inject.Inject
@@ -48,7 +49,8 @@ internal class AlgoAssetDataMapperImpl @Inject constructor() : AlgoAssetDataMapp
             parityValueInSecondaryCurrency = parityValueInSecondaryCurrency,
             prismUrl = null, // Algo does not have prism url
             verificationTier = VerificationTier.TRUSTED,
-            optedInAtRound = null
+            optedInAtRound = null,
+            assetType = AssetType.ASA
         )
     }
 }

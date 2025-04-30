@@ -60,8 +60,8 @@ class CollectibleListAdapter(
         }
     }
 
-    private val ownedNFTClickItemListener = NFTItemClickListener { nftId, nftOwnerId ->
-        listener.onOwnedNFTItemClick(nftId, nftOwnerId)
+    private val ownedNFTClickItemListener = NFTItemClickListener { nftAssetId, tokenId ->
+        listener.onOwnedNFTItemClick(nftAssetId, tokenId)
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -125,7 +125,7 @@ class CollectibleListAdapter(
     }
 
     interface CollectibleListAdapterListener {
-        fun onOwnedNFTItemClick(collectibleAssetId: Long, publicKey: String)
+        fun onOwnedNFTItemClick(collectibleAssetId: Long, tokenId: String)
         fun onReceiveCollectibleItemClick()
         fun onSearchQueryUpdated(query: String)
         fun onManageCollectiblesClick()

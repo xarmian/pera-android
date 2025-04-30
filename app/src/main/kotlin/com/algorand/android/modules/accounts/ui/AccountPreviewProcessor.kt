@@ -27,10 +27,8 @@ import com.algorand.android.modules.accounts.domain.model.AccountPreview
 import com.algorand.android.modules.accounts.domain.model.BaseAccountListItem
 import com.algorand.android.modules.accounts.domain.model.BasePortfolioValueItem
 import com.algorand.android.modules.accountsorting.ui.domain.usecase.GetSortedAccountsByPreference
-import com.algorand.android.modules.currency.domain.usecase.GetPrimaryCurrencySymbol
 import com.algorand.android.modules.currency.domain.usecase.GetPrimaryCurrencySymbolOrName
 import com.algorand.android.modules.currency.domain.usecase.GetSecondaryCurrencySymbol
-import com.algorand.android.modules.currency.domain.usecase.IsPrimaryCurrencyAlgo
 import com.algorand.android.modules.notification.domain.usecase.NotificationStatusUseCase
 import com.algorand.android.modules.swap.reddot.domain.usecase.GetSwapFeatureRedDotVisibilityUseCase
 import com.algorand.android.modules.tutorialdialog.data.model.Tutorial
@@ -39,11 +37,13 @@ import com.algorand.android.utils.formatAsCurrency
 import com.algorand.wallet.account.custom.domain.usecase.GetAccountBackUpStatus
 import com.algorand.wallet.account.custom.domain.usecase.GetNotBackedUpAccounts
 import com.algorand.wallet.account.detail.domain.model.AccountType
+import com.algorand.wallet.account.info.domain.model.AccountInformation
 import com.algorand.wallet.account.info.domain.usecase.IsThereAnyCachedErrorAccount
 import com.algorand.wallet.account.info.domain.usecase.IsThereAnyCachedSuccessAccount
 import com.algorand.wallet.remoteconfig.domain.usecase.IMMERSVE_BUTTON_TOGGLE
 import com.algorand.wallet.remoteconfig.domain.usecase.IsFeatureToggleEnabled
 import com.algorand.wallet.remoteconfig.domain.usecase.STAKING_BUTTON_TOGGLE
+import com.algorand.wallet.account.detail.domain.usecase.GetAccountDetail
 import java.math.BigDecimal
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -60,9 +60,7 @@ class AccountPreviewProcessor @Inject constructor(
     private val getPrimaryCurrencySymbolOrName: GetPrimaryCurrencySymbolOrName,
     private val getSecondaryCurrencySymbol: GetSecondaryCurrencySymbol,
     private val notificationStatusUseCase: NotificationStatusUseCase,
-    private val getPrimaryCurrencySymbol: GetPrimaryCurrencySymbol,
     private val accountPreviewMapper: AccountPreviewMapper,
-    private val isPrimaryCurrencyAlgo: IsPrimaryCurrencyAlgo,
     private val portfolioValueItemMapper: PortfolioValueItemMapper,
     private val getAccountIconDrawablePreview: GetAccountIconDrawablePreview,
     private val accountItemConfigMapper: AccountItemConfigurationMapper,
@@ -71,8 +69,10 @@ class AccountPreviewProcessor @Inject constructor(
     private val getSortedAccountsByPreference: GetSortedAccountsByPreference,
     private val getAccountBackUpStatus: GetAccountBackUpStatus,
     private val isFeatureToggleEnabledUseCase: IsFeatureToggleEnabled,
+    private val getAccountDetail: GetAccountDetail
 ) {
     suspend fun prepareAccountPreview(
+        accountInfoMap: Map<String, AccountInformation?>,
         banner: BaseBanner?,
         isTestnetBadgeVisible: Boolean,
         tutorial: Tutorial?,
@@ -83,17 +83,17 @@ class AccountPreviewProcessor @Inject constructor(
             var primaryAccountValue = BigDecimal.ZERO
             var secondaryAccountValue = BigDecimal.ZERO
 
-            val baseAccountListItems = getBaseAccountListItems(onAccountValueCalculated = {
+            val baseAccountListItems = getBaseAccountListItems(accountInfoMap) {
                 primaryAccountValue += it.primaryAccountValue
                 secondaryAccountValue += it.secondaryAccountValue
-            }).apply {
+            }.apply {
                 val bannerItem = getBannerItemOrNull(baseBanner = banner)
-                insertQuickActionsItem(this)
                 getBackupBannerOrNull()?.also { backupBanner ->
                     add(BANNER_ITEM_INDEX, backupBanner)
                 }
                 if (bannerItem != null) add(BANNER_ITEM_INDEX, bannerItem)
             }
+
             val portfolioValueItem = if (!isThereAnyCachedErrorAccount(excludeNoAuthAccounts = true)) {
                 getPortfolioValueSuccessItem(primaryAccountValue, secondaryAccountValue)
             } else if (isThereAnyCachedSuccessAccount(excludeNoAuthAccounts = true)) {
@@ -189,69 +189,84 @@ class AccountPreviewProcessor @Inject constructor(
 
     @Suppress("LongMethod")
     private suspend fun getBaseAccountListItems(
+        accountInfoMap: Map<String, AccountInformation?>,
         onAccountValueCalculated: (AccountTotalValue) -> Unit
     ): MutableList<BaseAccountListItem> {
-        val isPrimaryCurrencyAlgo = isPrimaryCurrencyAlgo()
-        val isSecondaryCurrencyAlgo = !isPrimaryCurrencyAlgo
         val sortedAccountListItems = getSortedAccountsByPreference(
             onLoadedAccountConfiguration = {
-                val accountBalance = getAccountTotalValue(address, true).also { accountValue ->
-                    if (accountType != AccountType.NoAuth) {
+                val accountInformation = accountInfoMap[this.address]
+                if (accountInformation == null) {
+                    accountItemConfigMapper(
+                        accountAddress = this.address,
+                        accountDisplayName = getAccountDisplayName(this.address),
+                        accountIconDrawablePreview = getAccountIconDrawablePreview(this.address),
+                        accountType = this.accountType,
+                        showWarningIcon = true
+                    )
+                } else {
+                    val accountValue = getAccountTotalValue(accountInformation, true)
+                    if (this.accountType != AccountType.NoAuth) {
                         onAccountValueCalculated.invoke(accountValue)
                     }
+                    val isBackedUp = getAccountBackUpStatus(this.address)
+                    val primaryCurrencySymbol = getPrimaryCurrencySymbolOrName()
+                    val secondaryCurrencySymbol = getSecondaryCurrencySymbol()
+                    val formattedPrimaryAccountValue = accountValue.primaryAccountValue.formatAsCurrency(primaryCurrencySymbol)
+                    val formattedSecondaryAccountValue = accountValue.secondaryAccountValue.formatAsCurrency(secondaryCurrencySymbol)
+
+                    accountItemConfigMapper(
+                        accountAddress = this.address,
+                        accountDisplayName = getAccountDisplayName(this.address),
+                        accountIconDrawablePreview = getAccountIconDrawablePreview(this.address),
+                        accountType = this.accountType,
+                        showWarningIcon = false,
+                        accountPrimaryValueText = formattedPrimaryAccountValue,
+                        accountSecondaryValueText = formattedSecondaryAccountValue,
+                        accountPrimaryValue = accountValue.primaryAccountValue,
+                        accountSecondaryValue = accountValue.secondaryAccountValue,
+                        startSmallIconResource = if (
+                            !isBackedUp &&
+                            accountValue.primaryAccountValue > BigDecimal.ZERO &&
+                            (this.accountType == AccountType.Algo25 || this.accountType == AccountType.HdKey)
+                        ) {
+                            R.drawable.ic_error_negative
+                        } else {
+                            null
+                        }
+                    )
                 }
-                val isAccountBackedUp = getAccountBackUpStatus(address)
-                accountItemConfigMapper(
-                    accountAddress = address,
-                    accountDisplayName = getAccountDisplayName(address),
-                    accountIconDrawablePreview = getAccountIconDrawablePreview(address),
-                    accountType = accountType,
-                    accountPrimaryValueText = accountBalance.primaryAccountValue.formatAsCurrency(
-                        symbol = getPrimaryCurrencySymbol().orEmpty(),
-                        isCompact = true,
-                        isFiat = !isPrimaryCurrencyAlgo
-                    ),
-                    accountSecondaryValueText = accountBalance.secondaryAccountValue.formatAsCurrency(
-                        symbol = getSecondaryCurrencySymbol(),
-                        isCompact = true,
-                        isFiat = !isSecondaryCurrencyAlgo
-                    ),
-                    accountPrimaryValue = accountBalance.primaryAccountValue,
-                    accountSecondaryValue = accountBalance.secondaryAccountValue,
-                    startSmallIconResource = if (!isAccountBackedUp &&
-                        accountBalance.primaryAccountValue > BigDecimal.ZERO) {
-                        R.drawable.ic_error_negative
-                    } else {
-                        null
-                    }
-                )
-            }, onFailedAccountConfiguration = {
+            },
+            onFailedAccountConfiguration = {
                 accountItemConfigMapper(
                     accountAddress = this,
                     accountDisplayName = getAccountDisplayName(this),
                     accountIconDrawablePreview = getAccountIconDrawablePreview(this),
+                    accountType = null,
                     showWarningIcon = true
                 )
             }
         )
-        val baseAccountList = sortedAccountListItems.map { accountListItem ->
-            if (accountListItem.itemConfiguration.showWarning == true) {
-                accountListItemMapper.mapToErrorAccountItem(
-                    accountListItem = accountListItem,
-                    canCopyable = accountListItem.itemConfiguration.accountType != AccountType.NoAuth
-                )
-            } else {
-                accountListItemMapper.mapToAccountItem(
-                    accountListItem = accountListItem,
-                    canCopyable = accountListItem.itemConfiguration.accountType != AccountType.NoAuth
-                )
-            }
-        }
+
+        if (sortedAccountListItems.isEmpty()) return mutableListOf()
+
         return mutableListOf<BaseAccountListItem>().apply {
-            if (baseAccountList.isNotEmpty()) {
-                add(BaseAccountListItem.HeaderItem(R.string.accounts))
-                addAll(baseAccountList)
+            add(BaseAccountListItem.HeaderItem(R.string.accounts))
+            val baseAccountList = sortedAccountListItems.map { accountListItem ->
+                val config = accountListItem.itemConfiguration
+                if (config.showWarning == true) {
+                    accountListItemMapper.mapToErrorAccountItem(
+                        accountListItem = accountListItem,
+                        canCopyable = config.accountType != AccountType.NoAuth
+                    )
+                } else {
+                    accountListItemMapper.mapToAccountItem(
+                        accountListItem = accountListItem,
+                        canCopyable = config.accountType != AccountType.NoAuth
+                    )
+                }
             }
+            addAll(baseAccountList)
+            insertQuickActionsItem(this)
         }
     }
 
@@ -294,19 +309,28 @@ class AccountPreviewProcessor @Inject constructor(
     }
 
     private suspend fun getBackupBannerOrNull(): BaseAccountListItem.BackupBannerItem? {
-        val accounts = getNotBackedUpAccounts()
+        val notBackedUpAddresses = getNotBackedUpAccounts()
 
-        if (accounts.isEmpty()) {
+        if (notBackedUpAddresses.isEmpty()) {
             return null
         }
 
-        val hasAccountWithBalance = accounts.any { address ->
-            val accountBalance = getAccountTotalValue(address, true)
-            accountBalance.primaryAccountValue > BigDecimal.ZERO
+        val standardNotBackedUpAddresses = notBackedUpAddresses.filter { address ->
+            val accountDetail = getAccountDetail(address)
+            accountDetail.accountType == AccountType.Algo25 || accountDetail.accountType == AccountType.HdKey
         }
 
-        return if (hasAccountWithBalance) {
-            BaseAccountListItem.BackupBannerItem(accounts.toList())
+        if (standardNotBackedUpAddresses.isEmpty()) {
+            return null
+        }
+
+        val hasStandardAccountWithBalance = standardNotBackedUpAddresses.any { address ->
+            val accountValue = getAccountTotalValue(address, true)
+            accountValue.primaryAccountValue > BigDecimal.ZERO
+        }
+
+        return if (hasStandardAccountWithBalance) {
+            BaseAccountListItem.BackupBannerItem(notBackedUpAddresses.toList())
         } else {
             null
         }
@@ -315,5 +339,6 @@ class AccountPreviewProcessor @Inject constructor(
     companion object {
         private const val QUICK_ACTIONS_ITEM_INDEX = 0
         private const val BANNER_ITEM_INDEX = 1
+        private const val TAG = "AccountPreviewProcessor"
     }
 }

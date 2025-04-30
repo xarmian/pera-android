@@ -149,44 +149,48 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="@dimen/spacing_large"
-                android:layout_marginTop="@dimen/spacing_xlarge"
                 android:text="@string/send"
-                app:icon="@drawable/ic_send_helper_button_bg_gray_dark"
-                app:layout_constraintEnd_toStartOf="@id/nftCopyButton"
-                app:layout_constraintHorizontal_chainStyle="packed"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/secondaryWarningTextView" />
+                android:visibility="gone"
+                app:icon="@drawable/ic_send_helper_button_bg_gray_dark" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/nftCopyButton"
                 style="@style/IconButton.Transparent.QuickAction"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="@dimen/spacing_large"
+                android:layout_marginHorizontal="@dimen/spacing_xlarge"
                 android:text="@string/copy"
-                app:icon="@drawable/ic_copy_helper_button_bg_secondary"
-                app:layout_constraintEnd_toStartOf="@id/nftSaveButton"
-                app:layout_constraintStart_toEndOf="@id/nftSendButton"
-                app:layout_constraintTop_toTopOf="@id/nftSendButton" />
+                app:icon="@drawable/ic_copy_helper_button_bg_secondary" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/nftSaveButton"
                 style="@style/IconButton.Transparent.QuickAction"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="@dimen/spacing_large"
+                android:layout_marginHorizontal="@dimen/spacing_xlarge"
                 android:text="@string/save"
-                app:icon="@drawable/ic_save_helper_button_bg_secondary"
+                app:icon="@drawable/ic_save_helper_button_bg_secondary" />
+
+            <androidx.constraintlayout.helper.widget.Flow
+                android:id="@+id/nftActionsFlow"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_xlarge"
+                android:orientation="horizontal"
+                app:constraint_referenced_ids="nftSendButton,nftCopyButton,nftSaveButton"
+                app:flow_horizontalBias="0.5"
+                app:flow_horizontalStyle="spread"
+                app:flow_wrapMode="chain"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@id/nftCopyButton"
-                app:layout_constraintTop_toTopOf="@id/nftSendButton" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/secondaryWarningTextView" />
 
             <androidx.constraintlayout.widget.Group
                 android:id="@+id/nftOwnerActionsGroup"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:visibility="gone"
-                app:constraint_referenced_ids="nftSendButton, nftCopyButton, nftSaveButton"
+                app:constraint_referenced_ids="nftCopyButton,nftSaveButton"
                 tools:visibility="visible" />
 
             <com.google.android.material.button.MaterialButton
@@ -198,7 +202,7 @@
                 android:visibility="gone"
                 app:layout_constraintEnd_toEndOf="@id/endGuideLine"
                 app:layout_constraintStart_toStartOf="@id/startGuideLine"
-                app:layout_constraintTop_toBottomOf="@id/nftSendButton"
+                app:layout_constraintTop_toBottomOf="@id/nftActionsFlow"
                 tools:visibility="visible" />
 
             <TextView
@@ -384,10 +388,9 @@
                 android:layout_marginTop="@dimen/spacing_normal"
                 android:drawablePadding="@dimen/spacing_xsmall"
                 android:gravity="center"
-                android:text="@string/pera_explorer"
+                android:text="@string/view_nft_navigator"
                 android:textAppearance="@style/TextAppearance.Body.Sans.Medium"
                 android:textColor="@color/link_primary"
-                app:drawableStartCompat="@drawable/ic_pera_round"
                 app:layout_constrainedWidth="true"
                 app:layout_constraintEnd_toEndOf="@id/endGuideLine"
                 app:layout_constraintHorizontal_bias="1"
@@ -437,7 +440,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:visibility="gone"
-                app:constraint_referenced_ids="nftOwnerAccountTextView, accountOwnedNFTCountTextView, nftOwnerAccountIconImageView"
+                app:constraint_referenced_ids="nftOwnerAccountTextView, nftOwnerAccountIconImageView"
                 tools:visibility="visible" />
 
             <androidx.constraintlayout.widget.Group

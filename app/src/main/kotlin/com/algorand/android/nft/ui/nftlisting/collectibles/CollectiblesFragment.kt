@@ -48,11 +48,12 @@ class CollectiblesFragment : BaseCollectiblesListingFragment(),
         registerBottomNavBarFragmentDelegation(this)
     }
 
-    override fun onOwnedNFTItemClick(collectibleAssetId: Long, publicKey: String) {
+    override fun onOwnedNFTItemClick(collectibleAssetId: Long, tokenId: String) {
         nav(
             CollectiblesFragmentDirections.actionCollectiblesFragmentToCollectibleDetailFragment(
                 collectibleAssetId = collectibleAssetId,
-                publicKey = publicKey
+                tokenId = tokenId,
+                publicKey = null
             )
         )
     }

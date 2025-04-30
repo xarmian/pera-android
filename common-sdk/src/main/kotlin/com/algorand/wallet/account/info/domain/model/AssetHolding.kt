@@ -12,6 +12,7 @@
 
 package com.algorand.wallet.account.info.domain.model
 
+import com.algorand.wallet.asset.domain.model.AssetType
 import java.math.BigInteger
 
 data class AssetHolding(
@@ -21,5 +22,6 @@ data class AssetHolding(
     val isFrozen: Boolean,
     val optedInAtRound: Long?,
     val optedOutAtRound: Long?,
-    val status: AssetStatus
+    val status: AssetStatus,
+    val assetType: AssetType
 )

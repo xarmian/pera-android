@@ -17,6 +17,8 @@ import com.algorand.wallet.account.info.data.database.model.AssetStatusEntity
 import com.algorand.wallet.account.info.data.model.AssetHoldingResponse
 import com.algorand.wallet.account.info.domain.model.AssetHolding
 import com.algorand.wallet.account.info.domain.model.AssetStatus
+import com.algorand.wallet.asset.domain.model.AssetType
+import com.algorand.wallet.foundation.database.model.DbAssetType
 import java.math.BigInteger
 import javax.inject.Inject
 
@@ -30,7 +32,8 @@ internal class AssetHoldingMapperImpl @Inject constructor() : AssetHoldingMapper
             isDeleted = response.isDeleted ?: false,
             optedInAtRound = response.optedInAtRound,
             optedOutAtRound = response.optedOutAtRound,
-            status = AssetStatus.OWNED_BY_ACCOUNT
+            status = AssetStatus.OWNED_BY_ACCOUNT,
+            assetType = AssetType.ASA
         )
     }
 
@@ -42,7 +45,8 @@ internal class AssetHoldingMapperImpl @Inject constructor() : AssetHoldingMapper
             isFrozen = entity.isFrozen,
             optedInAtRound = entity.optedInAtRound,
             optedOutAtRound = entity.optedOutAtRound,
-            status = mapToAssetStatus(entity.assetStatusEntity)
+            status = mapToAssetStatus(entity.assetStatusEntity),
+            assetType = mapToAssetType(entity.assetType)
         )
     }
 
@@ -55,6 +59,13 @@ internal class AssetHoldingMapperImpl @Inject constructor() : AssetHoldingMapper
             AssetStatusEntity.PENDING_FOR_REMOVAL -> AssetStatus.PENDING_FOR_REMOVAL
             AssetStatusEntity.PENDING_FOR_ADDITION -> AssetStatus.PENDING_FOR_ADDITION
             AssetStatusEntity.OWNED_BY_ACCOUNT -> AssetStatus.OWNED_BY_ACCOUNT
+        }
+    }
+
+    private fun mapToAssetType(dbAssetType: DbAssetType): AssetType {
+        return when (dbAssetType) {
+            DbAssetType.ASA -> AssetType.ASA
+            DbAssetType.ARC200 -> AssetType.ARC200
         }
     }
 }

@@ -12,6 +12,7 @@
 
 package com.algorand.android.modules.transactionhistory.data.di
 
+import com.algorand.android.modules.transactionhistory.data.mapper.Arc200TransferMapper
 import com.algorand.android.modules.transactionhistory.data.mapper.PaginatedTransactionsDTOMapper
 import com.algorand.android.modules.transactionhistory.data.mapper.PendingTransactionDTOMapper
 import com.algorand.android.modules.transactionhistory.data.repository.PendingTransactionsRepositoryImpl
@@ -20,6 +21,8 @@ import com.algorand.android.modules.transactionhistory.domain.repository.Pending
 import com.algorand.android.modules.transactionhistory.domain.repository.TransactionHistoryRepository
 import com.algorand.android.network.AlgodApi
 import com.algorand.android.network.IndexerApi
+import com.algorand.android.network.MimirApi
+import com.algorand.wallet.asset.domain.usecase.GetAssetDetail
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -34,9 +37,18 @@ object TransactionHistoryModule {
     @Named(TransactionHistoryRepository.INJECTION_NAME)
     fun provideTransactionHistoryRepository(
         indexerApi: IndexerApi,
-        paginatedTransactionsMapper: PaginatedTransactionsDTOMapper
+        mimirApi: MimirApi,
+        paginatedTransactionsMapper: PaginatedTransactionsDTOMapper,
+        arc200TransferMapper: Arc200TransferMapper,
+        getAssetDetailUseCase: GetAssetDetail
     ): TransactionHistoryRepository {
-        return TransactionHistoryRepositoryImpl(indexerApi, paginatedTransactionsMapper)
+        return TransactionHistoryRepositoryImpl(
+            indexerApi = indexerApi,
+            mimirApi = mimirApi,
+            paginatedTransactionsMapper = paginatedTransactionsMapper,
+            arc200TransferMapper = arc200TransferMapper,
+            getAssetDetailUseCase = getAssetDetailUseCase
+        )
     }
 
     @Provides

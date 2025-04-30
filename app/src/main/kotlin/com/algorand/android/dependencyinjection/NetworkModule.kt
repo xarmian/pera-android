@@ -22,6 +22,7 @@ import com.algorand.android.network.IndexerApi
 import com.algorand.android.network.IndexerInterceptor
 import com.algorand.android.network.MobileAlgorandApi
 import com.algorand.android.network.MobileHeaderInterceptor
+import com.algorand.android.network.MimirApi
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
@@ -302,6 +303,44 @@ object NetworkModule {
             .baseUrl(BuildConfig.ENVOI_MAINNET_BASE_URL)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .client(envoiHttpClient)
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    @Named("mimirRetrofitInterface")
+    internal fun provideMimirRetrofitInterface(
+        @Named("mimirHttpClient") mimirHttpClient: OkHttpClient,
+        gson: Gson
+    ): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl(BuildConfig.MIMIR_MAINNET_API_URL)
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .client(mimirHttpClient)
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    internal fun provideMimirApi(
+        @Named("mimirRetrofitInterface") mimirRetrofitInterface: Retrofit
+    ): MimirApi {
+        return mimirRetrofitInterface.create(MimirApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    @Named("mimirHttpClient")
+    fun provideMimirHttpClient(
+        mobileHeaderInterceptor: MobileHeaderInterceptor,
+        loggingInterceptor: HttpLoggingInterceptor
+    ): OkHttpClient {
+        return OkHttpClient.Builder()
+            .addInterceptor(mobileHeaderInterceptor)
+            .addInterceptor(loggingInterceptor)
+            .connectTimeout(TIMEOUT_CONSTANT, TimeUnit.SECONDS)
+            .readTimeout(TIMEOUT_CONSTANT, TimeUnit.SECONDS)
+            .writeTimeout(TIMEOUT_CONSTANT, TimeUnit.SECONDS)
             .build()
     }
 }

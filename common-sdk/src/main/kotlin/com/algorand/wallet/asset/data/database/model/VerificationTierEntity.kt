@@ -12,7 +12,7 @@
 
 package com.algorand.wallet.asset.data.database.model
 
-internal enum class VerificationTierEntity {
+enum class VerificationTierEntity {
     VERIFIED,
     UNVERIFIED,
     TRUSTED,

@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import android.util.Log
 
 internal class AccountInformationRepositoryImpl @Inject constructor(
     private val indexerApi: AccountInformationApiService,
@@ -52,6 +53,8 @@ internal class AccountInformationRepositoryImpl @Inject constructor(
     private val accountInformationErrorCache: AccountInformationErrorCache,
     private val getLocalAccountsAddresses: GetLocalAccountsAddresses
 ) : AccountInformationRepository {
+
+    private val TAG = AccountInformationRepositoryImpl::class.java.simpleName
 
     override suspend fun fetchAccountInformation(
         address: String,
@@ -94,7 +97,7 @@ internal class AccountInformationRepositoryImpl @Inject constructor(
                         onSuccess = { response ->
                             accountInformationCacheHelper.cacheAccountInformation(address, response)
                         },
-                        onFailed = { _, _ ->
+                        onFailed = { exception, code ->
                             null
                         }
                     )
@@ -112,11 +115,12 @@ internal class AccountInformationRepositoryImpl @Inject constructor(
         return combine(
             accountInformationDao.getAllAsFlow(),
             assetHoldingDao.getAllAsFlow()
-        ) { accountInformationEntities, _ ->
-            accountInformationEntities.associate {
-                val assetEntities = assetHoldingDao.getAssetsByAddress(it.algoAddress)
-                val assetHoldings = assetHoldingMapper(assetEntities)
-                it.algoAddress to accountInformationMapper(it, assetHoldings)
+        ) { accountInformationEntities, assetHoldingEntities ->
+            accountInformationEntities.associate { accountEntity ->
+                val currentAccountAssetEntities = assetHoldingDao.getAssetsByAddress(accountEntity.algoAddress)
+                val assetHoldings = assetHoldingMapper(currentAccountAssetEntities)
+                val mappedAccountInfo = accountInformationMapper(accountEntity, assetHoldings)
+                accountEntity.algoAddress to mappedAccountInfo
             }
         }.distinctUntilChanged()
     }

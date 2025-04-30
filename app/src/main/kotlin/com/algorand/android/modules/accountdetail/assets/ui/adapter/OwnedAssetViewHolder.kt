@@ -18,6 +18,7 @@ import android.view.ViewGroup
 import com.algorand.android.databinding.ItemAccountAssetViewBinding
 import com.algorand.android.models.BaseViewHolder
 import com.algorand.android.modules.accountdetail.assets.ui.model.AccountDetailAssetsItem
+import com.algorand.wallet.asset.domain.model.AssetType
 import kotlin.text.Typography.middleDot
 
 class OwnedAssetViewHolder(
@@ -37,10 +38,15 @@ class OwnedAssetViewHolder(
                 }
                 setTitleText(name.getName(resources))
                 val name = shortName.getName(resources)
-                val descriptionText = if (isAlgo) name else "$name  $middleDot  ${item.id}"
+                val idToDisplay = if (assetType == AssetType.ARC200) {
+                    item.id
+                } else {
+                    item.id
+                }
+                val descriptionText = if (isAlgo) name else "$name  $middleDot  $idToDisplay"
                 setDescriptionText(descriptionText)
                 setPrimaryValueText(formattedAmount)
-                setSecondaryValueText(if (isAmountInDisplayedCurrencyVisible) formattedDisplayedCurrencyValue else null)
+                setSecondaryValueText(formattedDisplayedCurrencyValue.takeIf { isAmountInDisplayedCurrencyVisible })
                 setTitleTextColor(verificationTierConfiguration.textColorResId)
                 setTrailingIconOfTitleText(verificationTierConfiguration.drawableResId)
                 setOnClickListener { listener.onOwnedAssetItemClick(item.id) }

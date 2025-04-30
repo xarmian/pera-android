@@ -16,10 +16,10 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
 import androidx.core.view.doOnLayout
-import com.algorand.android.utils.AssetName
 import com.algorand.android.utils.createPrismUrl
 import com.algorand.android.utils.loadImage
 import kotlinx.parcelize.Parcelize
+import com.algorand.android.utils.AssetName
 
 @Parcelize
 class CollectibleDrawableProvider(

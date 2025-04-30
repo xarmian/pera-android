@@ -43,7 +43,9 @@ class CollectibleListingItemMapper @Inject constructor(
         isClearFilterButtonVisible: Boolean,
         itemList: List<BaseCollectibleListItem>,
         isAccountFabVisible: Boolean,
-        isAddCollectibleFloatingActionButtonVisible: Boolean
+        isAddCollectibleFloatingActionButtonVisible: Boolean,
+        nextToken: String?,
+        totalCount: Long?
     ): CollectiblesListingPreview {
         return CollectiblesListingPreview(
             isLoadingVisible = isLoadingVisible,
@@ -54,7 +56,9 @@ class CollectibleListingItemMapper @Inject constructor(
             isClearFilterButtonVisible = isClearFilterButtonVisible,
             filteredCollectibleCount = filteredCollectibleCount,
             isAccountFabVisible = isAccountFabVisible,
-            isAddCollectibleFloatingActionButtonVisible = isAddCollectibleFloatingActionButtonVisible
+            isAddCollectibleFloatingActionButtonVisible = isAddCollectibleFloatingActionButtonVisible,
+            nextToken = nextToken,
+            totalCount = totalCount
         )
     }
 
@@ -68,6 +72,7 @@ class CollectibleListingItemMapper @Inject constructor(
     ): BaseCollectibleListItem.BaseCollectibleItem.BaseOwnedNFTItem.SimpleNFTItem {
         return BaseCollectibleListItem.BaseCollectibleItem.BaseOwnedNFTItem.SimpleNFTItem(
             collectibleId = collectible.id,
+            tokenId = null,
             collectibleName = AssetName.create(collectible.collectibleName),
             collectionName = collectible.collectionName,
             optedInAccountAddress = optedInAccountAddress,

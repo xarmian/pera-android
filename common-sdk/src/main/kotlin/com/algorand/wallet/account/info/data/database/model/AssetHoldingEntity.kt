@@ -17,12 +17,13 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.math.BigInteger
+import com.algorand.wallet.foundation.database.model.DbAssetType
 
 @Entity(
     tableName = "asset_holding_table",
     indices = [Index(value = ["algo_address", "asset_id"], unique = true)]
 )
-internal data class AssetHoldingEntity(
+data class AssetHoldingEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
 
@@ -48,5 +49,8 @@ internal data class AssetHoldingEntity(
     val optedOutAtRound: Long?,
 
     @ColumnInfo(name = "asset_status")
-    val assetStatusEntity: AssetStatusEntity
+    val assetStatusEntity: AssetStatusEntity,
+
+    @ColumnInfo(name = "asset_type", defaultValue = "ASA")
+    val assetType: DbAssetType
 )

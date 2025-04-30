@@ -72,7 +72,6 @@ class AssetDrawableProviderDecider @Inject constructor(
     fun getAssetDrawableProvider(searchedAsset: BaseSearchedAsset): BaseAssetDrawableProvider {
         return when {
             searchedAsset.assetId == AssetConstants.ALGO_ID -> {
-                // This is unnecessary check but to keep consistency, I added this check, too
                 AlgoDrawableProvider()
             }
             searchedAsset is BaseSearchedAsset.SearchedAsset -> {
@@ -95,23 +94,23 @@ class AssetDrawableProviderDecider @Inject constructor(
     }
 
     fun getAssetDrawableProvider(asset: Asset): BaseAssetDrawableProvider {
-        val assetName = asset.assetInfo?.name?.fullName
+        val assetNameString = asset.assetInfo?.name?.fullName
         return when {
             asset.id == AssetConstants.ALGO_ID -> AlgoDrawableProvider()
             asset is com.algorand.wallet.asset.domain.model.AssetDetail -> {
                 AssetDrawableProvider(
-                    assetName = AssetName.create(assetName),
+                    assetName = AssetName.create(assetNameString),
                     logoUri = asset.logoUri
                 )
             }
             asset is CollectibleDetail -> {
                 CollectibleDrawableProvider(
-                    assetName = AssetName.create(assetName),
+                    assetName = AssetName.create(assetNameString),
                     logoUri = asset.collectibleInfo.primaryImageUrl
                 )
             }
             else -> AssetDrawableProvider(
-                assetName = AssetName.create(assetName),
+                assetName = AssetName.create(assetNameString),
                 logoUri = asset.logoUri
             )
         }

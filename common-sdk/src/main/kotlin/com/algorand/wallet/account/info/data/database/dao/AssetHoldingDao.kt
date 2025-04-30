@@ -19,10 +19,11 @@ import androidx.room.Query
 import androidx.room.Transaction
 import com.algorand.wallet.account.info.data.database.model.AssetHoldingEntity
 import com.algorand.wallet.account.info.data.database.model.AssetStatusEntity
+import com.algorand.wallet.foundation.database.model.DbAssetType
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-internal interface AssetHoldingDao {
+interface AssetHoldingDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entity: AssetHoldingEntity)
@@ -66,9 +67,32 @@ internal interface AssetHoldingDao {
     suspend fun deleteAssetsNotInList(algoAddress: String, assetIds: List<Long>)
 
     @Transaction
-    suspend fun updateAssetHoldings(algoAddress: String, assetHoldingEntities: List<AssetHoldingEntity>) {
-        deleteByAddress(algoAddress)
-        insertAll(assetHoldingEntities)
+    suspend fun updateAssetHoldings(algoAddress: String, incomingAsaEntities: List<AssetHoldingEntity>) {
+        // 1. Get all current holdings for the address
+        val currentHoldings = getAssetsByAddress(algoAddress)
+
+        // 2. Separate current holdings by type (ASA vs Others)
+        val currentAsaHoldings = currentHoldings.filter { it.assetType == DbAssetType.ASA }
+        // Non-ASA holdings are implicitly kept as we won't delete them
+
+        // 3. Get IDs of incoming ASAs and current ASAs
+        val incomingAsaIds = incomingAsaEntities.map { it.assetId }.toSet()
+        val currentAsaIds = currentAsaHoldings.map { it.assetId }.toSet()
+
+        // 4. Determine which existing ASAs to delete
+        val asaIdsToDelete = currentAsaIds - incomingAsaIds
+
+        // 5. Delete the specific ASAs that are no longer held
+        asaIdsToDelete.forEach { assetId ->
+            delete(algoAddress, assetId)
+        }
+
+        // 6. Insert/Update the incoming ASAs (REPLACE handles conflicts/updates)
+        // Ensure we only insert entities with the ASA type, just in case the input list contains others
+        val filteredIncomingAsas = incomingAsaEntities.filter { it.assetType == DbAssetType.ASA }
+        if (filteredIncomingAsas.isNotEmpty()) {
+           insertAll(filteredIncomingAsas)
+        }
     }
 
     @Query("SELECT * FROM asset_holding_table")

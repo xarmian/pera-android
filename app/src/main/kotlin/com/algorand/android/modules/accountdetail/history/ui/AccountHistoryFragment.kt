@@ -130,7 +130,7 @@ class AccountHistoryFragment : BaseFragment(R.layout.fragment_account_history) {
     override fun onResume() {
         super.onResume()
         initSavedStateListener()
-        accountHistoryViewModel.activatePendingTransaction()
+        // accountHistoryViewModel.activatePendingTransaction()
     }
 
     override fun onPause() {

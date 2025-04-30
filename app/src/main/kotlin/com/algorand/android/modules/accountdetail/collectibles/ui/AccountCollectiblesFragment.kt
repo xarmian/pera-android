@@ -16,16 +16,20 @@ package com.algorand.android.modules.accountdetail.collectibles.ui
 import android.content.Context
 import android.os.Bundle
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Lifecycle
 import androidx.recyclerview.widget.RecyclerView
 import com.algorand.android.models.FragmentConfiguration
 import com.algorand.android.nft.domain.usecase.AccountCollectiblesListingPreviewUseCase.Companion.ACCOUNT_COLLECTIBLES_LIST_CONFIGURATION_HEADER_ITEM_INDEX
 import com.algorand.android.nft.ui.nftlisting.BaseCollectiblesListingFragment
 import com.algorand.android.utils.addItemVisibilityChangeListener
-import com.algorand.android.utils.extensions.collectLatestOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
+import androidx.recyclerview.widget.LinearLayoutManager
+import android.view.View
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import androidx.core.view.isVisible
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
+import com.algorand.android.models.ui.nft.NftDomainItem
 
 @AndroidEntryPoint
 class AccountCollectiblesFragment : BaseCollectiblesListingFragment() {
@@ -36,8 +40,47 @@ class AccountCollectiblesFragment : BaseCollectiblesListingFragment() {
 
     private var listener: Listener? = null
 
-    override fun onOwnedNFTItemClick(collectibleAssetId: Long, publicKey: String) {
-        listener?.onVideoItemClick(collectibleAssetId)
+    // Scroll listener for pagination
+    private val paginationScrollListener = object : RecyclerView.OnScrollListener() {
+        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+            super.onScrolled(recyclerView, dx, dy)
+            if (dy > 0) { // Check if scrolling down
+                val layoutManager = recyclerView.layoutManager as? LinearLayoutManager ?: return
+                val lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition()
+                val totalItemCount = layoutManager.itemCount
+                val currentState = baseCollectibleListingViewModel.collectiblesState.value
+
+                // Load more items when near the end of the list
+                // Threshold: Load when last item is visible (or adjust as needed)
+                if (!currentState.isLoadingMore && currentState.nextToken != null &&
+                    lastVisibleItemPosition == totalItemCount - 1) {
+                    baseCollectibleListingViewModel.loadMoreNfts()
+                }
+            }
+        }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        binding.collectiblesRecyclerView.addOnScrollListener(paginationScrollListener)
+    }
+
+    override fun onStop() {
+        // Remove listener in onStop() where the view and binding are still valid
+        // Check if binding is initialized before accessing (though it should be here)
+        if (view != null) { // Check if view is not null, binding relies on view
+            binding.collectiblesRecyclerView.removeOnScrollListener(paginationScrollListener)
+        }
+        super.onStop()
+    }
+
+    override fun onDestroyView() {
+        // No need to remove listener here anymore
+        super.onDestroyView()
+    }
+
+    override fun onOwnedNFTItemClick(collectibleAssetId: Long, tokenId: String) {
+        listener?.onCollectibleClick(collectibleAssetId, tokenId)
     }
 
     override fun onReceiveCollectibleClick() {
@@ -51,17 +94,29 @@ class AccountCollectiblesFragment : BaseCollectiblesListingFragment() {
     }
 
     override fun initCollectiblesListingPreviewCollector() {
-        viewLifecycleOwner.collectLatestOnLifecycle(
-            baseCollectibleListingViewModel.collectiblesListingPreviewFlow,
-            collectibleListingPreviewCollector
-        )
-        viewLifecycleOwner.collectLatestOnLifecycle(
-            flow = baseCollectibleListingViewModel.collectiblesListingPreviewFlow
-                .map { it?.isAddCollectibleFloatingActionButtonVisible }
-                .distinctUntilChanged(),
-            collection = addCollectibleFloatingActionButtonVisibilityCollector,
-            state = Lifecycle.State.STARTED
-        )
+        // Collect the new state flow
+        viewLifecycleOwner.lifecycleScope.launch {
+            baseCollectibleListingViewModel.collectiblesState.flowWithLifecycle(
+                viewLifecycleOwner.lifecycle,
+                Lifecycle.State.STARTED
+            ).collect { state ->
+                // Use the correct adapter name from the base class
+                collectibleListAdapter.submitList(state.listItems)
+                // Update UI based on state - use binding
+                binding.progressBar.root.isVisible = state.isLoading
+                binding.emptyStateScrollView.isVisible = state.isEmpty
+                // TODO: Add handling for isLoadingMore (e.g., show a footer spinner in adapter)
+                // TODO: Add handling for isError (e.g., show an error message/view)
+
+                // FAB logic - Set visibility directly using binding
+                // Use the isAccountFabVisible from the state.preview for now
+                val isFabVisible = state.preview?.isAccountFabVisible ?: false
+                binding.addCollectibleFloatingActionButton.isVisible = isFabVisible
+                // We might need to call addItemVisibilityChangeListenerToRecyclerView again if the FAB logic
+                // in the base class relied on the old flow structure.
+                // For now, let's just set visibility.
+            }
+        }
     }
 
     override fun addItemVisibilityChangeListenerToRecyclerView(recyclerView: RecyclerView) {
@@ -79,6 +134,11 @@ class AccountCollectiblesFragment : BaseCollectiblesListingFragment() {
     }
 
     interface Listener {
+        fun onSendNFTClick(nftId: Long, nftDomain: NftDomainItem)
+        fun onCollectiblesFilterClick()
+        fun onCollectibleClick(collectibleAssetId: Long, tokenId: String)
+        fun onReceiveNFTsClick()
+        fun onBuySellClick()
         fun onImageItemClick(nftAssetId: Long)
         fun onVideoItemClick(nftAssetId: Long)
         fun onSoundItemClick(nftAssetId: Long)

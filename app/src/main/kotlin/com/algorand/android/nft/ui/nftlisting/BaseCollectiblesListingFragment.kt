@@ -33,7 +33,7 @@ abstract class BaseCollectiblesListingFragment : DaggerBaseFragment(R.layout.fra
 
     abstract val baseCollectibleListingViewModel: BaseCollectibleListingViewModel
 
-    private lateinit var collectibleListAdapter: CollectibleListAdapter
+    protected lateinit var collectibleListAdapter: CollectibleListAdapter
 
     protected val binding by viewBinding(FragmentBaseCollectiblesListingBinding::bind)
 
@@ -48,6 +48,7 @@ abstract class BaseCollectiblesListingFragment : DaggerBaseFragment(R.layout.fra
     abstract fun initCollectiblesListingPreviewCollector()
     abstract fun addItemVisibilityChangeListenerToRecyclerView(recyclerView: RecyclerView)
     abstract fun onAddCollectibleFloatingActionButtonClicked()
+    abstract override fun onOwnedNFTItemClick(collectibleAssetId: Long, tokenId: String)
 
     override fun onResume() {
         super.onResume()

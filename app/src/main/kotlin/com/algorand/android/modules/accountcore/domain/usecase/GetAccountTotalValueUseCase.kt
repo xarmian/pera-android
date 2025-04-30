@@ -52,13 +52,15 @@ internal class GetAccountTotalValueUseCase @Inject constructor(
         accountInformation.assetHoldings.forEach { assetHolding ->
             val assetInformation = getAsset(assetHolding.assetId)
             if (assetInformation != null) {
-                val (primaryParityValue, secondaryParityValue) = getAssetParityValue(
-                    fractionDecimals = assetInformation.getDecimalsOrZero(),
-                    assetAmount = assetHolding.amount,
-                    assetUsdValue = assetInformation.usdValue.orZero()
-                )
-                primaryAccountValue += primaryParityValue.amountAsCurrency
-                secondaryAccountValue += secondaryParityValue.amountAsCurrency
+                if (!assetInformation.isAlgo) {
+                    val (primaryParityValue, secondaryParityValue) = getAssetParityValue(
+                        fractionDecimals = assetInformation.getDecimalsOrZero(),
+                        assetAmount = assetHolding.amount,
+                        assetUsdValue = assetInformation.usdValue.orZero()
+                    )
+                    primaryAccountValue += primaryParityValue.amountAsCurrency
+                    secondaryAccountValue += secondaryParityValue.amountAsCurrency
+                }
                 assetCount++
             }
         }

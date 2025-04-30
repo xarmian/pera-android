@@ -19,20 +19,29 @@ import com.algorand.android.modules.collectibles.detail.base.ui.BaseCollectibleD
 import com.algorand.android.modules.collectibles.detail.base.ui.model.BaseCollectibleMediaItem
 import com.algorand.android.modules.collectibles.detail.ui.CollectibleDetailViewModel.ViewState
 import com.algorand.android.modules.collectibles.detail.ui.model.NFTDetailPreview
-import com.algorand.android.modules.collectibles.detail.ui.usecase.CollectibleDetailPreviewUseCase
+import com.algorand.android.modules.collectibles.detail.ui.mapper.NFTDetailPreviewMapper
 import com.algorand.android.modules.collectibles.download.DownloadFileUseCase
+import com.algorand.android.network.dto.MimirNftItemDto
+import com.algorand.android.network.dto.MimirNftMetadataDto
+import com.algorand.android.repository.NftRepository
 import com.algorand.android.usecase.NetworkSlugUseCase
 import com.algorand.android.utils.getOrThrow
 import com.algorand.wallet.viewmodel.StateDelegate
 import com.algorand.wallet.viewmodel.StateViewModel
+import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import com.algorand.android.models.Result
+import com.algorand.android.utils.fromJson
 
 @HiltViewModel
 class CollectibleDetailViewModel @Inject constructor(
-    private val collectibleDetailPreviewUseCase: CollectibleDetailPreviewUseCase,
+    private val nftRepository: NftRepository,
+    private val nftDetailPreviewMapper: NFTDetailPreviewMapper,
+    private val gson: Gson,
     private val downloadFileUseCase: DownloadFileUseCase,
     networkSlugUseCase: NetworkSlugUseCase,
     savedStateHandle: SavedStateHandle,
@@ -40,11 +49,54 @@ class CollectibleDetailViewModel @Inject constructor(
 ) : BaseCollectibleDetailViewModel(networkSlugUseCase), StateViewModel<ViewState> by stateDelegate {
 
     val nftId = savedStateHandle.getOrThrow<Long>(COLLECTIBLE_ASSET_ID_KEY)
+    val tokenId = savedStateHandle.getOrThrow<String>(TOKEN_ID_KEY)
     val accountAddress = savedStateHandle.getOrThrow<String>(PUBLIC_KEY_KEY)
 
     init {
         stateDelegate.setDefaultState(ViewState.Loading)
-        getCollectibleDetailPreview()
+        fetchNftDetails()
+    }
+
+    private fun fetchNftDetails() {
+        stateDelegate.updateState { ViewState.Loading }
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = nftRepository.getNftDetailFromMimir(nftId, tokenId)
+            withContext(Dispatchers.Main) {
+                when (result) {
+                    is Result.Success -> {
+                        val nftItemDto = result.data
+                        handleFetchSuccess(nftItemDto)
+                    }
+                    is Result.Error -> {
+                        handleFetchError(result.exception)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun handleFetchSuccess(nftItemDto: MimirNftItemDto) {
+        viewModelScope.launch(Dispatchers.Default) {
+            val metadataDto: MimirNftMetadataDto? = try {
+                nftItemDto.metadataJsonString?.let { gson.fromJson<MimirNftMetadataDto>(it) }
+            } catch (e: Exception) {
+                null
+            }
+
+            val preview = nftDetailPreviewMapper.mapToPreview(
+                nftItemDto = nftItemDto,
+                metadataDto = metadataDto,
+                accountPublicKey = accountAddress
+            )
+
+            withContext(Dispatchers.Main) {
+                updateContentState(preview)
+            }
+        }
+    }
+
+    private fun handleFetchError(exception: Throwable) {
+        stateDelegate.updateState { ViewState.Error(exception) }
     }
 
     fun getAssetName(): AssetName? {
@@ -61,10 +113,7 @@ class CollectibleDetailViewModel @Inject constructor(
 
     fun onSendNFTClick() {
         stateDelegate.onState<ViewState.Content> { contentState ->
-            val updatedPreview = collectibleDetailPreviewUseCase.getSendEventPreviewAccordingToNFTType(
-                contentState.preview
-            )
-            updateContentState(updatedPreview)
+            // Placeholder: Logic for sending needs review based on new data model
         }
     }
 
@@ -83,31 +132,23 @@ class CollectibleDetailViewModel @Inject constructor(
         return (stateDelegate.state.value as? ViewState.Content)?.preview
     }
 
-    private fun getCollectibleDetailPreview() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val updatedPreview = collectibleDetailPreviewUseCase.getCollectibleDetailPreview(
-                nftId = nftId,
-                accountAddress = accountAddress
-            )
-            updateContentState(updatedPreview)
-        }
-    }
-
     private fun updateContentState(preview: NFTDetailPreview?) {
         if (preview != null) {
-            stateDelegate.updateState {
-                ViewState.Content(preview)
-            }
+            stateDelegate.updateState { ViewState.Content(preview) }
+        } else {
+            handleFetchError(IllegalStateException("Failed to create NFT detail preview"))
         }
     }
 
     sealed interface ViewState {
         data object Loading : ViewState
         data class Content(val preview: NFTDetailPreview) : ViewState
+        data class Error(val throwable: Throwable) : ViewState
     }
 
     companion object {
         private const val COLLECTIBLE_ASSET_ID_KEY = "collectibleAssetId"
+        private const val TOKEN_ID_KEY = "tokenId"
         private const val PUBLIC_KEY_KEY = "publicKey"
     }
 }

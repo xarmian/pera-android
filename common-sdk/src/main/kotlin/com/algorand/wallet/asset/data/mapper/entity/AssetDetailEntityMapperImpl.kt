@@ -14,6 +14,7 @@ package com.algorand.wallet.asset.data.mapper.entity
 
 import com.algorand.wallet.asset.data.model.AssetResponse
 import com.algorand.wallet.asset.data.database.model.AssetDetailEntity
+import com.algorand.wallet.foundation.database.model.DbAssetType
 import javax.inject.Inject
 
 internal class AssetDetailEntityMapperImpl @Inject constructor(
@@ -45,7 +46,8 @@ internal class AssetDetailEntityMapperImpl @Inject constructor(
                 verificationTier = verificationTierEntityMapper(verificationTier),
                 assetCreatorAddress = assetCreator?.publicKey,
                 assetCreatorId = assetCreator?.id,
-                isVerifiedAssetCreator = assetCreator?.isVerifiedAssetCreator
+                isVerifiedAssetCreator = assetCreator?.isVerifiedAssetCreator,
+                assetType = DbAssetType.ASA
             )
         }
     }
