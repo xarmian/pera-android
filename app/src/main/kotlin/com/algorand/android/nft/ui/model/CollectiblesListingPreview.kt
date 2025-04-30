@@ -21,5 +21,7 @@ data class CollectiblesListingPreview(
     val filteredCollectibleCount: Int,
     val baseCollectibleListItems: List<BaseCollectibleListItem>,
     val isAccountFabVisible: Boolean,
-    val isAddCollectibleFloatingActionButtonVisible: Boolean
+    val isAddCollectibleFloatingActionButtonVisible: Boolean,
+    val nextToken: String? = null,
+    val totalCount: Long? = null
 )

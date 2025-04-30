@@ -59,8 +59,20 @@ class CollectibleDetailFragment : BaseCollectibleDetailFragment() {
 
     private val collectibleDetailPreviewCollector: suspend (CollectibleDetailViewModel.ViewState?) -> Unit = { state ->
         when (state) {
-            is CollectibleDetailViewModel.ViewState.Content -> initCollectibleDetailPreview(state.preview)
-            CollectibleDetailViewModel.ViewState.Loading -> setProgressBarVisibility(true)
+            is CollectibleDetailViewModel.ViewState.Content -> {
+                setProgressBarVisibility(false)
+                initCollectibleDetailPreview(state.preview)
+            }
+            is CollectibleDetailViewModel.ViewState.Loading -> {
+                setProgressBarVisibility(true)
+                // TODO: Clear previous content? Hide content views?
+            }
+            is CollectibleDetailViewModel.ViewState.Error -> {
+                setProgressBarVisibility(false)
+                // TODO: Show error message / retry button?
+                val exception = state.throwable
+                showGlobalError(exception.message ?: getString(R.string.an_error_occured))
+            }
             null -> Unit
         }
     }
@@ -85,7 +97,7 @@ class CollectibleDetailFragment : BaseCollectibleDetailFragment() {
             setNFTCreatorAccount(creatorAccountAddressOfNFT)
             setNFTTraits(traitListOfNFT)
             setShowOnPeraExplorer(peraExplorerUrl)
-            setNFTTotalSupply(formattedTotalSupply)
+            // setNFTTotalSupply(formattedTotalSupply)
             globalErrorEvent?.consume()?.run { if (this.isNotBlank()) showGlobalError(this) }
             nftSendEvent?.consume()?.run {
                 navToSendAlgoNavigation(optedInAccountDisplayName.accountAddress, nftId, isPureNFT)
@@ -124,10 +136,10 @@ class CollectibleDetailFragment : BaseCollectibleDetailFragment() {
     }
 
     private fun setOptOutButton(isOptOutButtonVisible: Boolean) {
-        with(binding.nftOptOutButton) {
+        /* with(binding.nftOptOutButton) {
             setOnClickListener { navToOptOutNavigation() }
             isVisible = isOptOutButtonVisible
-        }
+        } */
     }
 
     private fun navToOptOutNavigation() {

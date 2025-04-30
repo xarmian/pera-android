@@ -191,9 +191,9 @@ class AssetAboutPreviewUseCase @Inject constructor(
                     add(this)
                 }
 
-                addVerificationTierDescriptionIfNeed(this@apply, verificationTier)
+                // addVerificationTierDescriptionIfNeed(this@apply, verificationTier)
 
-                addReportItemIfNeed(this@apply, verificationTier, assetDetail.id, shortName)
+                // addReportItemIfNeed(this@apply, verificationTier, assetDetail.id, shortName)
             }
         }
         return assetAboutPreviewMapper.mapToAssetAboutPreview(assetAboutListItems = assetAboutList)

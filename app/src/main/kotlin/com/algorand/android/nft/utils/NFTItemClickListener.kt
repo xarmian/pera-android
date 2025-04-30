@@ -13,5 +13,5 @@
 package com.algorand.android.nft.utils
 
 fun interface NFTItemClickListener {
-    fun onNFTClick(nftId: Long, nftOwnerId: String)
+    fun onNFTItemClick(nftAssetId: Long, tokenId: String)
 }

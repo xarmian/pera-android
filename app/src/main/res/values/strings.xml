@@ -536,6 +536,7 @@
 
     <string name="transaction_details">Transaction Details</string>
     <string name="show_pera_explorer">Show Voi Explorer</string>
+    <string name="view_nft_navigator">View on NFT Navigator</string>
     <string name="remainder_close_to">Remainder\nClose To</string>
 
     <string name="portfolio_value">Portfolio Value</string>

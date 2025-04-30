@@ -15,6 +15,7 @@ package com.algorand.android.network
 import com.algorand.android.network.dto.Arc200BalanceResponse
 import com.algorand.android.network.dto.Arc200TokenDetailResponse
 import com.algorand.android.network.dto.Arc200ApiTransfersResponse
+import com.algorand.android.network.dto.MimirNftListResponse
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -39,4 +40,18 @@ interface MimirApi {
         @Query("contractId") contractId: Long,
         @Query("user") userAddress: String
     ): Response<Arc200ApiTransfersResponse>
+
+    @GET("nft-indexer/v1/tokens")
+    suspend fun getAccountNfts(
+        @Query("owner") ownerAddress: String,
+        @Query("limit") limit: Int?,
+        @Query("next-token") nextToken: String?
+    ): Response<MimirNftListResponse>
+
+    @GET("nft-indexer/v1/tokens")
+    suspend fun getTokens(
+        @Query("contractId") contractId: Long,
+        @Query("tokenId") tokenId: String,
+        @Query("limit") limit: Int = 1 // Ensure we only get one result
+    ): Response<MimirNftListResponse> // Reuse existing DTO as structure matches
 }

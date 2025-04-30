@@ -32,8 +32,12 @@ open class OwnedNFTGridViewHolder(
 ) : BaseViewHolder<BaseCollectibleListItem>(binding.root) {
 
     override fun bind(item: BaseCollectibleListItem) {
-        if (item !is BaseCollectibleListItem.BaseCollectibleItem) return
-        binding.root.setOnClickListener { listener?.onNFTClick(item.collectibleId, item.optedInAccountAddress) }
+        if (item !is BaseCollectibleListItem.BaseCollectibleItem.BaseOwnedNFTItem.SimpleNFTItem) return
+        binding.root.setOnClickListener {
+            item.tokenId?.let { nnTokenId ->
+                listener?.onNFTItemClick(item.collectibleId, nnTokenId)
+            }
+        }
         initCollectionName(item.collectionName)
         initNFTName(item.collectibleName)
         initNFTAmount(item.isAmountVisible, item.formattedCollectibleAmount)
@@ -66,7 +70,7 @@ open class OwnedNFTGridViewHolder(
         }
     }
 
-    private fun loadNFTDrawable(item: BaseCollectibleListItem.BaseCollectibleItem) {
+    private fun loadNFTDrawable(item: BaseCollectibleListItem.BaseCollectibleItem.BaseOwnedNFTItem.SimpleNFTItem) {
         binding.collectibleImageView.run {
             setOpacity(item.shouldDecreaseOpacity)
             item.baseAssetDrawableProvider.provideAssetDrawable(

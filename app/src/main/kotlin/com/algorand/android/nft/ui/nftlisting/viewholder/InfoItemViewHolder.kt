@@ -36,7 +36,8 @@ class InfoItemViewHolder(
             )
             setPrimaryButtonClickListener { infoItemListener.primaryButtonOnClickListener() }
             setSecondaryButtonClickListener { infoItemListener.secondaryButtonClickListener() }
-            setSecondaryButtonVisibility(item.isAddButtonVisible)
+            // setSecondaryButtonVisibility(item.isAddButtonVisible)
+            setSecondaryButtonVisibility(false)
         }
     }
 

@@ -33,7 +33,7 @@ class OwnedNFTLinearVerticalViewHolder(
 ) : BaseViewHolder<BaseCollectibleListItem>(binding.root) {
 
     override fun bind(item: BaseCollectibleListItem) {
-        if (item !is BaseCollectibleListItem.BaseCollectibleItem) return
+        if (item !is BaseCollectibleListItem.BaseCollectibleItem.BaseOwnedNFTItem.SimpleNFTItem) return
         with(item) {
             with(binding) {
                 nftStartIconImageView.apply {
@@ -47,7 +47,11 @@ class OwnedNFTLinearVerticalViewHolder(
                 setNftCollectionNameText(collectionName)
                 setNftAmountText(item.formattedCollectibleAmount, isAmountVisible)
                 setNftNameText(collectibleName?.getName(root.resources))
-                root.setOnClickListener { listener.onNFTClick(item.collectibleId, optedInAccountAddress) }
+                root.setOnClickListener {
+                    item.tokenId?.let { nnTokenId ->
+                        listener.onNFTItemClick(item.collectibleId, nnTokenId)
+                    }
+                }
             }
         }
     }

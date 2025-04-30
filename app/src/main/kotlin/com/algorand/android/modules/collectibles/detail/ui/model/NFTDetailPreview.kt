@@ -29,6 +29,7 @@ data class NFTDetailPreview(
     val nftDescription: String?,
     val creatorAccountAddressOfNFT: AccountDisplayName,
     val nftId: Long,
+    val tokenId: String?,
     val formattedTotalSupply: String,
     val peraExplorerUrl: String,
     val isPureNFT: Boolean,

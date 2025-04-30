@@ -30,35 +30,43 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import com.algorand.wallet.account.core.domain.usecase.GetAccountDetailFlow
+import com.algorand.wallet.account.core.domain.usecase.GetAccountDetailFlowUseCase
+import dagger.Binds
 
 @Module
 @InstallIn(SingletonComponent::class)
-internal object AccountDetailModule {
+internal abstract class AccountDetailModule {
 
-    @Provides
-    fun provideGetAccountType(useCase: GetAccountTypeUseCase): GetAccountType = useCase
+    @Binds
+    abstract fun bindGetAccountDetailFlow(impl: GetAccountDetailFlowUseCase): GetAccountDetailFlow
 
-    @Provides
-    fun provideGetAccountState(useCase: GetAccountStateUseCase): GetAccountState = useCase
+    companion object {
+        @Provides
+        fun provideGetAccountType(useCase: GetAccountTypeUseCase): GetAccountType = useCase
 
-    @Provides
-    fun provideGetAccountRegistrationType(
-        useCase: GetAccountRegistrationTypeUseCase
-    ): GetAccountRegistrationType = useCase
+        @Provides
+        fun provideGetAccountState(useCase: GetAccountStateUseCase): GetAccountState = useCase
 
-    @Provides
-    fun provideGetAccountsDetails(useCase: GetAccountsDetailsUseCase): GetAccountsDetails = useCase
+        @Provides
+        fun provideGetAccountRegistrationType(
+            useCase: GetAccountRegistrationTypeUseCase
+        ): GetAccountRegistrationType = useCase
 
-    @Provides
-    fun provideGetAccountDetail(useCase: GetAccountDetailUseCase): GetAccountDetail = useCase
+        @Provides
+        fun provideGetAccountsDetails(useCase: GetAccountsDetailsUseCase): GetAccountsDetails = useCase
 
-    @Provides
-    fun provideGetRekeyedAccountCount(
-        useCase: GetLocalRekeyedAccountCountUseCase
-    ): GetLocalRekeyedAccountCount = useCase
+        @Provides
+        fun provideGetAccountDetail(useCase: GetAccountDetailUseCase): GetAccountDetail = useCase
 
-    @Provides
-    fun provideIsAccountRekeyedToAnotherAccount(
-        useCase: IsAccountRekeyedToAnotherAccountUseCase
-    ): IsAccountRekeyedToAnotherAccount = useCase
+        @Provides
+        fun provideGetRekeyedAccountCount(
+            useCase: GetLocalRekeyedAccountCountUseCase
+        ): GetLocalRekeyedAccountCount = useCase
+
+        @Provides
+        fun provideIsAccountRekeyedToAnotherAccount(
+            useCase: IsAccountRekeyedToAnotherAccountUseCase
+        ): IsAccountRekeyedToAnotherAccount = useCase
+    }
 }

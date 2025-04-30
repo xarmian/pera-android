@@ -145,7 +145,7 @@ open class BaseCollectiblesListingPreviewUseCase(
         return collectibleListingItemMapper.mapToTitleTextItem()
     }
 
-    protected fun createSearchViewItem(
+    fun createSearchViewItem(
         @StringRes searchViewHintResId: Int = R.string.search_nfts,
         query: String,
         nftListingType: NFTListingViewType?
@@ -158,7 +158,7 @@ open class BaseCollectiblesListingPreviewUseCase(
         )
     }
 
-    protected fun createInfoViewItem(
+    fun createInfoViewItem(
         displayedCollectibleCount: Int,
         isAddButtonVisible: Boolean
     ): BaseCollectibleListItem.InfoViewItem {

@@ -27,6 +27,7 @@
         android:layout_weight="1"
         android:hint="@string/search_nfts"
         android:inputType="text"
+        android:visibility="invisible"
         app:endIconTintColor="@color/secondary_icon_tint_color"
         app:startIconTintColor="@color/search_bar_view_icon_color" />
 

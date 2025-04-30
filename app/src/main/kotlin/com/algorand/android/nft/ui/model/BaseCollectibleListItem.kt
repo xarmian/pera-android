@@ -109,6 +109,7 @@ sealed class BaseCollectibleListItem : RecyclerListItem, CollectibleSortableItem
 
             data class SimpleNFTItem(
                 override val collectibleId: Long,
+                val tokenId: String?,
                 override val collectibleName: AssetName?,
                 override val collectionName: String?,
                 override val optedInAccountAddress: String,

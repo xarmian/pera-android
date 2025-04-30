@@ -12,11 +12,8 @@
 
 package com.algorand.android.nft.domain.usecase
 
-import com.algorand.android.models.BaseAccountAssetData
-import com.algorand.android.modules.accountcore.domain.usecase.GetAccountCollectibleDataFlow
 import com.algorand.android.modules.collectibles.filter.domain.usecase.ClearCollectibleFiltersPreferencesUseCase
 import com.algorand.android.modules.collectibles.filter.domain.usecase.ShouldDisplayOptedInNFTPreferenceUseCase
-import com.algorand.android.modules.collectibles.listingviewtype.domain.model.NFTListingViewType
 import com.algorand.android.modules.collectibles.listingviewtype.domain.usecase.AddOnListingViewTypeChangeListenerUseCase
 import com.algorand.android.modules.collectibles.listingviewtype.domain.usecase.GetNFTListingViewTypePreferenceUseCase
 import com.algorand.android.modules.collectibles.listingviewtype.domain.usecase.RemoveOnListingViewTypeChangeListenerUseCase
@@ -34,6 +31,19 @@ import com.algorand.wallet.account.info.domain.usecase.IsAssetOwnedByAccount
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
+import com.algorand.android.repository.NftRepository
+import com.algorand.android.mapper.MimirNftItemMapper
+import com.algorand.android.models.Result
+import com.algorand.android.nft.mapper.NftDomainToListItemMapper
+import com.algorand.android.models.ui.nft.NftDomainItem
+
+// Data class to hold NFT fetch result including pagination info
+data class NftFetchResult(
+    val items: List<NftDomainItem>,
+    val nextToken: String?,
+    val totalCount: Long?
+)
 
 @SuppressWarnings("LongParameterList")
 class AccountCollectiblesListingPreviewUseCase @Inject constructor(
@@ -42,7 +52,9 @@ class AccountCollectiblesListingPreviewUseCase @Inject constructor(
     private val collectibleItemSortUseCase: CollectibleItemSortUseCase,
     private val getNFTListingViewTypePreferenceUseCase: GetNFTListingViewTypePreferenceUseCase,
     private val getAccountDetailFlow: GetAccountDetailFlow,
-    private val getAccountCollectibleDataFlow: GetAccountCollectibleDataFlow,
+    private val nftRepository: NftRepository,
+    private val mimirNftItemMapper: MimirNftItemMapper,
+    private val nftDomainToListItemMapper: NftDomainToListItemMapper,
     isAssetOwnedByAccount: IsAssetOwnedByAccount,
     clearCollectibleFiltersPreferencesUseCase: ClearCollectibleFiltersPreferencesUseCase,
     shouldDisplayOptedInNFTPreferenceUseCase: ShouldDisplayOptedInNFTPreferenceUseCase,
@@ -60,21 +72,60 @@ class AccountCollectiblesListingPreviewUseCase @Inject constructor(
 ) {
 
     fun getCollectiblesListingPreviewFlow(searchKeyword: String, publicKey: String): Flow<CollectiblesListingPreview> {
+        val limit = INITIAL_NFT_FETCH_LIMIT
+        // Update Flow type to emit NftFetchResult
+        val nftDataFlow: Flow<NftFetchResult> = flow {
+            when (val result = nftRepository.getAccountNftsFromMimir(publicKey, limit, null)) {
+                is Result.Success -> {
+                    val domainItems = result.data.items.mapNotNull { mimirNftItemMapper.mapToDomainModel(it) }
+                    val fetchResult = NftFetchResult(
+                        items = domainItems.filter { !it.imageUrl.isNullOrBlank() },
+                        nextToken = result.data.nextToken,
+                        totalCount = result.data.totalCount
+                    )
+                    emit(fetchResult)
+                }
+                is Result.Error -> {
+                    // Emit empty result on error, maybe handle error state better later
+                    emit(NftFetchResult(emptyList(), null, null))
+                }
+            }
+        }
+
         return combine(
             getAccountDetailFlow(publicKey),
             failedAssetRepository.getFailedAssetCacheFlow(),
-            getAccountCollectibleDataFlow(publicKey),
-        ) { accountDetail, failedAssets, accountCollectibleData ->
-            val hasAccountAuthority = hasAccountAuthority(accountDetail)
-            val nftListingType = getNFTListingViewTypePreferenceUseCase()
-            val collectibleListData = prepareCollectiblesListItems(
-                searchKeyword = searchKeyword,
-                accountDetail = accountDetail,
-                accountCollectibleData = accountCollectibleData,
-                nftListingType = nftListingType
+            nftDataFlow,
+            // Fetch listing type preference once and combine it
+            flow { emit(getNFTListingViewTypePreferenceUseCase()) }
+        ) { accountDetail, failedAssets, nftFetchResult, nftListingType ->
+            // Now combine produces all needed data directly
+            // Use safe calls or elvis operators for nullable accountDetail
+            val hasAccountAuthority = accountDetail?.canSignTransaction() ?: false
+            val accountType = accountDetail?.accountType ?: AccountType.Algo25
+
+            val mappedItemList = nftFetchResult.items.mapNotNull { domainItem ->
+                nftDomainToListItemMapper.mapToOwnedCollectibleListItem(
+                    domain = domainItem,
+                    accountAddress = publicKey,
+                    accountType = accountType,
+                    nftListingViewType = nftListingType // Use listing type from combine
+                )
+            }
+
+            val filteredList = mappedItemList
+            val displayedCollectibleCount = nftFetchResult.totalCount?.toInt() ?: filteredList.size
+            val filteredOutCollectibleCount = 0 // Keep simplified or adjust if needed
+
+            val collectibleListData = BaseCollectibleListData(
+                baseCollectibleItemList = collectibleItemSortUseCase.sortCollectibles(filteredList),
+                displayedCollectibleCount = displayedCollectibleCount,
+                filteredOutCollectibleCount = filteredOutCollectibleCount
             )
+
             val isAllCollectiblesFilteredOut = isAllCollectiblesFilteredOut(collectibleListData, searchKeyword)
-            val isEmptyStateVisible = accountCollectibleData.isEmpty() || isAllCollectiblesFilteredOut
+            val isEmptyStateVisible = nftFetchResult.items.isEmpty() || isAllCollectiblesFilteredOut
+
             val itemList = mutableListOf<BaseCollectibleListItem>().apply {
                 if (!isEmptyStateVisible) {
                     add(createSearchViewItem(query = searchKeyword, nftListingType = nftListingType))
@@ -88,53 +139,21 @@ class AccountCollectiblesListingPreviewUseCase @Inject constructor(
                 }
                 addAll(collectibleListData.baseCollectibleItemList)
             }
+
             collectibleListingItemMapper.mapToPreviewItem(
-                isLoadingVisible = false,
+                isLoadingVisible = false, // Should be handled by ViewModel state
                 isEmptyStateVisible = isEmptyStateVisible,
-                isErrorVisible = failedAssets.isNotEmpty(),
+                isErrorVisible = failedAssets.isNotEmpty(), // Error state handled by ViewModel
                 itemList = itemList,
                 isReceiveButtonVisible = isEmptyStateVisible && hasAccountAuthority,
                 filteredCollectibleCount = collectibleListData.filteredOutCollectibleCount,
                 isClearFilterButtonVisible = isAllCollectiblesFilteredOut,
                 isAccountFabVisible = hasAccountAuthority,
-                isAddCollectibleFloatingActionButtonVisible = hasAccountAuthority
+                isAddCollectibleFloatingActionButtonVisible = hasAccountAuthority,
+                nextToken = nftFetchResult.nextToken,
+                totalCount = nftFetchResult.totalCount
             )
         }
-    }
-
-    private suspend fun prepareCollectiblesListItems(
-        searchKeyword: String,
-        accountDetail: AccountDetail?,
-        accountCollectibleData: List<BaseAccountAssetData>,
-        nftListingType: NFTListingViewType
-    ): BaseCollectibleListData {
-        var displayedCollectibleCount = 0
-        var filteredOutCollectibleCount = 0
-        val collectibleList = mutableListOf<BaseCollectibleListItem>().apply {
-            accountCollectibleData.filter { nftData ->
-                if (accountDetail?.address == null) return@filter false
-                filterOptedInNFTIfNeed(accountDetail.address, nftData.id).also { isNotFiltered ->
-                    if (!isNotFiltered) filteredOutCollectibleCount++
-                }
-            }.forEach { collectibleData ->
-                filteredOutCollectibleCount++
-                if (filterNFTBaseOnSearch(searchKeyword, collectibleData)) return@forEach
-                val collectibleListItem = createCollectibleListItem(
-                    accountAssetData = collectibleData,
-                    optedInAccountAddress = accountDetail?.address.orEmpty(),
-                    nftListingType = nftListingType,
-                    isOwnedByWatchAccount = accountDetail?.accountType == AccountType.NoAuth
-                ) ?: return@forEach
-                add(collectibleListItem)
-                displayedCollectibleCount++
-            }
-        }
-        val sortedCollectibleItemList = collectibleItemSortUseCase.sortCollectibles(collectibleList)
-        return collectibleListingItemMapper.mapToBaseCollectibleListData(
-            sortedCollectibleItemList,
-            displayedCollectibleCount,
-            filteredOutCollectibleCount
-        )
     }
 
     private fun hasAccountAuthority(accountDetail: AccountDetail?): Boolean {
@@ -143,5 +162,6 @@ class AccountCollectiblesListingPreviewUseCase @Inject constructor(
 
     companion object {
         const val ACCOUNT_COLLECTIBLES_LIST_CONFIGURATION_HEADER_ITEM_INDEX = 0
+        private const val INITIAL_NFT_FETCH_LIMIT = 50
     }
 }

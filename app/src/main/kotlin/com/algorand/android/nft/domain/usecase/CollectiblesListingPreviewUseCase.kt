@@ -105,7 +105,9 @@ class CollectiblesListingPreviewUseCase @Inject constructor(
                     filteredCollectibleCount = collectibleListData.filteredOutCollectibleCount,
                     isClearFilterButtonVisible = isAllCollectiblesFilteredOut,
                     isAccountFabVisible = false,
-                    isAddCollectibleFloatingActionButtonVisible = hasAnyAccountAuthority
+                    isAddCollectibleFloatingActionButtonVisible = hasAnyAccountAuthority,
+                    nextToken = null,
+                    totalCount = null
                 )
             } else {
                 createLoadingPreview(hasAnyAccountAuthority, searchKeyword)
@@ -173,7 +175,9 @@ class CollectiblesListingPreviewUseCase @Inject constructor(
             filteredCollectibleCount = 0,
             isClearFilterButtonVisible = false,
             isAccountFabVisible = false,
-            isAddCollectibleFloatingActionButtonVisible = false
+            isAddCollectibleFloatingActionButtonVisible = false,
+            nextToken = null,
+            totalCount = null
         )
     }
 
