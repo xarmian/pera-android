@@ -12,11 +12,14 @@
 
 package com.algorand.android.modules.viewpassphrase.view
 
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.View
 import android.view.ViewTreeObserver
+import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
 import com.algorand.android.R
 import com.algorand.android.core.DaggerBaseFragment
 import com.algorand.android.databinding.FragmentViewPassphraseBinding
@@ -25,15 +28,18 @@ import com.algorand.android.models.ToolbarConfiguration
 import com.algorand.android.utils.disableScreenCapture
 import com.algorand.android.utils.enableScreenCapture
 import com.algorand.android.utils.extensions.collectLatestOnLifecycle
-import com.algorand.android.utils.extensions.show
 import com.algorand.android.utils.viewbinding.viewBinding
 import com.algorand.wallet.ui.accountdetail.viewpassphrase.ViewPassphraseViewModel
 import com.algorand.wallet.ui.accountdetail.viewpassphrase.ViewPassphraseViewModel.ViewEvent.NavigateBack
 import com.algorand.wallet.ui.accountdetail.viewpassphrase.ViewPassphraseViewModel.ViewEvent.ShowGenericError
+import com.algorand.wallet.ui.accountdetail.viewpassphrase.ViewPassphraseViewModel.ViewState
 import com.algorand.wallet.ui.accountdetail.viewpassphrase.ViewPassphraseViewModel.ViewState.Content
 import com.algorand.wallet.ui.accountdetail.viewpassphrase.ViewPassphraseViewModel.ViewState.Idle
 import com.algorand.wallet.ui.accountdetail.viewpassphrase.ViewPassphraseViewModel.ViewState.Loading
+import com.google.zxing.BarcodeFormat
+import com.journeyapps.barcodescanner.BarcodeEncoder
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class ViewPassphraseFragment : DaggerBaseFragment(R.layout.fragment_view_passphrase) {
@@ -56,7 +62,7 @@ class ViewPassphraseFragment : DaggerBaseFragment(R.layout.fragment_view_passphr
         isScreenCaptureEnablingAllowed = hasFocus
     }
 
-    private val viewStateCollector: suspend (ViewPassphraseViewModel.ViewState) -> Unit = {
+    private val viewStateCollector: suspend (ViewState) -> Unit = {
         updateViewState(it)
     }
 
@@ -71,11 +77,21 @@ class ViewPassphraseFragment : DaggerBaseFragment(R.layout.fragment_view_passphr
         super.onViewCreated(view, savedInstanceState)
         binding.viewPassphraseToolbar.configure(toolbarConfiguration)
         initObserver()
+        initListeners()
     }
 
     private fun initObserver() {
         collectLatestOnLifecycle(viewPassphraseViewModel.viewEvent, viewEventCollector, Lifecycle.State.CREATED)
         collectLatestOnLifecycle(viewPassphraseViewModel.state, viewStateCollector)
+    }
+
+    private fun initListeners() {
+        binding.displayModeRadioGroup.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.mnemonicRadioButton -> showMnemonicView()
+                R.id.qrCodeRadioButton -> showQrCodeView()
+            }
+        }
     }
 
     override fun onResume() {
@@ -94,19 +110,93 @@ class ViewPassphraseFragment : DaggerBaseFragment(R.layout.fragment_view_passphr
         super.onStop()
     }
 
-    private fun updateViewState(state: ViewPassphraseViewModel.ViewState) {
+    private fun updateViewState(state: ViewState) {
+        binding.progressBar.isVisible = state is Loading
         when (state) {
-            Idle -> Unit
-            Loading -> binding.progressBar.show()
-            is Content -> showMnemonics(state.mnemonicWords)
+            is Idle -> { /* Reset UI elements? */ }
+            is Loading -> {
+                // Handled above, hide content views
+                binding.passphraseBoxView.visibility = View.INVISIBLE
+                binding.qrCodeImageView.visibility = View.INVISIBLE
+                binding.displayModeRadioGroup.visibility = View.INVISIBLE
+            }
+            is Content -> {
+                binding.displayModeRadioGroup.visibility = View.VISIBLE
+                binding.passphraseBoxView.setPassphrases(state.mnemonicWords)
+                binding.qrCodeRadioButton.isEnabled = state.isQrExportAvailable
+
+                // Ensure initial view is correct based on availability and current check state
+                if (!state.isQrExportAvailable) {
+                     binding.mnemonicRadioButton.isChecked = true // Force mnemonic if QR unavailable
+                     showMnemonicView() // Show mnemonic view explicitly
+                } else {
+                     // If content loaded, show view based on which radio button is checked
+                     if (binding.mnemonicRadioButton.isChecked) {
+                         showMnemonicView()
+                     } else if (binding.qrCodeRadioButton.isChecked) {
+                         showQrCodeView() // Will trigger URI generation if QR is selected
+                     }
+                }
+            }
         }
     }
 
-    private fun showMnemonics(mnemonicWords: List<String>) {
-        binding.progressBar.hide()
-        binding.passphraseBoxView.apply {
-            setPassphrases(mnemonicWords)
-            show()
+    private fun showMnemonicView() {
+        binding.passphraseBoxView.visibility = View.VISIBLE
+        binding.qrCodeImageView.visibility = View.GONE
+        binding.qrCodeImageView.setImageBitmap(null) // Clear QR if it was generated
+    }
+
+    private fun showQrCodeView() {
+        binding.passphraseBoxView.visibility = View.GONE
+        binding.qrCodeImageView.visibility = View.VISIBLE // Show the placeholder/loading view
+        binding.qrCodeImageView.setImageBitmap(null) // Clear previous QR or error icon
+
+        // Request URI generation from ViewModel
+        val address = requireArguments().getString(ACCOUNT_ADDRESS).orEmpty()
+        if (address.isNotEmpty()) {
+             viewPassphraseViewModel.requestAccountExportUri(address) { result ->
+                 // Ensure UI updates on main thread (lifecycleScope handles this)
+                 viewLifecycleOwner.lifecycleScope.launch {
+                     result.use(
+                         onSuccess = { uriString -> generateAndDisplayQrCode(uriString) },
+                         onFailed = { error, _ ->
+                             // Handle error - Show error icon or message
+                             binding.qrCodeImageView.setImageResource(R.drawable.ic_error) // Placeholder
+                             // Consider logging the actual error
+                             showGlobalError(getString(R.string.qr_code_generation_failed))
+                         }
+                     )
+                 }
+             }
+        } else {
+            // Handle case where address is missing (should not happen)
+            showGlobalError(getString(R.string.an_error_occured))
+            binding.qrCodeImageView.setImageResource(R.drawable.ic_error)
+        }
+    }
+
+    private fun generateAndDisplayQrCode(uriString: String) {
+        val qrSize = resources.getDimensionPixelSize(R.dimen.qr_code_size) // Use defined dimension
+        val qrBitmap = generateQrCodeBitmap(uriString, qrSize) // Using the utility function
+        if (qrBitmap != null) {
+            binding.qrCodeImageView.setImageBitmap(qrBitmap)
+        } else {
+            // Error handled during generation or show here
+            binding.qrCodeImageView.setImageResource(R.drawable.ic_error) // Placeholder error icon
+            showGlobalError(getString(R.string.qr_code_generation_failed))
+        }
+    }
+
+    /**
+     * Generates a QR code bitmap from the given data string.
+     */
+    private fun generateQrCodeBitmap(data: String, size: Int): Bitmap? {
+        return try {
+            val barcodeEncoder = BarcodeEncoder()
+            barcodeEncoder.encodeBitmap(data, BarcodeFormat.QR_CODE, size, size)
+        } catch (e: Exception) {
+            null // Return null on error, the caller handles showing a user message
         }
     }
 

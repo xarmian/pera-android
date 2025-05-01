@@ -1498,4 +1498,9 @@
 
     <!-- Discover URL Viewer -->
     <string name="open_in_browser">Open in Browser</string>
+
+    <!-- View Passphrase / Account Export -->
+    <string name="mnemonic">Mnemonic</string>
+    <string name="account_export_qr_code">Account Export QR Code</string>
+    <string name="qr_code_generation_failed">QR code generation failed.</string>
 </resources>
