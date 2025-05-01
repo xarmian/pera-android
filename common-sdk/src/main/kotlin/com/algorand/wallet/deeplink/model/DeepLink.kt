@@ -111,4 +111,8 @@ sealed interface DeepLink {
     ) : DeepLink
 
     data class Undefined(val url: String) : DeepLink
+
+    // Note: The 'name' parameter is currently parsed but not used in the final handling (Step 7).
+    // Future enhancement: Modify the account recovery flow to accept and utilize this name.
+    data class AccountImportFromPrivateKey(val name: String?, val base64Key: String) : DeepLink
 }

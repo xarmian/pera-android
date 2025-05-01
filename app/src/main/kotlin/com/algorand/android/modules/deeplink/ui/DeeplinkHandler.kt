@@ -12,24 +12,31 @@
 
 package com.algorand.android.modules.deeplink.ui
 
+import android.util.Base64
+import android.util.Log
 import com.algorand.android.models.AssetAction
 import com.algorand.android.models.AssetTransaction
 import com.algorand.android.models.User
 import com.algorand.android.modules.webimport.common.data.model.WebImportQrCode
 import com.algorand.android.utils.toBigIntegerOrZero
 import com.algorand.android.utils.toShortenedAddress
+import com.algorand.wallet.algosdk.transaction.sdk.AlgoAccountSdk
 import com.algorand.wallet.account.info.domain.usecase.IsAssetOptedInByAnyLocalAccount
 import com.algorand.wallet.asset.domain.util.AssetConstants
 import com.algorand.wallet.deeplink.model.DeepLink
 import com.algorand.wallet.deeplink.model.NotificationGroupType
 import com.algorand.wallet.deeplink.parser.CreateDeepLink
+import com.algorand.wallet.encryption.domain.manager.Base64Manager
+import java.net.URLDecoder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class DeeplinkHandler @Inject constructor(
     private val isAssetOptedInByAnyLocalAccount: IsAssetOptedInByAnyLocalAccount,
-    private val createDeepLink: CreateDeepLink
+    private val createDeepLink: CreateDeepLink,
+    private val algoAccountSdk: AlgoAccountSdk,
+    private val base64Manager: Base64Manager
 ) {
 
     private var listener: Listener? = null
@@ -61,6 +68,7 @@ class DeeplinkHandler @Inject constructor(
             is DeepLink.AssetInbox -> handleAssetInboxDeepLink(deepLink)
             is DeepLink.Cards -> handleCardsDeepLink(deepLink)
             is DeepLink.Staking -> handleStakingDeepLink(deepLink)
+            is DeepLink.AccountImportFromPrivateKey -> handleAccountImportFromPrivateKeyDeepLink(deepLink)
         }
         if (!isDeeplinkHandled) listener?.onDeepLinkNotHandled(deepLink)
     }
@@ -159,6 +167,31 @@ class DeeplinkHandler @Inject constructor(
                 accountAddress = deepLink.address,
                 notificationGroupType = deepLink.notificationGroupType
             )
+        }
+    }
+
+    private fun handleAccountImportFromPrivateKeyDeepLink(deepLink: DeepLink.AccountImportFromPrivateKey): Boolean {
+        val privateKeyBytes = try {
+            val urlDecodedKey = try {
+                URLDecoder.decode(deepLink.base64Key, "UTF-8")
+            } catch (e: Exception) {
+                Log.w("DeeplinkHandler", "Failed to URL-decode key: ${deepLink.base64Key}", e)
+                return triggerListener { it.onUndefinedDeepLink(DeepLink.Undefined(deepLink.toString())) ; true }
+            }
+            android.util.Base64.decode(urlDecodedKey, Base64.URL_SAFE or Base64.NO_PADDING)
+        } catch (e: Exception) {
+            Log.w("DeeplinkHandler", "Failed to decode base64 (URL_SAFE) private key: ${deepLink.base64Key}", e)
+            return triggerListener { it.onUndefinedDeepLink(DeepLink.Undefined(deepLink.toString())) ; true }
+        }
+
+        // AlgoAccountSdk handles the conversion and validation internally.
+        val mnemonic = algoAccountSdk.getMnemonicFromAlgo25SecretKey(privateKeyBytes)
+
+        return if (mnemonic != null) {
+            triggerListener { it.onImportAccountDeepLink(mnemonic) }
+        } else {
+            Log.w("DeeplinkHandler", "Failed to convert private key bytes to mnemonic (invalid key?). Key: ${deepLink.base64Key}")
+            triggerListener { it.onUndefinedDeepLink(DeepLink.Undefined(deepLink.toString())) ; true }
         }
     }
 

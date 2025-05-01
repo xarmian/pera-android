@@ -26,6 +26,7 @@ import com.algorand.wallet.deeplink.builder.NotificationDeepLinkBuilder
 import com.algorand.wallet.deeplink.builder.StakingDeepLinkBuilder
 import com.algorand.wallet.deeplink.builder.WalletConnectConnectionDeepLinkBuilder
 import com.algorand.wallet.deeplink.builder.WebImportQrCodeDeepLinkBuilder
+import com.algorand.wallet.deeplink.builder.AccountImportFromPrivateKeyDeepLinkBuilder
 import com.algorand.wallet.deeplink.parser.CreateDeepLink
 import com.algorand.wallet.deeplink.parser.CreateDeepLinkImpl
 import com.algorand.wallet.deeplink.parser.ParseDeepLinkPayload
@@ -39,6 +40,7 @@ import com.algorand.wallet.deeplink.parser.query.NotificationGroupTypeQueryParse
 import com.algorand.wallet.deeplink.parser.query.UrlQueryParser
 import com.algorand.wallet.deeplink.parser.query.WalletConnectUrlQueryParser
 import com.algorand.wallet.deeplink.parser.query.WebImportQrCodeQueryParser
+import com.algorand.wallet.deeplink.parser.query.AccountImportFromPrivateKeyQueryParser
 import com.algorand.wallet.encryption.domain.manager.Base64Manager
 import com.algorand.wallet.foundation.json.JsonSerializer
 import dagger.Module
@@ -51,6 +53,11 @@ import dagger.hilt.components.SingletonComponent
 internal object DeepLinkModule {
 
     @Provides
+    fun provideAccountImportFromPrivateKeyQueryParser(): AccountImportFromPrivateKeyQueryParser {
+        return AccountImportFromPrivateKeyQueryParser()
+    }
+
+    @Provides
     fun providePeraUriParser(impl: PeraUriParserImpl): PeraUriParser = impl
 
     @Provides
@@ -58,7 +65,8 @@ internal object DeepLinkModule {
         peraUriParser: PeraUriParser,
         algoSdkAddress: AlgoSdkAddress,
         jsonSerializer: JsonSerializer,
-        base64Manager: Base64Manager
+        base64Manager: Base64Manager,
+        accountImportFromPrivateKeyQueryParser: AccountImportFromPrivateKeyQueryParser
     ): ParseDeepLinkPayload {
         return ParseDeepLinkPayloadImpl(
             peraUriParser = peraUriParser,
@@ -68,8 +76,14 @@ internal object DeepLinkModule {
             webImportQrCodeQueryParser = WebImportQrCodeQueryParser(jsonSerializer),
             urlQueryParser = UrlQueryParser(base64Manager),
             mnemonicQueryParser = MnemonicQueryParser(jsonSerializer),
-            walletConnectUrlQueryParser = WalletConnectUrlQueryParser()
+            walletConnectUrlQueryParser = WalletConnectUrlQueryParser(),
+            accountImportFromPrivateKeyQueryParser = accountImportFromPrivateKeyQueryParser
         )
+    }
+
+    @Provides
+    fun provideAccountImportFromPrivateKeyDeepLinkBuilder(): AccountImportFromPrivateKeyDeepLinkBuilder {
+        return AccountImportFromPrivateKeyDeepLinkBuilder()
     }
 
     @Provides
@@ -90,7 +104,8 @@ internal object DeepLinkModule {
             assetInboxDeepLinkBuilder = AssetInboxDeepLinkBuilder(),
             keyRegTransactionDeepLinkBuilder = KeyRegTransactionDeepLinkBuilder(),
             cardsDeepLinkBuilder = CardsDeepLinkBuilder(),
-            stakingDeepLinkBuilder = StakingDeepLinkBuilder()
+            stakingDeepLinkBuilder = StakingDeepLinkBuilder(),
+            accountImportFromPrivateKeyDeepLinkBuilder = AccountImportFromPrivateKeyDeepLinkBuilder()
         )
     }
 }
