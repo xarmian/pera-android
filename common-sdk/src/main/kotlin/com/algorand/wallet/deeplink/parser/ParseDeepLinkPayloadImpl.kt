@@ -13,6 +13,7 @@
 package com.algorand.wallet.deeplink.parser
 
 import com.algorand.wallet.deeplink.model.DeepLinkPayload
+import com.algorand.wallet.deeplink.model.DeepLink
 import com.algorand.wallet.deeplink.model.NotificationGroupType
 import com.algorand.wallet.deeplink.model.WebImportQrCode
 import com.algorand.wallet.deeplink.parser.query.DeepLinkQueryParser
@@ -26,6 +27,7 @@ internal class ParseDeepLinkPayloadImpl(
     private val urlQueryParser: DeepLinkQueryParser<String?>,
     private val mnemonicQueryParser: DeepLinkQueryParser<String?>,
     private val walletConnectUrlQueryParser: DeepLinkQueryParser<String?>,
+    private val accountImportFromPrivateKeyQueryParser: DeepLinkQueryParser<DeepLink.AccountImportFromPrivateKey?>
 ) : ParseDeepLinkPayload {
 
     override fun invoke(url: String): DeepLinkPayload {
@@ -53,6 +55,7 @@ internal class ParseDeepLinkPayloadImpl(
             votekd = peraUri.getQueryParam(VOTEKD_QUERY_KEY),
             type = peraUri.getQueryParam(TYPE_QUERY_KEY),
             path = peraUri.getQueryParam(PATH_KEY),
+            accountImportFromPrivateKey = accountImportFromPrivateKeyQueryParser.parseQuery(peraUri),
             host = peraUri.host,
             rawDeepLinkUri = url
         )

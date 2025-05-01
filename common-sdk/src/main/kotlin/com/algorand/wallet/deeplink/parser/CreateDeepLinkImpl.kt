@@ -29,7 +29,8 @@ internal class CreateDeepLinkImpl(
     private val assetInboxDeepLinkBuilder: DeepLinkBuilder,
     private val keyRegTransactionDeepLinkBuilder: DeepLinkBuilder,
     private val cardsDeepLinkBuilder: DeepLinkBuilder,
-    private val stakingDeepLinkBuilder: DeepLinkBuilder
+    private val stakingDeepLinkBuilder: DeepLinkBuilder,
+    private val accountImportFromPrivateKeyDeepLinkBuilder: DeepLinkBuilder
 ) : CreateDeepLink {
 
     override fun invoke(url: String): DeepLink {
@@ -74,6 +75,9 @@ internal class CreateDeepLinkImpl(
             }
             stakingDeepLinkBuilder.doesDeeplinkMeetTheRequirements(payload) -> {
                 stakingDeepLinkBuilder.createDeepLink(payload)
+            }
+            accountImportFromPrivateKeyDeepLinkBuilder.doesDeeplinkMeetTheRequirements(payload) -> {
+                accountImportFromPrivateKeyDeepLinkBuilder.createDeepLink(payload)
             }
             else -> DeepLink.Undefined(url)
         }

@@ -36,6 +36,7 @@ internal data class DeepLinkPayload(
     val type: String? = null,
     val host: String? = null,
     val path: String? = null,
+    val accountImportFromPrivateKey: DeepLink.AccountImportFromPrivateKey? = null,
     val rawDeepLinkUri: String,
 )
 
