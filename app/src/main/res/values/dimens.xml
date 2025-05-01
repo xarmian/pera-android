@@ -201,4 +201,8 @@
     <dimen name="action_button_corner_radius">8dp</dimen>
 
     <dimen name="rekey_confirmation_bottom_padding">240dp</dimen>
+
+    <!-- QR Code -->
+    <dimen name="qr_code_size">250dp</dimen>
+
 </resources>

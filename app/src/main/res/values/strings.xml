@@ -1493,4 +1493,12 @@
     </plurals>
 
     <string name="select_the_rekeyed_accounts_you">Select the rekeyed accounts you want to add to your wallet:</string>
+
+    <!-- Discover URL Viewer -->
+    <string name="open_in_browser">Open in Browser</string>
+
+    <!-- View Passphrase / Account Export -->
+    <string name="mnemonic">Mnemonic</string>
+    <string name="account_export_qr_code">Account Export QR Code</string>
+    <string name="qr_code_generation_failed">QR code generation failed.</string>
 </resources>

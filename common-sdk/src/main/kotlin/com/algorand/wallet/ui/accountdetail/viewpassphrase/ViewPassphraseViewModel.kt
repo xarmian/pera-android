@@ -15,7 +15,11 @@ package com.algorand.wallet.ui.accountdetail.viewpassphrase
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.algorand.wallet.account.local.domain.model.AccountMnemonic
+import com.algorand.wallet.account.local.domain.usecase.GenerateAccountExportUriUseCase
 import com.algorand.wallet.account.local.domain.usecase.GetAccountMnemonic
+import com.algorand.wallet.account.local.domain.usecase.GetLocalAccount
+import com.algorand.wallet.account.local.domain.model.LocalAccount
+import com.algorand.wallet.foundation.PeraResult
 import com.algorand.wallet.ui.accountdetail.viewpassphrase.ViewPassphraseViewModel.ViewEvent
 import com.algorand.wallet.ui.accountdetail.viewpassphrase.ViewPassphraseViewModel.ViewState
 import com.algorand.wallet.ui.accountdetail.viewpassphrase.ViewPassphraseViewModel.ViewState.Idle
@@ -30,6 +34,8 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class ViewPassphraseViewModel @Inject constructor(
     private val getAccountMnemonic: GetAccountMnemonic,
+    private val getLocalAccount: GetLocalAccount,
+    private val generateAccountExportUriUseCase: GenerateAccountExportUriUseCase,
     private val stateDelegate: StateDelegate<ViewState>,
     private val eventDelegate: EventDelegate<ViewEvent>
 ) : ViewModel(), StateViewModel<ViewState> by stateDelegate, EventViewModel<ViewEvent> by eventDelegate {
@@ -42,31 +48,59 @@ class ViewPassphraseViewModel @Inject constructor(
         stateDelegate.onState<Idle> {
             stateDelegate.updateState { ViewState.Loading }
             viewModelScope.launch {
-                getAccountMnemonic(accountAddress).use(
-                    onSuccess = ::displayMnemonic,
-                    onFailed = { _, _ -> displayError() }
-                )
+                val mnemonicResult = getAccountMnemonic(accountAddress)
+                val localAccount = getLocalAccount(accountAddress)
+
+                if (localAccount == null) {
+                    eventDelegate.sendEvent(ViewEvent.ShowGenericError)
+                    eventDelegate.sendEvent(ViewEvent.NavigateBack)
+                    return@launch
+                }
+
+                val mnemonic = when (mnemonicResult) {
+                    is PeraResult.Success -> mnemonicResult.data
+                    is PeraResult.Error -> {
+                        eventDelegate.sendEvent(ViewEvent.ShowGenericError)
+                        eventDelegate.sendEvent(ViewEvent.NavigateBack)
+                        return@launch
+                    }
+                }
+
+                val isQrAvailable = mnemonic.type == AccountMnemonic.AccountType.Algo25
+                val accountName = localAccount.algoAddress.shortenAddress()
+                stateDelegate.updateState {
+                    ViewState.Content(
+                        accountName = accountName,
+                        mnemonicWords = mnemonic.words,
+                        isQrExportAvailable = isQrAvailable
+                    )
+                }
             }
         }
     }
 
-    private fun displayMnemonic(mnemonic: AccountMnemonic) {
-        stateDelegate.updateState {
-            ViewState.Content(mnemonic.words)
+    fun requestAccountExportUri(accountAddress: String, resultCallback: (PeraResult<String>) -> Unit) {
+        viewModelScope.launch {
+            val result = generateAccountExportUriUseCase(accountAddress)
+            resultCallback(result)
         }
     }
 
-    private fun displayError() {
-        viewModelScope.launch {
-            eventDelegate.sendEvent(ViewEvent.ShowGenericError)
-            eventDelegate.sendEvent(ViewEvent.NavigateBack)
+    private fun String.shortenAddress(prefixLength: Int = 4, suffixLength: Int = 4): String {
+        if (this.length <= prefixLength + suffixLength) {
+            return this
         }
+        return "${this.take(prefixLength)}...${this.takeLast(suffixLength)}"
     }
 
     sealed interface ViewState {
         data object Idle : ViewState
         data object Loading : ViewState
-        data class Content(val mnemonicWords: List<String>) : ViewState
+        data class Content(
+            val accountName: String,
+            val mnemonicWords: List<String>,
+            val isQrExportAvailable: Boolean
+        ) : ViewState
     }
 
     sealed interface ViewEvent {
