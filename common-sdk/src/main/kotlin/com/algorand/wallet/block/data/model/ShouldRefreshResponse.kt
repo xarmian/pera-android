@@ -14,6 +14,6 @@ package com.algorand.wallet.block.data.model
 
 import com.google.gson.annotations.SerializedName
 
-internal data class ShouldRefreshResponse(
+data class ShouldRefreshResponse(
     @SerializedName("refresh") val shouldRefresh: Boolean?
 )

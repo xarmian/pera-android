@@ -16,13 +16,21 @@ import com.algorand.android.network.dto.Arc200BalanceResponse
 import com.algorand.android.network.dto.Arc200TokenDetailResponse
 import com.algorand.android.network.dto.Arc200ApiTransfersResponse
 import com.algorand.android.network.dto.MimirNftListResponse
+import com.algorand.wallet.block.data.model.ShouldRefreshRequestBody
+import com.algorand.wallet.block.data.model.ShouldRefreshResponse
+import com.algorand.wallet.block.data.service.BlockPollingNetworkService
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Query
 
-interface MimirApi {
+interface MimirApi : BlockPollingNetworkService {
 
-    @GET("arc200/balances/")
+    @POST("account/should-refresh")
+    override suspend fun shouldRefresh(@Body body: ShouldRefreshRequestBody): Response<ShouldRefreshResponse>
+
+    @GET("account/assets/")
     suspend fun getArc200Balances(
         @Query("accountId") accountId: String,
         @Query("limit") limit: Int?,

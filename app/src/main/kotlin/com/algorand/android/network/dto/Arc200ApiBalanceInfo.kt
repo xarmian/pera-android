@@ -3,7 +3,7 @@ package com.algorand.android.network.dto
 import com.google.gson.annotations.SerializedName
 
 /**
- * Represents a single ARC-200 token balance from the Mimir API /arc200/balances endpoint.
+ * Represents a single ARC-200 token balance from the Mimir API /account/assets endpoint.
  * Matches the structure within the "balances" array.
  */
 data class Arc200ApiBalanceInfo(

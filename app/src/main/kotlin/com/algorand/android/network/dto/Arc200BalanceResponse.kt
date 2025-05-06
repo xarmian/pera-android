@@ -3,7 +3,7 @@ package com.algorand.android.network.dto
 import com.google.gson.annotations.SerializedName
 
 /**
- * Represents the full response from the Mimir API /arc200/balances endpoint.
+ * Represents the full response from the Mimir API /acccount/assets endpoint.
  */
 data class Arc200BalanceResponse(
     @SerializedName("balances")

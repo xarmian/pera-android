@@ -134,7 +134,10 @@ class AccountAssetsPreviewUseCase @Inject constructor(
         hasInboxItem: Boolean
     ): AccountDetailAssetsItem.QuickActionItemContainer {
         val quickActionItemList = mutableListOf<QuickActionItem>().apply {
-            if (isWatchAccount) {
+            add(QuickActionItem.CopyAddressButton)
+            add(QuickActionItem.ShowAddressButton)
+
+            /*if (isWatchAccount) {
                 add(QuickActionItem.CopyAddressButton)
                 add(QuickActionItem.ShowAddressButton)
             } else {
@@ -144,10 +147,10 @@ class AccountAssetsPreviewUseCase @Inject constructor(
                 } else {
                     QuickActionItem.AssetInbox
                 }
-                // add(accountDetailAssetItemMapper.mapToSwapQuickActionItem(isSwapSelected))
-                // add(QuickActionItem.BuyAlgoButton)
-                // add(inboxItem)
-            }
+                add(accountDetailAssetItemMapper.mapToSwapQuickActionItem(isSwapSelected))
+                add(QuickActionItem.BuyAlgoButton)
+                add(inboxItem)
+            }*/
             add(QuickActionItem.MoreButton)
         }
         return accountDetailAssetItemMapper.mapToQuickActionItemContainer(quickActionItemList)

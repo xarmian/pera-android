@@ -18,8 +18,7 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
 
-internal interface BlockPollingApiService {
-
-    @POST("v1/algorand-indexer/should-refresh/")
+interface BlockPollingNetworkService {
+    @POST("account/should-refresh")
     suspend fun shouldRefresh(@Body body: ShouldRefreshRequestBody): Response<ShouldRefreshResponse>
-}
+} 

@@ -12,8 +12,9 @@
 
 package com.algorand.wallet.block.data.repository
 
+// import com.algorand.android.network.MimirApi // Will be removed
 import com.algorand.wallet.block.data.model.ShouldRefreshRequestBody
-import com.algorand.wallet.block.data.service.BlockPollingApiService
+import com.algorand.wallet.block.data.service.BlockPollingNetworkService // Added
 import com.algorand.wallet.block.domain.repository.BlockPollingRepository
 import com.algorand.wallet.foundation.PeraResult
 import com.algorand.wallet.foundation.cache.CacheResult
@@ -22,7 +23,7 @@ import com.algorand.wallet.foundation.network.exceptions.PeraRetrofitErrorHandle
 import com.algorand.wallet.foundation.network.utils.requestWithHipoErrorHandler
 
 internal class BlockPollingRepositoryImpl(
-    private val blockPollingApiService: BlockPollingApiService,
+    private val blockPollingNetworkService: BlockPollingNetworkService, // Changed from mimirApi: MimirApi
     private val blockPollingLocalCache: SingleInMemoryLocalCache<Long>,
     private val peraErrorHandler: PeraRetrofitErrorHandler
 ) : BlockPollingRepository {
@@ -41,7 +42,7 @@ internal class BlockPollingRepositoryImpl(
 
     override suspend fun shouldUpdateAccountCache(localAccountAddresses: List<String>): PeraResult<Boolean> {
         val body = ShouldRefreshRequestBody(localAccountAddresses, getLastKnownAccountBlockNumber())
-        return requestWithHipoErrorHandler(peraErrorHandler) { blockPollingApiService.shouldRefresh(body) }.map {
+        return requestWithHipoErrorHandler(peraErrorHandler) { blockPollingNetworkService.shouldRefresh(body) }.map { // Changed from mimirApi
             it.shouldRefresh ?: false
         }
     }
