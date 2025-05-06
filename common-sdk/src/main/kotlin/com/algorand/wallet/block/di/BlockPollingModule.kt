@@ -13,7 +13,7 @@
 package com.algorand.wallet.block.di
 
 import com.algorand.wallet.block.data.repository.BlockPollingRepositoryImpl
-import com.algorand.wallet.block.data.service.BlockPollingApiService
+import com.algorand.wallet.block.data.service.BlockPollingNetworkService
 import com.algorand.wallet.block.domain.repository.BlockPollingRepository
 import com.algorand.wallet.block.domain.usecase.ClearLastKnownBlockNumber
 import com.algorand.wallet.block.domain.usecase.GetLastKnownBlockNumber
@@ -29,7 +29,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Named
 import javax.inject.Singleton
-import retrofit2.Retrofit
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -37,20 +36,12 @@ internal object BlockPollingModule {
 
     @Provides
     @Singleton
-    fun provideBlockPollingApiService(
-        @Named("mobileAlgorandRetrofitInterface") retrofit: Retrofit
-    ): BlockPollingApiService {
-        return retrofit.create(BlockPollingApiService::class.java)
-    }
-
-    @Provides
-    @Singleton
     fun provideBlockPollingRepository(
-        blockPollingApiService: BlockPollingApiService,
+        blockPollingNetworkService: BlockPollingNetworkService,
         retrofitErrorHandler: PeraRetrofitErrorHandler
     ): BlockPollingRepository {
         return BlockPollingRepositoryImpl(
-            blockPollingApiService,
+            blockPollingNetworkService,
             SingleInMemoryLocalCache(),
             retrofitErrorHandler
         )

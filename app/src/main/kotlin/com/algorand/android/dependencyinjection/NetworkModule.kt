@@ -23,6 +23,7 @@ import com.algorand.android.network.IndexerInterceptor
 import com.algorand.android.network.MobileAlgorandApi
 import com.algorand.android.network.MobileHeaderInterceptor
 import com.algorand.android.network.MimirApi
+import com.algorand.wallet.block.data.service.BlockPollingNetworkService
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
@@ -342,5 +343,11 @@ object NetworkModule {
             .readTimeout(TIMEOUT_CONSTANT, TimeUnit.SECONDS)
             .writeTimeout(TIMEOUT_CONSTANT, TimeUnit.SECONDS)
             .build()
+    }
+
+    @Provides
+    @Singleton
+    internal fun provideBlockPollingNetworkService(mimirApi: MimirApi): BlockPollingNetworkService {
+        return mimirApi
     }
 }
