@@ -228,6 +228,10 @@ class AccountDetailFragment :
         navToBackupPassphraseInfoNavigation()
     }
 
+    override fun onQrScanClick() {
+        nav(HomeNavigationDirections.actionGlobalAccountsQrScannerFragment())
+    }
+
     override fun onImageItemClick(nftAssetId: Long) {
         // Remove body - navigation handled by onCollectibleClick
     }
