@@ -23,7 +23,6 @@ import com.algorand.android.modules.collectibles.listingviewtype.domain.model.NF
 import com.algorand.android.modules.collectibles.util.deciders.NFTAmountFormatDecider
 import com.algorand.android.modules.verificationtier.ui.decider.VerificationTierConfigurationDecider
 import com.algorand.android.utils.AssetName
-import com.algorand.wallet.asset.domain.model.AssetType
 import javax.inject.Inject
 
 // TODO Rename this function to make it screen independent
@@ -38,7 +37,7 @@ class AccountDetailAssetItemMapper @Inject constructor(
         accountAssetData: BaseAccountAssetData.BaseOwnedAssetData
     ): AccountDetailAssetsItem.BaseAssetItem.BaseOwnedItem.AssetItem {
         return with(accountAssetData) {
-            val shouldShowCurrencyValue = isAmountInSelectedCurrencyVisible && assetType != AssetType.ARC200
+            val shouldShowCurrencyValue = isAmountInSelectedCurrencyVisible
 
             AccountDetailAssetsItem.BaseAssetItem.BaseOwnedItem.AssetItem(
                 id = id,
