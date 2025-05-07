@@ -161,6 +161,9 @@ class AccountAssetsFragment : BaseFragment(R.layout.fragment_account_assets) {
                 listener?.onAccountQuickActionsFloatingActionButtonClicked(isWatchAccount)
             }
         }
+        binding.qrImageButton.setOnClickListener {
+            listener?.onQrScanClick()
+        }
     }
 
     private fun initObservers() {
@@ -189,6 +192,7 @@ class AccountAssetsFragment : BaseFragment(R.layout.fragment_account_assets) {
         fun onShowAddressClick()
         fun onBackupNowClick()
         fun onBuySellClick()
+        fun onQrScanClick()
     }
 
     companion object {

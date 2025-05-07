@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="@dimen/settings_list_item_min_height"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingHorizontal="@dimen/spacing_large"
+    android:paddingVertical="@dimen/spacing_small"
+    android:background="?android:attr/selectableItemBackground">
+
+    <TextView
+        android:id="@+id/currencyActualSymbolTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.Body.Sans.Medium"
+        android:textColor="?android:attr/textColorPrimary"
+        android:layout_marginEnd="@dimen/spacing_xsmall"
+        tools:text="$" />
+
+    <TextView
+        android:id="@+id/currencyIdTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.Body.Sans.Medium"
+        android:textColor="?android:attr/textColorPrimary"
+        tools:text="USD" />
+
+    <TextView
+        android:id="@+id/currencyNameTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="@dimen/spacing_small"
+        android:textAppearance="@style/TextAppearance.Body.Sans"
+        android:textColor="?android:attr/textColorSecondary"
+        tools:text="United States Dollar" />
+
+    <ImageView
+        android:id="@+id/radioButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing_small"
+        android:src="@drawable/selector_radio_button"
+        android:contentDescription="@null" />
+
+</LinearLayout> 

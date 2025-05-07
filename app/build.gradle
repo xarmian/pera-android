@@ -122,8 +122,8 @@ android {
             buildConfigField "String", "ALGORAND_API_KEY", apiKeyProps["ALGORAND_API_KEY"]
             buildConfigField "String", "INDEXER_API_KEY", apiKeyProps["INDEXER_API_KEY"]
             buildConfigField "String", "MOBILE_API_KEY", apiKeyProps["MOBILE_API_KEY"]
-            buildConfigField "String", "MOBILE_ALGORAND_MAINNET_BASE_URL", '"https://api.voirewards.com/"'
-            buildConfigField "String", "MOBILE_ALGORAND_TESTNET_BASE_URL", '"https://api.voirewards.com/"'
+            buildConfigField "String", "MOBILE_ALGORAND_MAINNET_BASE_URL", '"https://voi-mainnet-mimirapi.voirewards.com/"'
+            buildConfigField "String", "MOBILE_ALGORAND_TESTNET_BASE_URL", '"https://voi-mainnet-mimirapi.voirewards.com/"'
             buildConfigField "String", "PERA_3D_EXPLORER_BASE_URL", '"https://static-hosting.perawallet.app/3dviewer/index.html"'
             buildConfigField "String", "DISCOVER_WEBVIEW_USERNAME", apiKeyProps["DISCOVER_WEBVIEW_USERNAME"]
             buildConfigField "String", "DISCOVER_WEBVIEW_PASSWORD", apiKeyProps["DISCOVER_WEBVIEW_PASSWORD"]
@@ -163,8 +163,8 @@ android {
             buildConfigField "String", "ALGORAND_API_KEY", apiKeyProps["ALGORAND_API_KEY"]
             buildConfigField "String", "INDEXER_API_KEY", apiKeyProps["INDEXER_API_KEY"]
             buildConfigField "String", "MOBILE_API_KEY", apiKeyProps["MOBILE_API_KEY"]
-            buildConfigField "String", "MOBILE_ALGORAND_MAINNET_BASE_URL", '"https://api.voirewards.com/"'
-            buildConfigField "String", "MOBILE_ALGORAND_TESTNET_BASE_URL", '"https://api.voirewards.com/"'
+            buildConfigField "String", "MOBILE_ALGORAND_MAINNET_BASE_URL", '"https://voi-mainnet-mimirapi.voirewards.com/"'
+            buildConfigField "String", "MOBILE_ALGORAND_TESTNET_BASE_URL", '"https://voi-mainnet-mimirapi.voirewards.com/"'
             buildConfigField "String", "PERA_3D_EXPLORER_BASE_URL", '"https://static-hosting.perawallet.app/3dviewer/index.html"'
             buildConfigField "String", "DISCOVER_WEBVIEW_USERNAME", apiKeyProps["DISCOVER_WEBVIEW_USERNAME"]
             buildConfigField "String", "DISCOVER_WEBVIEW_PASSWORD", apiKeyProps["DISCOVER_WEBVIEW_PASSWORD"]
