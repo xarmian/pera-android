@@ -58,7 +58,7 @@ class Arc200DtoToEntityMapper @Inject constructor() {
             name = balanceInfo.name,
             unitName = balanceInfo.symbol,
             decimals = decimals,
-            usdValue = null,
+            usdValue = balanceInfo.usdValue,
             maxSupply = "0",
             explorerUrl = null,
             projectUrl = null,

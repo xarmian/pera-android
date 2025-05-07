@@ -26,7 +26,6 @@ import com.algorand.android.models.ToolbarConfiguration
 import com.algorand.android.models.ui.CurrencySelectionPreview
 import com.algorand.android.modules.currency.domain.model.SelectedCurrency
 import com.algorand.android.ui.settings.selection.CurrencyListItem
-import com.algorand.android.ui.settings.selection.SelectionAdapter
 import com.algorand.android.utils.extensions.collectLatestOnLifecycle
 import com.algorand.android.utils.getXmlStyledString
 import com.algorand.android.utils.viewbinding.viewBinding
@@ -35,7 +34,7 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class CurrencySelectionFragment : DaggerBaseFragment(R.layout.fragment_currency_selection) {
 
-    private val currencySelectionAdapter = SelectionAdapter(::onDifferentCurrencyListItemClick)
+    private val currencySelectionAdapter = CurrencySelectionAdapter(::onDifferentCurrencyListItemClick)
 
     private val currencySelectionViewModel: CurrencySelectionViewModel by viewModels()
 

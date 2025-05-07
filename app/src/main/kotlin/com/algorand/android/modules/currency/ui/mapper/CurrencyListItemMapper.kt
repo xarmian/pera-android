@@ -20,9 +20,11 @@ import javax.inject.Inject
 class CurrencyListItemMapper @Inject constructor() {
 
     fun mapToCurrencyListItem(currencyOption: CurrencyOption, isSelectedItem: Boolean): CurrencyListItem {
+        val symbol = Currency.entries.find { it.id == currencyOption.currencyId }?.symbol
         return CurrencyListItem(
             currencyId = currencyOption.currencyId,
             currencyName = currencyOption.currencyName,
+            currencySymbol = symbol,
             isSelected = isSelectedItem
         )
     }
@@ -31,6 +33,7 @@ class CurrencyListItemMapper @Inject constructor() {
         return CurrencyListItem(
             currencyId = Currency.ALGO.id,
             currencyName = Currency.ALGO.id,
+            currencySymbol = Currency.ALGO.symbol,
             isSelected = isSelected
         )
     }
