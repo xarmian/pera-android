@@ -108,6 +108,12 @@
 
     <include app:graph="@navigation/add_note_navigation" />
 
+    <fragment
+        android:id="@+id/bridgeFragment"
+        android:name="com.algorand.android.ui.bridge.BridgeFragment"
+        android:label="fragment_bridge"
+        tools:layout="@layout/fragment_bridge" />
+
     <action
         android:id="@+id/action_global_showQrNavigation"
         app:destination="@id/showQrNavigation">

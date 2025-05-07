@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/from_algo_account_label_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="From Algorand Account"
+        android:textAppearance="?attr/textAppearanceHeadline6"
+        android:layout_marginBottom="8dp"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/from_algorand_address_text_input_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:hint="Source Algorand Address"
+        android:layout_marginBottom="4dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/from_algorand_address_edit_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:id="@+id/from_algo_account_balance_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        tools:text="Balance: 500.00 aVOI"
+        android:textAppearance="?attr/textAppearanceCaption"/>
+
+</LinearLayout> 
