@@ -34,6 +34,7 @@ data class LanguageListItem(
 data class CurrencyListItem(
     val currencyId: String,
     val currencyName: String,
+    val currencySymbol: String?,
     override var isSelected: Boolean
 ) : SelectionListItem() {
     override fun getVisibleName(context: Context): String = currencyId

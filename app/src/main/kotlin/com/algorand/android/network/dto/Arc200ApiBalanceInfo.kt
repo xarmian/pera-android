@@ -1,6 +1,7 @@
 package com.algorand.android.network.dto
 
 import com.google.gson.annotations.SerializedName
+import java.math.BigDecimal
 
 /**
  * Represents a single ARC-200 token balance from the Mimir API /account/assets endpoint.
@@ -22,5 +23,7 @@ data class Arc200ApiBalanceInfo(
     @SerializedName("contractId")
     val contractId: Long?, // Assuming contractId is a Long
     @SerializedName("imageUrl")
-    val imageUrl: String?
+    val imageUrl: String?,
+    @SerializedName("usdValue")
+    val usdValue: BigDecimal?
 )
