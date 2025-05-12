@@ -14,19 +14,16 @@ package com.algorand.android.utils
 
 import android.os.Bundle
 import android.view.View
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.navigation.fragment.navArgs
 import com.algorand.android.R
 import com.algorand.android.core.DaggerBaseFragment
 import com.algorand.android.databinding.FragmentShowQrBinding
 import com.algorand.android.models.FragmentConfiguration
 import com.algorand.android.models.ToolbarConfiguration
-import com.algorand.android.utils.analytics.logTapShowQrCopy
-import com.algorand.android.utils.analytics.logTapShowQrShare
-import com.algorand.android.utils.analytics.logTapShowQrShareComplete
 import com.algorand.android.utils.viewbinding.viewBinding
 import dagger.hilt.android.AndroidEntryPoint
-import java.io.File
+
+const val SHORT_ADDRESS_LENGTH = 8
 
 @AndroidEntryPoint
 class ShowQrFragment : DaggerBaseFragment(R.layout.fragment_show_qr) {
@@ -41,8 +38,6 @@ class ShowQrFragment : DaggerBaseFragment(R.layout.fragment_show_qr) {
         toolbarConfiguration = toolbarConfiguration
     )
 
-    private var qrCodeFile: File? = null
-
     private val qrCodeBitmap by lazy {
         getQrCodeBitmap(resources.getDimensionPixelSize(R.dimen.show_qr_size), args.qrText)
     }
@@ -55,35 +50,53 @@ class ShowQrFragment : DaggerBaseFragment(R.layout.fragment_show_qr) {
         super.onViewCreated(view, savedInstanceState)
         getAppToolbar()?.changeTitle(args.title)
         with(binding) {
-            accountAddressLabelTextView.text = args.qrText.toShortenedAddress()
-            accountAddressTextView.text = args.qrText
-            accountAddressTextView.enableClickToCopy()
             qrImageView.setImageBitmap(qrCodeBitmap)
-            copyButton.setOnClickListener { onCopyClick() }
-            shareButton.setOnClickListener { onShareButtonClick() }
-        }
-    }
 
-    private fun onCopyClick() {
-        firebaseAnalytics.logTapShowQrCopy(args.qrText)
-        onAccountAddressCopied(args.qrText)
-    }
+            // Instruction text is set from XML via @string resource
 
-    private val sharingActivityResultLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            qrCodeFile?.delete()
-            firebaseAnalytics.logTapShowQrShareComplete(args.qrText)
-        }
+            // Token to Send
+            if (args.tokenToSend != null) {
+                tokenToSendTextView.text = args.tokenToSend
+                tokenToSendLabelTextView.visibility = View.VISIBLE
+                tokenToSendTextView.visibility = View.VISIBLE
+            } else {
+                tokenToSendLabelTextView.visibility = View.GONE
+                tokenToSendTextView.visibility = View.GONE
+            }
 
-    private fun onShareButtonClick() {
-        firebaseAnalytics.logTapShowQrShare(args.qrText)
-        qrCodeBitmap?.let { bitmap ->
-            qrCodeFile = openImageShareBottomMenu(bitmap, sharingActivityResultLauncher)
+            // Amount to Send
+            if (args.amountToSend != null) {
+                amountToSendTextView.text = args.amountToSend
+                amountToSendLabelTextView.visibility = View.VISIBLE
+                amountToSendTextView.visibility = View.VISIBLE
+            } else {
+                amountToSendLabelTextView.visibility = View.GONE
+                amountToSendTextView.visibility = View.GONE
+            }
+
+            // Amount to Receive
+            if (args.amountToReceive != null) {
+                amountToReceiveTextView.text = args.amountToReceive
+                amountToReceiveLabelTextView.visibility = View.VISIBLE
+                amountToReceiveTextView.visibility = View.VISIBLE
+            } else {
+                amountToReceiveLabelTextView.visibility = View.GONE
+                amountToReceiveTextView.visibility = View.GONE
+            }
+
+            // Receiving Account
+            if (args.receivingAccount != null) {
+                receivingAccountTextView.text = args.receivingAccount?.toShortenedAddress(SHORT_ADDRESS_LENGTH) // Or show full, or make it configurable
+                receivingAccountLabelTextView.visibility = View.VISIBLE
+                receivingAccountTextView.visibility = View.VISIBLE
+            } else {
+                receivingAccountLabelTextView.visibility = View.GONE
+                receivingAccountTextView.visibility = View.GONE
+            }
         }
     }
 
     companion object {
-        private const val ADDRESS_COPY_LABEL = "address"
-        private const val FIREBASE_EVENT_SCREEN_ID = "screen_show_qr"
+        private const val FIREBASE_EVENT_SCREEN_ID = "screen_show_qr_bridge"
     }
 }

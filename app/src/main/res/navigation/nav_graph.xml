@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <include app:graph="@navigation/show_qr_navigation" />
+
+    <fragment
+        android:id="@+id/bridgeFragment"
+        android:name="com.algorand.android.ui.bridge.BridgeFragment"
+        android:label="BridgeFragment">
+        <action
+            android:id="@+id/action_bridgeFragment_to_bridgeConfirmationFragment"
+            app:destination="@id/bridgeConfirmationFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/bridgeConfirmationFragment"
+        android:name="com.algorand.android.ui.bridge.BridgeConfirmationFragment"
+        android:label="BridgeConfirmationFragment">
+        <argument
+            android:name="amountToSendAtomic"
+            app:argType="long" />
+        <argument
+            android:name="amountToReceiveAtomic"
+            app:argType="long" />
+        <argument
+            android:name="destinationAddress"
+            app:argType="string" />
+        <argument
+            android:name="peraWalletDeeplink"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_bridgeConfirmationFragment_to_showQrFragment"
+            app:destination="@id/showQrFragment">
+            <argument
+                android:name="title"
+                app:argType="string" />
+            <argument
+                android:name="qrText"
+                app:argType="string" />
+        </action>
+    </fragment>
+
+    <!-- Other fragments and actions from the original nav_graph.xml should be here -->
+    <!-- For example, if rekeyConfirmationFragment and ledgerAccountDetailFragment are defined elsewhere, ensure they are correctly placed -->
+
+</navigation> 

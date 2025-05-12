@@ -19,7 +19,7 @@ import com.algorand.wallet.foundation.PeraResult
 import java.math.BigInteger
 import kotlinx.coroutines.flow.Flow
 
-internal interface AccountInformationRepository {
+interface AccountInformationRepository {
 
     suspend fun fetchAccountInformation(address: String, includeClosedAccount: Boolean): PeraResult<AccountInformation>
 

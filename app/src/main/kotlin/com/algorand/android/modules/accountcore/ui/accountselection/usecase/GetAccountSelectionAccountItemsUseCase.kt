@@ -19,7 +19,7 @@ import com.algorand.android.modules.accountsorting.ui.domain.usecase.GetSortedAc
 import com.algorand.android.modules.currency.domain.usecase.GetPrimaryCurrencySymbol
 import javax.inject.Inject
 
-internal class GetAccountSelectionAccountItemsUseCase @Inject constructor(
+public class GetAccountSelectionAccountItemsUseCase @Inject constructor(
     private val getPrimaryCurrencySymbol: GetPrimaryCurrencySymbol,
     private val getSortedAccountsByPreference: GetSortedAccountsByPreference,
     private val createLoadedAccountConfiguration: CreateLoadedAccountConfiguration,

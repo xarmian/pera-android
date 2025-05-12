@@ -112,7 +112,73 @@
         android:id="@+id/bridgeFragment"
         android:name="com.algorand.android.ui.bridge.BridgeFragment"
         android:label="fragment_bridge"
-        tools:layout="@layout/fragment_bridge" />
+        tools:layout="@layout/fragment_bridge">
+        <action
+            android:id="@+id/action_bridgeFragment_to_bridgeConfirmationFragment"
+            app:destination="@id/bridgeConfirmationFragment">
+            <argument
+                android:name="amountToSendAtomic"
+                app:argType="long" />
+            <argument
+                android:name="amountToReceiveAtomic"
+                app:argType="long" />
+            <argument
+                android:name="destinationAddress"
+                app:argType="string" />
+            <argument
+                android:name="peraWalletDeeplink"
+                app:argType="string" />
+        </action>
+    </fragment>
+
+    <fragment
+        android:id="@+id/bridgeConfirmationFragment"
+        android:name="com.algorand.android.ui.bridge.BridgeConfirmationFragment"
+        android:label="BridgeConfirmationFragment"
+        tools:layout="@layout/fragment_bridge_confirmation">
+        <argument
+            android:name="amountToSendAtomic"
+            app:argType="long" />
+        <argument
+            android:name="amountToReceiveAtomic"
+            app:argType="long" />
+        <argument
+            android:name="destinationAddress"
+            app:argType="string" />
+        <argument
+            android:name="peraWalletDeeplink"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_bridgeConfirmationFragment_to_showQrFragment"
+            app:destination="@id/showQrNavigation">
+            <argument
+                android:name="title"
+                app:argType="string" />
+            <argument
+                android:name="qrText"
+                app:argType="string" />
+            <argument
+                android:name="tokenToSend"
+                app:argType="string"
+                app:nullable="true"
+                android:defaultValue="@null" />
+            <argument
+                android:name="amountToSend"
+                app:argType="string"
+                app:nullable="true"
+                android:defaultValue="@null" />
+            <argument
+                android:name="amountToReceive"
+                app:argType="string"
+                app:nullable="true"
+                android:defaultValue="@null" />
+            <argument
+                android:name="receivingAccount"
+                app:argType="string"
+                app:nullable="true"
+                android:defaultValue="@null" />
+        </action>
+    </fragment>
 
     <action
         android:id="@+id/action_global_showQrNavigation"

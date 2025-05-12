@@ -10,7 +10,7 @@
         android:id="@+id/from_algo_account_label_text_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="From Algorand Account"
+        android:text="@string/from_algorand_account_label"
         android:textAppearance="?attr/textAppearanceHeadline6"
         android:layout_marginBottom="8dp"/>
 
@@ -19,15 +19,36 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-        android:hint="Source Algorand Address"
+        android:hint="@string/enter_or_paste_source_algorand_address"
+        app:endIconMode="custom"
+        app:endIconDrawable="@drawable/ic_clipboard"
         android:layout_marginBottom="4dp">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/from_algorand_address_edit_text"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:inputType="textNoSuggestions"
+            android:maxLines="1" />
 
     </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/or"
+        android:layout_gravity="center_horizontal"
+        android:textAppearance="?attr/textAppearanceCaption"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"/>
+
+    <Button
+        android:id="@+id/select_from_local_for_algo_button"
+        style="?attr/materialButtonOutlinedStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/select_from_local_accounts"
+        android:layout_marginBottom="4dp"/>
 
     <TextView
         android:id="@+id/from_algo_account_balance_text_view"

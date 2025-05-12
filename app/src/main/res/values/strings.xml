@@ -15,6 +15,7 @@
     <string name="cancel">Cancel</string>
     <string name="share_via">Share via</string>
     <string name="ok">OK</string>
+    <string name="or">OR</string>
     <string name="next">Next</string>
     <string name="account_name">Account Name</string>
     <string name="name">Name</string>
@@ -1050,7 +1051,7 @@
     <string name="protect_your_account_by_delegating">Protect your account by delegating signatures to another account</string>
     <string name="future_transactions_can_only">Future transactions can only be signed by the delegated account.</string>
     <string name="this_account_will_no_longer">This account will no longer be able to sign transactions.</string>
-    <string name="your_account_s_public">Your account\'s public key, balances, and configuration will not change.</string>
+    <string name="your_account_s_public_key">Your account\'s public key, balances, and configuration will not change.</string>
 
     <string name="invalid_url">Invalid Url</string>
 
@@ -1278,7 +1279,7 @@
     <string name="your_account_is_a_standard">Your account is a standard Voi account. It has not been rekeyed and it is not associated with a Ledger device. It was added to your wallet with its keys. <annotation font="dmsans_medium"><annotation custom="learn_more">Learn more</annotation></annotation></string>
     <string name="your_account_is_a_Ledger">Your account is a Ledger account. It was added to your wallet directly from the hardware device. All transactions for this account must be confirmed on your Ledger. <annotation font="dmsans_medium"><annotation custom="learn_more">Learn more</annotation></annotation></string>
     <string name="this_account_was_not">This account was not added to your wallet with its keys. It is read-only and cannot interact with other accounts or authorize transactions.</string>
-    <string name="your_account_doesn_t">Your account doesn't have any Auth information. You can\'t send assets or sign transactions. <annotation font="dmsans_medium"><annotation custom="learn_more">Learn more</annotation></annotation></string>
+    <string name="your_account_doesn_t">Your account doesn\'t have any Auth information. You can\'t send assets or sign transactions. <annotation font="dmsans_medium"><annotation custom="learn_more">Learn more</annotation></annotation></string>
     <string name="your_account_is_rekeyed">Your account is rekeyed to a Voi account that is not in your wallet. You can\'t send assets or sign transactions. <annotation font="dmsans_medium"><annotation custom="learn_more">Learn more</annotation></annotation></string>
     <string name="your_account_is_rekeyed_to">Your account is rekeyed to another standard Voi account. Transactions for this account will be authorized by the other account. <annotation font="dmsans_medium"><annotation custom="learn_more">Learn more</annotation></annotation></string>
     <string name="your_account_is_rekeyed_to_an">Your account is rekeyed to a Voi account that is not in your wallet. You can\'t send assets or sign transactions. <annotation font="dmsans_medium"><annotation custom="learn_more">Learn more</annotation></annotation></string>
@@ -1501,8 +1502,62 @@
     <string name="open_in_browser">Open in Browser</string>
 
     <string name="wallet_connect_session_update_failed_message">An error occurred while trying to update the session. Please make sure you are connected to the internet.</string>
+    <string name="voi_ticker">VOI</string>
+    <string name="avoi_ticker">aVOI</string>
 
-    <string name="bridge">Bridge</string>
-    <string name="nfts">NFTs</string>
-    <string name="buy_algo">Buy Algo</string>
+    <string name="select_from_voi_account">Select Source Voi Account</string>
+    <string name="select_to_voi_account">Select Destination Voi Account</string>
+    <string name="select_from_algorand_account">Select Source Algorand Account</string>
+    <string name="select_to_algorand_account">Select Destination Algorand Account</string>
+    <string name="no_signable_accounts_found">No accounts found that can sign transactions.</string>
+    <string name="no_local_accounts_found">No local accounts found.</string>
+    <string name="selected_account_colon">Selected: %1$s</string>
+    <string name="change_account">Change Account</string>
+    <string name="select_from_local_accounts">Select from Local Accounts</string>
+
+    <!-- Bridge Specific Strings -->
+    <string name="bridge_fee">Bridge Fee</string>
+    <string name="bridge_title">Asset Bridge</string>
+    <string name="voi_to_algorand">Voi to Algorand</string>
+    <string name="algorand_to_voi">Algorand to Voi</string>
+    <string name="from_voi_account_label">From Voi Account</string>
+    <string name="to_algorand_account_label">To Algorand Account</string>
+    <string name="from_algorand_account_label">From Algorand Account (optional)</string>
+    <string name="to_voi_account_label">To Voi Account</string>
+    <string name="amount_to_bridge_label">Amount to Bridge</string>
+    <string name="bridge_button_text">Bridge Assets</string>
+    <string name="avoi_opt_in_help_button_text">Help Opt-In to aVOI</string>
+    <string name="avoi_opt_in_status_checking">Checking aVOI opt-in...</string>
+    <string name="avoi_opt_in_status_opted_in">aVOI Opted-In</string>
+    <string name="avoi_opt_in_status_not_opted_in">aVOI Not Opted-In</string>
+    <string name="avoi_opt_in_status_invalid_address">Enter valid Algorand address</string>
+    <string name="avoi_opt_in_status_unknown_error">Error checking opt-in status</string>
+    <string name="balance_simple">Balance: %1$s</string>
+    <string name="balance_voi_detailed">Balance: %1$s µVOI</string>
+    <string name="balance_avoi_detailed">aVOI Balance: %1$s µaVOI</string>
+    <string name="fee_display">Fee: %1$s</string>
+    <string name="net_amount_display">Net to Receive: %1$s</string>
+    <string name="enter_or_paste_voi_address">Enter or Paste Voi Address</string>
+    <string name="enter_or_paste_source_algorand_address">Enter or Paste Source Algorand Address</string>
+    <string name="enter_or_paste_destination_algorand_address">Enter or Paste Destination Algorand Address</string>
+    <string name="invalid_algorand_address">Invalid Algorand Address</string>
+    <string name="invalid_voi_address">Invalid Voi Address</string>
+    <string name="confirm_bridge_transaction">Confirm Bridge Transaction</string>
+    <string name="you_are_sending">You are sending:</string>
+    <string name="you_will_receive_approximately">You will receive (approx.):</string>
+    <string name="to_voi_account">To Voi Account:</string>
+    <string name="bridge_time_estimate_message">Most bridge transactions complete in under 3 minutes.</string>
+    <string name="send_to_perawallet">Send Tx to Pera Wallet</string>
+    <string name="send_to_deflywallet">Send Tx to Defly Wallet</string>
+    <string name="view_qr_code">View QR Code</string>
+    <string name="amount_avoi_template">%1$s aVOI</string>
+    <string name="amount_voi_template">%1$s VOI</string>
+    <string name="scan_with_your_wallet">Scan with your Wallet</string>
+    <string name="complete_transaction_in_your_wallet">Complete transaction in your wallet app</string>
+    <string name="error_opening_deeplink">Could not open wallet app. Please ensure it is installed.</string>
+    <string name="scan_qr_with_pera_or_defly_bridge">Scan this QR code with Pera Wallet or Defly Wallet to initiate a bridge transaction.</string>
+    <string name="token_to_send_label">Token to Send:</string>
+    <string name="amount_to_send_label">You Send:</string> <!-- Changed to match confirmation screen -->
+    <string name="amount_to_receive_label">You Receive (est.):</string> <!-- Changed to match confirmation screen -->
+    <string name="receiving_account_on_voi_label">To Voi Account:</string> <!-- Changed to match confirmation screen -->
 </resources>
