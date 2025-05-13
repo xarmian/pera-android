@@ -1525,7 +1525,7 @@
     <string name="from_algorand_account_label">From Algorand Account (optional)</string>
     <string name="to_voi_account_label">To Voi Account</string>
     <string name="amount_to_bridge_label">Amount to Bridge</string>
-    <string name="bridge_button_text">Bridge Assets</string>
+    <string name="bridge_button_text">Bridge</string>
     <string name="avoi_opt_in_help_button_text">Help Opt-In to aVOI</string>
     <string name="avoi_opt_in_status_checking">Checking aVOI opt-in...</string>
     <string name="avoi_opt_in_status_opted_in">aVOI Opted-In</string>
@@ -1557,7 +1557,9 @@
     <string name="error_opening_deeplink">Could not open wallet app. Please ensure it is installed.</string>
     <string name="scan_qr_with_pera_or_defly_bridge">Scan this QR code with Pera Wallet or Defly Wallet to initiate a bridge transaction.</string>
     <string name="token_to_send_label">Token to Send:</string>
-    <string name="amount_to_send_label">You Send:</string> <!-- Changed to match confirmation screen -->
-    <string name="amount_to_receive_label">You Receive (est.):</string> <!-- Changed to match confirmation screen -->
-    <string name="receiving_account_on_voi_label">To Voi Account:</string> <!-- Changed to match confirmation screen -->
+    <string name="amount_to_send_label">You Send:</string>
+    <string name="amount_to_receive_label">You Receive (est.):</string>
+    <string name="receiving_account_on_voi_label">To Voi Account:</string>
+    <string name="bridge_verawallet_no_fee">Vera Wallet does not add any fees for bridge transactions.</string>
+    <string name="bridge_need_help">Need help? <annotation type="bridge_support_click">Learn more</annotation></string>
 </resources>

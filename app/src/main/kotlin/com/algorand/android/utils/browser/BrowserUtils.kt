@@ -62,6 +62,7 @@ const val ASSET_INBOX_SUPPORT_URL = "https://getvera.app/support/asset-inbox/"
 const val WATCH_SUPPORT_URL = "https://getvera.app/support/watch-accounts/"
 const val HD_ACCOUNT_SUPPORT_URL = "https://getvera.app/support/hd-wallets/"
 const val ALGO25_ACCOUNT_SUPPORT_URL = "https://getvera.app/support/create-new-account/"
+const val BRIDGE_SUPPORT_URL = "https://getvera.app/support/bridge/"
 
 const val HTTPS_PROTOCOL = "https://"
 const val HTTP_PROTOCOL = "http://"

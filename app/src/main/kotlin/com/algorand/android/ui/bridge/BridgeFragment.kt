@@ -27,6 +27,10 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import com.algorand.android.utils.toShortenedAddress
 import com.algorand.android.utils.ALGO_DECIMALS
+import com.algorand.android.utils.browser.BRIDGE_SUPPORT_URL
+import com.algorand.android.utils.browser.openUrl
+import android.text.method.LinkMovementMethod
+import androidx.core.content.ContextCompat
 
 @AndroidEntryPoint
 class BridgeFragment : DaggerBaseFragment(R.layout.fragment_bridge), BridgeAccountSelectionBottomSheet.Listener {
@@ -158,6 +162,10 @@ class BridgeFragment : DaggerBaseFragment(R.layout.fragment_bridge), BridgeAccou
             }
         }
 
+        // Set LinkMovementMethod for the support link TextView
+        // binding.bridgeSupportLinkTextView.movementMethod = android.text.method.LinkMovementMethod.getInstance()
+        setupSupportLinkText()
+
         // Amount Listener
         binding.bridgeAmountSection.bridgeAmountEditText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { /* NA */ }
@@ -166,6 +174,32 @@ class BridgeFragment : DaggerBaseFragment(R.layout.fragment_bridge), BridgeAccou
                 bridgeViewModel.onAmountChanged(s.toString().trim())
             }
         })
+    }
+
+    private fun setupSupportLinkText() {
+        binding.bridgeSupportLinkTextView.apply {
+            val linkTextColor = ContextCompat.getColor(context, R.color.link_primary)
+            val text = getString(R.string.bridge_need_help)
+            val spannableString = android.text.SpannableString(text)
+            val learnMoreStart = text.indexOf("Learn more")
+            val learnMoreEnd = learnMoreStart + "Learn more".length
+            val clickableSpan = object : android.text.style.ClickableSpan() {
+                override fun onClick(widget: android.view.View) {
+                    context?.openUrl(BRIDGE_SUPPORT_URL)
+                }
+                override fun updateDrawState(ds: android.text.TextPaint) {
+                    super.updateDrawState(ds)
+                    ds.color = linkTextColor
+                    ds.isUnderlineText = true
+                }
+            }
+            spannableString.setSpan(clickableSpan, learnMoreStart, learnMoreEnd, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            this.text = spannableString
+            highlightColor = ContextCompat.getColor(context, R.color.transparent)
+            isClickable = true
+            isFocusable = true
+            movementMethod = LinkMovementMethod.getInstance()
+        }
     }
 
     private fun updateUiForBridgeMode(isVoiToAlgo: Boolean) {

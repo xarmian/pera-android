@@ -17,12 +17,12 @@
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Voi to Algorand" />
+            android:text="@string/voi_to_algorand" />
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Algorand to Voi" />
+            android:text="@string/algorand_to_voi" />
     </com.google.android.material.tabs.TabLayout>
 
     <ScrollView
@@ -77,7 +77,15 @@
                 android:id="@+id/bridge_amount_section"
                 layout="@layout/layout_bridge_amount" />
 
-            <!-- Fees and Final Amount TextView will go here (these are now part of layout_bridge_amount.xml) -->
+            <TextView
+                android:id="@+id/bridge_support_link_text_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center_horizontal"
+                android:text="@string/bridge_need_help"
+                android:linksClickable="true"
+                android:textAppearance="?attr/textAppearanceBody2" />
 
         </LinearLayout>
     </ScrollView>
@@ -89,7 +97,7 @@
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
-        android:text="Bridge"
+        android:text="@string/bridge"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
