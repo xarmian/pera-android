@@ -12,7 +12,7 @@
 
 package com.algorand.wallet.block.data.repository
 
-// import com.algorand.android.network.MimirApi // Will be removed
+// import com.algorand.wallet.network.mimir.api.MimirApi // Will be removed
 import com.algorand.wallet.block.data.model.ShouldRefreshRequestBody
 import com.algorand.wallet.block.data.service.BlockPollingNetworkService // Added
 import com.algorand.wallet.block.domain.repository.BlockPollingRepository

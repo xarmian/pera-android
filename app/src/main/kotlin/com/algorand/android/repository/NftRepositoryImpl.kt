@@ -1,9 +1,9 @@
 package com.algorand.android.repository
 
 import com.algorand.android.models.Result
-import com.algorand.android.network.MimirApi
+import com.algorand.wallet.network.mimir.api.MimirApi
 import com.algorand.android.network.request
-import com.algorand.android.network.dto.MimirNftItemDto
+import com.algorand.wallet.network.mimir.model.MimirNftItemDto
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

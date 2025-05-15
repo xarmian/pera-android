@@ -1,8 +1,8 @@
 package com.algorand.android.mapper
 
 import com.algorand.android.models.ui.nft.NftDomainItem // Placeholder for domain model
-import com.algorand.android.network.dto.MimirNftItemDto
-import com.algorand.android.network.dto.MimirNftMetadataDto
+import com.algorand.wallet.network.mimir.model.MimirNftItemDto
+import com.algorand.wallet.network.mimir.model.MimirNftMetadataDto
 import com.algorand.android.utils.fromJson
 import com.google.gson.Gson
 import javax.inject.Inject

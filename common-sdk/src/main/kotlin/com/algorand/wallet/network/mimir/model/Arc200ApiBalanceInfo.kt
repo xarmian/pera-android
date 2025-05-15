@@ -1,4 +1,4 @@
-package com.algorand.android.network.dto
+package com.algorand.wallet.network.mimir.model
 
 import com.google.gson.annotations.SerializedName
 import java.math.BigDecimal

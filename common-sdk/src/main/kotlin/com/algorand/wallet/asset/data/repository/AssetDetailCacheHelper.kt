@@ -19,7 +19,9 @@ import com.algorand.wallet.asset.domain.model.CollectibleDetail
 
 internal interface AssetDetailCacheHelper {
 
-    suspend fun cacheAssetDetails(assetDetails: List<AssetResponse>)
+    suspend fun cacheAssetResponseDetails(assetDetails: List<AssetResponse>)
+
+    suspend fun cacheAssetDomainDetails(assetDetails: List<AssetDetail>)
 
     suspend fun getAssetDetail(assetId: Long): AssetDetail?
 

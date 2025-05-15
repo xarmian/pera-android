@@ -24,8 +24,8 @@ import com.algorand.android.modules.collectibles.detail.base.ui.model.BaseCollec
 import com.algorand.android.modules.collectibles.detail.base.ui.model.CollectibleTraitItem
 import com.algorand.android.modules.collectibles.detail.ui.model.NFTDetailPreview
 import com.algorand.android.modules.collectibles.util.deciders.NFTAmountFormatDecider
-import com.algorand.android.network.dto.MimirNftItemDto
-import com.algorand.android.network.dto.MimirNftMetadataDto
+import com.algorand.wallet.network.mimir.model.MimirNftItemDto
+import com.algorand.wallet.network.mimir.model.MimirNftMetadataDto
 import com.algorand.wallet.account.detail.domain.usecase.GetAccountDetail
 import java.math.BigDecimal
 import javax.inject.Inject

@@ -18,7 +18,7 @@ import com.algorand.android.modules.transactionhistory.data.mapper.PaginatedTran
 import com.algorand.android.modules.transactionhistory.domain.model.PaginatedTransactionsDTO
 import com.algorand.android.modules.transactionhistory.domain.repository.TransactionHistoryRepository
 import com.algorand.android.network.IndexerApi
-import com.algorand.android.network.MimirApi
+import com.algorand.wallet.network.mimir.api.MimirApi
 import com.algorand.android.network.request
 import com.algorand.android.utils.recordException
 import com.algorand.wallet.asset.domain.model.AssetType

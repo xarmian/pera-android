@@ -10,7 +10,7 @@
  * limitations under the License
  */
 
-package com.algorand.android.network
+package com.algorand.wallet.network.mimir.api
 
 import com.algorand.wallet.network.mimir.model.Arc200BalanceResponse
 import com.algorand.wallet.network.mimir.model.Arc200TokenDetailResponse

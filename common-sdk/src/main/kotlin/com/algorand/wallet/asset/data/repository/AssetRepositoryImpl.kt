@@ -30,6 +30,9 @@ import com.algorand.wallet.asset.domain.repository.AssetRepository
 import com.algorand.wallet.asset.domain.util.AssetConstants.ALGO_ID
 import com.algorand.wallet.foundation.PeraResult
 import com.algorand.wallet.foundation.network.utils.request
+import com.algorand.wallet.mapper.arc200.Arc200DtoToEntityMapper
+import com.algorand.wallet.network.mimir.api.MimirApi
+import com.algorand.wallet.network.mimir.model.Arc200TokenDetailResponse
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -48,18 +51,30 @@ internal class AssetRepositoryImpl @Inject constructor(
     private val collectibleDetailMapper: CollectibleDetailMapper,
     private val collectibleMediaDao: CollectibleMediaDao,
     private val collectibleTraitDao: CollectibleTraitDao,
+    private val mimirApi: MimirApi,
+    private val arc200DtoToEntityMapper: Arc200DtoToEntityMapper,
     private val coroutineDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : AssetRepository {
 
     override suspend fun fetchAsset(assetId: Long): PeraResult<Asset> {
         return withContext(coroutineDispatcher) {
             try {
-                val assetIds = listOf(assetId)
-                val response = assetDetailApi.getAssetsByIds(assetIds.toQueryString())
-                if (response.results.isEmpty()) {
-                    PeraResult.Error(Exception("No asset found with id: $assetId"))
+                val mimirResponse = mimirApi.getArc200Tokens(contractIds = assetId.toString())
+
+                if (mimirResponse.isSuccessful && mimirResponse.body() != null) {
+                    val tokenDetail = mimirResponse.body()?.tokens?.firstOrNull()
+                    if (tokenDetail == null) {
+                        PeraResult.Error(Exception("No asset found with id: $assetId from Mimir"))
+                    } else {
+                        val assetDetail = arc200DtoToEntityMapper.mapTokenDetailToAssetDetail(tokenDetail)
+                        if (assetDetail != null) {
+                            PeraResult.Success(assetDetail)
+                        } else {
+                            PeraResult.Error(Exception("Failed to map Arc200ApiTokenDetail to AssetDetail for id: $assetId"))
+                        }
+                    }
                 } else {
-                    mapAssetDetailResponseToResult(response.results.first())
+                    PeraResult.Error(Exception("Failed to fetch asset $assetId from Mimir: ${mimirResponse.code()} ${mimirResponse.message()}"))
                 }
             } catch (exception: Exception) {
                 PeraResult.Error(exception)
@@ -70,14 +85,30 @@ internal class AssetRepositoryImpl @Inject constructor(
     override suspend fun fetchAssets(assetIds: List<Long>): PeraResult<List<Asset>> {
         return try {
             withContext(coroutineDispatcher) {
-                val chunkedAssetIds = assetIds.toSet().chunked(MAX_ASSET_FETCH_COUNT)
-                val result = chunkedAssetIds.map {
-                    async {
-                        val response = assetDetailApi.getAssetsByIds(it.toQueryString())
-                        response.results.mapNotNull { assetMapper(it) }
+                val uniqueAssetIds = assetIds.toSet()
+                if (uniqueAssetIds.isEmpty()) return@withContext PeraResult.Success(emptyList())
+
+                val chunkedAssetIds = uniqueAssetIds.chunked(MAX_ASSET_FETCH_COUNT)
+                val mappedResults = mutableListOf<Asset>()
+
+                for (chunk in chunkedAssetIds) {
+                    val mimirResponse = mimirApi.getArc200Tokens(contractIds = chunk.joinToString(","))
+                    if (mimirResponse.isSuccessful && mimirResponse.body() != null) {
+                        val tokenDetailsList = mimirResponse.body()?.tokens
+                        if (!tokenDetailsList.isNullOrEmpty()) {
+                            tokenDetailsList.forEach { tokenDetail ->
+                                arc200DtoToEntityMapper.mapTokenDetailToAssetDetail(tokenDetail)?.let {
+                                    mappedResults.add(it)
+                                }
+                            }
+                        }
+                    } else {
+                        return@withContext PeraResult.Error(
+                            Exception("Failed to fetch assets from Mimir: ${mimirResponse.code()} ${mimirResponse.message()} for IDs: ${chunk.joinToString(",")}")
+                        )
                     }
-                }.awaitAll()
-                PeraResult.Success(result.flatten())
+                }
+                PeraResult.Success(mappedResults)
             }
         } catch (exception: Exception) {
             PeraResult.Error(exception)
@@ -93,15 +124,39 @@ internal class AssetRepositoryImpl @Inject constructor(
     }
 
     override suspend fun fetchAndCacheAssets(assetIds: List<Long>, includeDeleted: Boolean): PeraResult<Unit> {
+        // Note: `includeDeleted` parameter is not used with MimirApi.getArc200Tokens.
+        // The concept of "deleted" might be different for ARC-200 tokens.
         return try {
             withContext(coroutineDispatcher) {
-                val chunkedAssetIds = assetIds.toSet().chunked(MAX_ASSET_FETCH_COUNT)
-                chunkedAssetIds.map {
-                    async {
-                        val response = assetDetailApi.getAssetsByIds(it.toQueryString(), includeDeleted)
-                        assetDetailCacheHelper.cacheAssetDetails(response.results)
+                val uniqueAssetIds = assetIds.toSet()
+                if (uniqueAssetIds.isEmpty()) return@withContext PeraResult.Success(Unit)
+
+                val chunkedAssetIds = uniqueAssetIds.chunked(MAX_ASSET_FETCH_COUNT)
+                val allMappedAssetDetails = mutableListOf<AssetDetail>()
+
+                for (chunk in chunkedAssetIds) {
+                    val mimirResponse = mimirApi.getArc200Tokens(contractIds = chunk.joinToString(","))
+                    if (mimirResponse.isSuccessful && mimirResponse.body() != null) {
+                        val tokenDetailsList = mimirResponse.body()?.tokens
+                        if (!tokenDetailsList.isNullOrEmpty()) {
+                            tokenDetailsList.forEach { tokenDetail ->
+                                arc200DtoToEntityMapper.mapTokenDetailToAssetDetail(tokenDetail)?.let {
+                                    allMappedAssetDetails.add(it)
+                                }
+                            }
+                        } else {
+                            // Log or handle cases where a chunk returns no tokens, if necessary.
+                        }
+                    } else {
+                        return@withContext PeraResult.Error(
+                            Exception("Failed to fetch assets for caching from Mimir: ${mimirResponse.code()} ${mimirResponse.message()} for IDs: ${chunk.joinToString(",")}")
+                        )
                     }
-                }.awaitAll()
+                }
+
+                // Call the new overloaded cacheAssetDetails method
+                assetDetailCacheHelper.cacheAssetDomainDetails(allMappedAssetDetails)
+
                 PeraResult.Success(Unit)
             }
         } catch (exception: Exception) {

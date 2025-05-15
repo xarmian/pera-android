@@ -22,7 +22,7 @@ import com.algorand.android.network.IndexerApi
 import com.algorand.android.network.IndexerInterceptor
 import com.algorand.android.network.MobileAlgorandApi
 import com.algorand.android.network.MobileHeaderInterceptor
-import com.algorand.android.network.MimirApi
+import com.algorand.wallet.network.mimir.api.MimirApi
 import com.algorand.wallet.block.data.service.BlockPollingNetworkService
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder

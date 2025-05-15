@@ -1,7 +1,7 @@
-package com.algorand.android.mapper
+package com.algorand.wallet.mapper.arc200
 
-import com.algorand.android.network.dto.Arc200ApiBalanceInfo
-import com.algorand.android.network.dto.Arc200ApiTokenDetail
+import com.algorand.wallet.network.mimir.model.Arc200ApiBalanceInfo
+import com.algorand.wallet.network.mimir.model.Arc200ApiTokenDetail
 import com.algorand.wallet.account.info.data.database.model.AssetHoldingEntity
 import com.algorand.wallet.account.info.data.database.model.AssetStatusEntity
 import com.algorand.wallet.asset.data.database.model.AssetDetailEntity
@@ -118,6 +118,50 @@ class Arc200DtoToEntityMapper @Inject constructor() {
             assetInfo = assetInfo,
             verificationTier = verificationTier,
             assetType = AssetType.ARC200
+        )
+    }
+
+    /**
+     * Maps a domain AssetDetail (known to be ARC200) to AssetDetailEntity for caching.
+     */
+    fun mapDomainArc200AssetDetailToEntity(assetDetail: AssetDetail): AssetDetailEntity? {
+        if (assetDetail.assetType != AssetType.ARC200) return null // Should not happen if called correctly
+
+        val assetInfo = assetDetail.assetInfo ?: return null // Basic info must exist
+
+        val dbVerificationTier = when (assetDetail.verificationTier) {
+            VerificationTier.VERIFIED -> VerificationTierEntity.VERIFIED
+            VerificationTier.TRUSTED -> VerificationTierEntity.TRUSTED // Or map to VERIFIED/UNVERIFIED as per DB enum
+            VerificationTier.SUSPICIOUS -> VerificationTierEntity.SUSPICIOUS
+            VerificationTier.UNVERIFIED -> VerificationTierEntity.UNVERIFIED
+            VerificationTier.UNKNOWN -> VerificationTierEntity.UNKNOWN
+        }
+
+        return AssetDetailEntity(
+            assetId = assetDetail.id,
+            name = assetInfo.name.fullName,
+            unitName = assetInfo.name.shortName,
+            decimals = assetInfo.decimals,
+            usdValue = assetInfo.fiat?.usdValue, // Will be null based on current DTO->Domain mapping
+            maxSupply = assetInfo.supply?.max?.toPlainString() ?: "0", // Often "0" or not applicable for ARC200 like ASA max
+            explorerUrl = assetInfo.explorerUrl,
+            projectUrl = assetInfo.project?.url,
+            projectName = assetInfo.project?.name,
+            logoSvgUrl = assetInfo.logo?.svgUri,
+            logoUrl = assetInfo.logo?.uri,
+            discordUrl = assetInfo.social?.discordUrl,
+            telegramUrl = assetInfo.social?.telegramUrl,
+            twitterUsername = assetInfo.social?.twitterUsername,
+            description = assetInfo.description,
+            url = assetInfo.url,
+            totalSupply = assetInfo.supply?.total?.toPlainString(),
+            last24HoursAlgoPriceChangePercentage = assetInfo.fiat?.last24HoursAlgoPriceChangePercentage,
+            availableOnDiscoverMobile = assetInfo.isAvailableOnDiscoverMobile ?: false,
+            assetCreatorId = null, // assetInfo.creator.id is not typically stored in AssetDetailEntity
+            assetCreatorAddress = assetInfo.creator?.publicKey,
+            isVerifiedAssetCreator = assetInfo.creator?.isVerifiedAssetCreator,
+            verificationTier = dbVerificationTier,
+            assetType = DbAssetType.ARC200
         )
     }
 }

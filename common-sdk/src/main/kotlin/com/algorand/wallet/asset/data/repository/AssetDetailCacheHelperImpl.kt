@@ -27,6 +27,7 @@ import com.algorand.wallet.asset.data.model.AssetResponse
 import com.algorand.wallet.asset.domain.model.Asset
 import com.algorand.wallet.asset.domain.model.AssetDetail
 import com.algorand.wallet.asset.domain.model.CollectibleDetail
+import com.algorand.wallet.mapper.arc200.Arc200DtoToEntityMapper
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -47,10 +48,11 @@ internal class AssetDetailCacheHelperImpl @Inject constructor(
     private val collectibleEntityMapper: CollectibleEntityMapper,
     private val collectibleMediaEntityMapper: CollectibleMediaEntityMapper,
     private val collectibleTraitEntityMapper: CollectibleTraitEntityMapper,
+    private val arc200DtoToEntityMapper: Arc200DtoToEntityMapper,
     private val coroutineDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : AssetDetailCacheHelper {
 
-    override suspend fun cacheAssetDetails(assetDetails: List<AssetResponse>) {
+    override suspend fun cacheAssetResponseDetails(assetDetails: List<AssetResponse>) {
         withContext(coroutineDispatcher) {
             val assetDetailEntities = assetDetails.mapNotNull { assetDetailEntityMapper(it) }
             val collectibleEntities = assetDetails.mapNotNull { collectibleEntityMapper(it) }
@@ -61,6 +63,23 @@ internal class AssetDetailCacheHelperImpl @Inject constructor(
             collectibleMediaDao.insertAll(collectibleMediaEntities)
             assetDetailDao.insertAll(assetDetailEntities)
             collectibleTraitDao.insertAll(collectibleTraitEntities)
+        }
+    }
+
+    override suspend fun cacheAssetDomainDetails(assetDetails: List<AssetDetail>) {
+        withContext(coroutineDispatcher) {
+            // This path is specifically for AssetDetail domain models, likely ARC-200s from Mimir
+            // It will not cache collectible-specific info as AssetDetail from Mimir doesn't have it.
+            val assetDetailEntities = assetDetails.mapNotNull {
+                // We need Arc200DtoToEntityMapper here to map AssetDetail (domain) to AssetDetailEntity
+                // Assuming assetDetail.assetType helps decide the mapping if this cache helper becomes more generic
+                // For now, we rely on the caller (AssetRepositoryImpl) to send AssetDetail that are ARC200 type
+                arc200DtoToEntityMapper.mapDomainArc200AssetDetailToEntity(it)
+            }
+            if (assetDetailEntities.isNotEmpty()) {
+                assetDetailDao.insertAll(assetDetailEntities)
+            }
+            // NOTE: No collectible entities are processed here for ARC-200 AssetDetail from Mimir
         }
     }
 

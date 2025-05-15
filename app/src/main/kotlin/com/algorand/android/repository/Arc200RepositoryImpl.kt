@@ -1,8 +1,8 @@
 package com.algorand.android.repository
 
-import com.algorand.android.mapper.Arc200DtoToEntityMapper
-import com.algorand.android.network.MimirApi
-import com.algorand.android.network.dto.Arc200ApiBalanceInfo
+import com.algorand.wallet.mapper.arc200.Arc200DtoToEntityMapper
+import com.algorand.wallet.network.mimir.api.MimirApi
+import com.algorand.wallet.network.mimir.model.Arc200ApiBalanceInfo
 import com.algorand.wallet.account.info.data.database.dao.AssetHoldingDao
 import com.algorand.wallet.account.info.data.database.model.AssetHoldingEntity
 import com.algorand.wallet.asset.data.database.dao.AssetDetailDao
