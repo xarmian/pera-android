@@ -13,6 +13,7 @@
 package com.algorand.wallet.account.info.domain.model
 
 import com.algorand.wallet.asset.domain.model.AssetType
+import com.algorand.wallet.asset.domain.util.AssetConstants
 import java.math.BigInteger
 
 data class AssetHolding(
@@ -24,4 +25,8 @@ data class AssetHolding(
     val optedOutAtRound: Long?,
     val status: AssetStatus,
     val assetType: AssetType
-)
+) {
+    fun isAlgo(): Boolean = assetId == AssetConstants.ALGO_ID
+
+    fun isArc200(): Boolean = assetType == AssetType.ARC200
+}

@@ -84,6 +84,8 @@
     <string name="assets">Assets</string>
     <string name="send_format">Send %1$s</string>
     <string name="add_asset_fee">Add Asset Fee</string>
+    <string name="mbr_payment_fee">MBR Payment</string>
+    <string name="arc200_token_transfer">ARC-200 Token Transfer</string>
     <string name="unnamed">Unnamed</string>
     <string name="entered_address_is_not_valid">Entered address is not valid.</string>
     <string name="search_assets_id">Search Assets ID or Name</string>
@@ -536,7 +538,7 @@
     <string name="default_frozen">Default\nFrozen</string>
 
     <string name="transaction_details">Transaction Details</string>
-    <string name="show_pera_explorer">Show Voi Explorer</string>
+    <string name="show_pera_explorer">Show Voiager Explorer</string>
     <string name="view_nft_navigator">View on NFT Navigator</string>
     <string name="remainder_close_to">Remainder\nClose To</string>
 
@@ -901,7 +903,7 @@
         <item quantity="other">Sign Transactions</item>
     </plurals>
     <string name="signing_index_out_of_count">Signing %1$d out of %2$d…</string>
-    <string name="view_transaction_detail_in_pera_explorer">View Transaction detail in Voi Explorer</string>
+    <string name="view_transaction_detail_in_pera_explorer">View Transaction detail in Voiager Explorer</string>
     <string name="go_to_homepage">Go to Homepage</string>
 
     <string name="sending_the_transaction">Sending the transaction</string>
@@ -1562,4 +1564,23 @@
     <string name="receiving_account_on_voi_label">To Voi Account:</string>
     <string name="bridge_verawallet_no_fee">Vera Wallet does not add any fees for bridge transactions.</string>
     <string name="bridge_need_help">Need help? <annotation type="bridge_support_click">Learn more</annotation></string>
+
+    <string name="payment">Payment</string>
+    <string name="asset_transfer">Asset Transfer</string>
+
+    <string name="close_all_sessions_message">Are you sure you want to close all sessions?</string>
+    <string name="close_all_sessions_description">You will have to re-establish connection with the dApps.</string>
+
+    <!-- ARC-200 Transfer Preview Labels -->
+    <string name="transaction_type_label">Transaction Type</string>
+    <string name="arc200_contract_id_label">Contract ID</string>
+    <string name="arc200_method_name_label">Method Name</string>
+
+    <string name="session_successfully_killed">Session is successfully removed</string>
+    <string name="session_request_expired">Session request is expired</string>
+    <string name="recipient_not_opted_in_to_asset">Recipient has not opted-in to this asset.</string>
+    <string name="amount_with_unit">Amount %1$s VOI</string>
+    <string name="fee_with_unit">Fee %1$s VOI</string>
+    <string name="recipient_with_address">Recipient %1$s</string>
+    <string name="arc200_mbr_payment">MBR Payment</string>
 </resources>

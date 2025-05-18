@@ -27,6 +27,7 @@ import com.algorand.wallet.asset.data.model.AssetResponse
 import com.algorand.wallet.asset.domain.model.Asset
 import com.algorand.wallet.asset.domain.model.AssetDetail
 import com.algorand.wallet.asset.domain.model.CollectibleDetail
+import com.algorand.wallet.asset.domain.model.AssetType
 import com.algorand.wallet.mapper.arc200.Arc200DtoToEntityMapper
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
@@ -68,18 +69,28 @@ internal class AssetDetailCacheHelperImpl @Inject constructor(
 
     override suspend fun cacheAssetDomainDetails(assetDetails: List<AssetDetail>) {
         withContext(coroutineDispatcher) {
-            // This path is specifically for AssetDetail domain models, likely ARC-200s from Mimir
-            // It will not cache collectible-specific info as AssetDetail from Mimir doesn't have it.
-            val assetDetailEntities = assetDetails.mapNotNull {
-                // We need Arc200DtoToEntityMapper here to map AssetDetail (domain) to AssetDetailEntity
-                // Assuming assetDetail.assetType helps decide the mapping if this cache helper becomes more generic
-                // For now, we rely on the caller (AssetRepositoryImpl) to send AssetDetail that are ARC200 type
-                arc200DtoToEntityMapper.mapDomainArc200AssetDetailToEntity(it)
+            val entitiesToCache = assetDetails.mapNotNull { domainDetail ->
+                var entityToCache = arc200DtoToEntityMapper.mapDomainArc200AssetDetailToEntity(domainDetail)
+
+                // If it's an ARC200 and the incoming domain detail (likely from Arc200ApiTokenDetail)
+                // has no fiat/USD value, check if a USD value already exists in the DB
+                // (likely from a previous cache operation using Arc200ApiBalanceInfo).
+                if (domainDetail.assetType == AssetType.ARC200 &&
+                    domainDetail.assetInfo?.fiat?.usdValue == null &&
+                    entityToCache != null
+                ) {
+                    val existingEntity = assetDetailDao.getByAssetId(domainDetail.id)
+                    if (existingEntity?.usdValue != null) {
+                        // Preserve the existing USD value.
+                        entityToCache = entityToCache.copy(usdValue = existingEntity.usdValue)
+                    }
+                }
+                entityToCache
             }
-            if (assetDetailEntities.isNotEmpty()) {
-                assetDetailDao.insertAll(assetDetailEntities)
+
+            if (entitiesToCache.isNotEmpty()) {
+                assetDetailDao.insertAll(entitiesToCache)
             }
-            // NOTE: No collectible entities are processed here for ARC-200 AssetDetail from Mimir
         }
     }
 

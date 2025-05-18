@@ -33,5 +33,11 @@ data class AssetTransferPreview(
     val fee: Long,
     val note: String? = null,
     val isNoteEditable: Boolean,
-    val targetAccountDetail: AccountDetail
+    val targetAccountDetail: AccountDetail,
+    // ARC-200 Specific Fields
+    val transactionTypeLabel: AnnotatedString? = null,
+    val arc200ContractId: Long? = null,
+    val arc200MethodName: String? = null,
+    val mbrPaymentAmount: BigInteger? = null,
+    val simulationResponse: String? = null
 )

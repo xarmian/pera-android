@@ -26,6 +26,7 @@ import com.algorand.wallet.asset.domain.usecase.FetchAsset
 import com.algorand.wallet.asset.domain.usecase.GetAsset
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
+import java.math.BigInteger
 
 class AssetTransferPreviewUseCase @Inject constructor(
     private val assetTransferPreviewMapper: AssetTransferPreviewMapper,
@@ -39,7 +40,8 @@ class AssetTransferPreviewUseCase @Inject constructor(
 
     suspend fun getAssetTransferPreview(
         transactionDataList: List<TransactionSignData>,
-        receiverMinBalanceFee: Long? = null
+        receiverMinBalanceFee: Long? = null,
+        mbrPaymentAmount: BigInteger? = null
     ): AssetTransferPreview {
         val fee = transactionDataList.sumOf {
             it.calculatedFee ?: (it as? TransactionSignData.Send)?.projectedFee
@@ -61,7 +63,9 @@ class AssetTransferPreviewUseCase @Inject constructor(
             assetShortName = asset?.shortName ?: sendTransactionData.assetId.toString(),
             assetDecimals = asset?.assetInfo?.decimals ?: 0,
             fee = fee,
-            targetAccountDetail = getAccountDetail(sendTransactionData.targetUser.publicKey)
+            targetAccountDetail = getAccountDetail(sendTransactionData.targetUser.publicKey),
+            mbrPaymentAmount = mbrPaymentAmount,
+            simulationResponse = sendTransactionData.simulationResponse
         )
     }
 

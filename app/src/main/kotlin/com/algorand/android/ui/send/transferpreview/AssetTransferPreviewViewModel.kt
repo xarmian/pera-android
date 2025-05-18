@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import com.algorand.android.models.Arc200TransferReviewUiModel
 
 @HiltViewModel
 class AssetTransferPreviewViewModel @Inject constructor(
@@ -45,6 +46,7 @@ class AssetTransferPreviewViewModel @Inject constructor(
     private val transactionSignManager: TransactionSignManager,
     private val getTransactionSigner: GetTransactionSigner,
     private val getAccountInformation: GetAccountInformation,
+    private val arc200TransferSimulator: com.algorand.android.models.Arc200TransferSimulator,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -54,6 +56,10 @@ class AssetTransferPreviewViewModel @Inject constructor(
     private val _sendAlgoResponseFlow = MutableStateFlow<Event<Resource<String>>?>(null)
     val sendAlgoResponseFlow: StateFlow<Event<Resource<String>>?> = _sendAlgoResponseFlow
 
+    private val _arc200TransferReviewUiModelFlow = MutableStateFlow<Arc200TransferReviewUiModel?>(null)
+    val arc200TransferReviewUiModelFlow: StateFlow<Arc200TransferReviewUiModel?> = _arc200TransferReviewUiModelFlow
+
+    // Retain old preview flow for non-ARC-200 flows
     private val _assetTransferPreviewFlow = MutableStateFlow<AssetTransferPreview?>(null)
     val assetTransferPreviewFlow: StateFlow<AssetTransferPreview?> = _assetTransferPreviewFlow
 
@@ -75,11 +81,47 @@ class AssetTransferPreviewViewModel @Inject constructor(
         receiverMinBalanceFee: Long? = null
     ) {
         viewModelScope.launch {
-            val signedTransactionPreview = assetTransferPreviewUserCase.getAssetTransferPreview(
-                transactionList,
-                receiverMinBalanceFee
-            )
-            _assetTransferPreviewFlow.emit(signedTransactionPreview)
+            val firstSend = transactionList.firstOrNull() as? TransactionSignData.Send
+            val isArc200 = firstSend?.assetType?.name == "ARC200"
+            if (isArc200 && firstSend != null) {
+                // Simulate the ARC-200 transfer and get the simulation result
+                val simulationResult = arc200TransferSimulator.simulateArc200TransferWithMbrCheck(
+                    senderAddress = firstSend.senderAccountAddress,
+                    receiverAddress = firstSend.targetUser.publicKey,
+                    arc200AppId = firstSend.assetId,
+                    amount = firstSend.amount,
+                    suggestedParams = null // Use appropriate params if available
+                )
+                val mbrAmount = simulationResult.mbrAmount?.let { java.math.BigInteger.valueOf(it) }
+
+                // Create updated transaction data with simulation response
+                val updatedTransactionList = transactionList.map { txData ->
+                    if (txData is TransactionSignData.Send) {
+                        txData.copy(simulationResponse = simulationResult.simulationResponse)
+                    } else {
+                        txData
+                    }
+                }
+
+                val preview = assetTransferPreviewUserCase.getAssetTransferPreview(
+                    updatedTransactionList,
+                    receiverMinBalanceFee,
+                    mbrPaymentAmount = mbrAmount
+                )
+                _arc200TransferReviewUiModelFlow.emit(
+                    Arc200TransferReviewUiModel.Single(
+                        preview = preview,
+                        fee = preview.fee,
+                        totalFee = preview.fee
+                    )
+                )
+            } else {
+                val signedTransactionPreview = assetTransferPreviewUserCase.getAssetTransferPreview(
+                    transactionList,
+                    receiverMinBalanceFee
+                )
+                _assetTransferPreviewFlow.emit(signedTransactionPreview)
+            }
         }
     }
 
@@ -171,15 +213,18 @@ class AssetTransferPreviewViewModel @Inject constructor(
     }
 
     fun getTransactionData(): TransactionSignData.Send {
+        val simResponse = transactionData.simulationResponse
         return if (_assetTransferPreviewFlow.value?.isNoteEditable == true) {
             transactionData.copy(
                 note = _assetTransferPreviewFlow.value?.note,
-                xnote = null
+                xnote = null,
+                simulationResponse = simResponse
             )
         } else {
             transactionData.copy(
                 note = null,
-                xnote = _assetTransferPreviewFlow.value?.note
+                xnote = _assetTransferPreviewFlow.value?.note,
+                simulationResponse = simResponse
             )
         }
     }

@@ -137,6 +137,48 @@
             app:layout_constraintTop_toBottomOf="@id/toUserView"
             tools:text="0.00001 ALGO" />
 
+        <!-- MBR Payment Section (initially gone) -->
+
+        <!-- ARC-200 MBR Payment Details Group (initially gone) -->
+        <TextView
+            android:id="@+id/arc200MbrPaymentTitleTextView"
+            style="@style/TextAppearance.Description"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/arc200_mbr_payment"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/feeAmountView"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="@id/arc200MbrPaymentAmountView"
+            tools:text="@string/arc200_mbr_payment"
+            tools:visibility="visible" />
+
+        <com.algorand.android.customviews.AlgorandAmountView
+            android:id="@+id/arc200MbrPaymentAmountView"
+            style="@style/TextAppearance.Body.Mono"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_xlarge"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0"
+            app:layout_constraintStart_toStartOf="@id/labelBarrier"
+            app:layout_constraintTop_toBottomOf="@id/feeAmountView"
+            tools:text="0.00001 ALGO"
+            tools:visibility="visible" />
+
+        <TextView
+            android:id="@+id/arc200MbrExplanationTextView"
+            style="@style/TextAppearance.Description"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Recipient needs box pre-funding (MBR payment) to receive ARC-200 tokens."
+            android:textColor="@color/text_gray"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/arc200MbrPaymentAmountView"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
         <View
             android:id="@+id/typeDivider"
             android:layout_width="0dp"
@@ -145,7 +187,100 @@
             android:background="@color/layer_gray_lighter"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/feeAmountView" />
+            app:layout_constraintTop_toBottomOf="@id/arc200MbrExplanationTextView" />
+
+        <!-- ARC-200 Transaction Type -->
+        <TextView
+            android:id="@+id/arc200TransactionTypeLabelTextView"
+            style="@style/TextAppearance.Description"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="@string/transaction_type_label"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/typeDivider"
+            tools:visibility="visible" />
+
+        <TextView
+            android:id="@+id/arc200TransactionTypeTextView"
+            style="@style/TextAppearance.Body.Mono"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_marginStart="@dimen/spacing_xlarge"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@id/labelBarrier"
+            app:layout_constraintTop_toTopOf="@id/arc200TransactionTypeLabelTextView"
+            app:layout_constraintBottom_toBottomOf="@id/arc200TransactionTypeLabelTextView"
+            tools:text="ARC-200 Token Transfer"
+            tools:visibility="visible" />
+
+        <!-- ARC-200 Contract ID -->
+        <TextView
+            android:id="@+id/arc200ContractIdLabelTextView"
+            style="@style/TextAppearance.Description"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_normal"
+            android:text="@string/arc200_contract_id_label"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/arc200TransactionTypeTextView"
+            tools:visibility="visible" />
+
+        <TextView
+            android:id="@+id/arc200ContractIdTextView"
+            style="@style/TextAppearance.Body.Mono"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_marginStart="@dimen/spacing_xlarge"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@id/labelBarrier"
+            app:layout_constraintTop_toTopOf="@id/arc200ContractIdLabelTextView"
+            app:layout_constraintBottom_toBottomOf="@id/arc200ContractIdLabelTextView"
+            tools:text="123456789"
+            tools:visibility="visible" />
+
+        <!-- ARC-200 Method Name -->
+        <TextView
+            android:id="@+id/arc200MethodNameLabelTextView"
+            style="@style/TextAppearance.Description"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_normal"
+            android:text="@string/arc200_method_name_label"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/arc200ContractIdTextView"
+            tools:visibility="visible" />
+
+        <TextView
+            android:id="@+id/arc200MethodNameTextView"
+            style="@style/TextAppearance.Body.Mono"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_marginStart="@dimen/spacing_xlarge"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@id/labelBarrier"
+            app:layout_constraintTop_toTopOf="@id/arc200MethodNameLabelTextView"
+            app:layout_constraintBottom_toBottomOf="@id/arc200MethodNameLabelTextView"
+            tools:text="arc200_transfer"
+            tools:visibility="visible" />
+
+        <View
+            android:id="@+id/arc200DetailsDivider"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginTop="28dp"
+            android:background="@color/layer_gray_lighter"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/arc200MethodNameTextView"
+            tools:visibility="visible" />
 
         <TextView
             android:id="@+id/balanceLabelTextView"
@@ -170,7 +305,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0"
             app:layout_constraintStart_toStartOf="@id/labelBarrier"
-            app:layout_constraintTop_toBottomOf="@id/typeDivider"
+            app:layout_constraintTop_toBottomOf="@id/arc200DetailsDivider"
             tools:text="$191.00"
             tools:visibility="visible" />
 
@@ -261,7 +396,8 @@
             android:layout_height="wrap_content"
             app:barrierDirection="end"
             app:constraint_referenced_ids="amountLabelTextView, accountLabelTextView,
-            toLabelTextView, balanceLabelTextView, noteLabelTextView" />
+            toLabelTextView, balanceLabelTextView, noteLabelTextView,
+            arc200TransactionTypeLabelTextView, arc200ContractIdLabelTextView, arc200MethodNameLabelTextView" />
 
         <androidx.constraintlayout.widget.Group
             android:id="@+id/noteGroup"

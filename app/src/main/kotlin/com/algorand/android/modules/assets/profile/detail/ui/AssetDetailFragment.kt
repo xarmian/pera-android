@@ -320,7 +320,7 @@ class AssetDetailFragment : BaseFragment(R.layout.fragment_asset_detail), AssetA
             }
             sendButton.apply {
                 setOnClickListener { assetDetailViewModel.onSendClick() }
-                isVisible = false
+                isVisible = true
             }
             receiveButton.setOnClickListener { navToShowQRBottomSheet() }
         }

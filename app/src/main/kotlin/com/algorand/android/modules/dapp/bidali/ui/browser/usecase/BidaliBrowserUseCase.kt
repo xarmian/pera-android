@@ -28,6 +28,7 @@ import com.algorand.wallet.account.core.domain.usecase.GetAccountMinBalance
 import com.algorand.wallet.account.core.domain.usecase.GetTransactionSigner
 import com.algorand.wallet.account.custom.domain.usecase.GetAccountCustomName
 import com.algorand.wallet.account.info.domain.usecase.GetAccountInformation
+import com.algorand.wallet.asset.domain.model.AssetType
 import com.algorand.wallet.asset.domain.usecase.GetAsset
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -81,6 +82,7 @@ class BidaliBrowserUseCase @Inject constructor(
             minimumBalance = getAccountMinBalance(selectedAccount.address).toLong(),
             amount = amountAsBigInteger,
             assetId = selectedAssetId,
+            assetType = AssetType.ASA,
             xnote = paymentRequest.extraId,
             targetUser = TargetUser(
                 publicKey = paymentRequest.address,

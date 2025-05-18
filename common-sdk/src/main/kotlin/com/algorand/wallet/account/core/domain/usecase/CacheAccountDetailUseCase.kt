@@ -26,9 +26,19 @@ internal class CacheAccountDetailUseCase @Inject constructor(
     override suspend fun invoke(address: String): PeraResult<AccountInformation> {
         val accountInformationMap = fetchAndCacheAccountInformation(listOf(address))
         val accountInformation = accountInformationMap[address]
-            ?: return PeraResult.Error(Exception("Failed to fetch account information"))
-        val accountAssetHoldingIds = accountInformation.assetHoldings.map { it.assetId }
-        fetchAndCacheAssets(accountAssetHoldingIds, false)
+            ?: return PeraResult.Error(Exception("Failed to fetch account information for $address"))
+        
+        // Filter out ARC200 assets before calling fetchAndCacheAssets
+        val nonArc200AssetHoldingIds = accountInformation.assetHoldings
+            .filterNot { it.isArc200() }
+            .map { it.assetId }
+
+        if (nonArc200AssetHoldingIds.isNotEmpty()) {
+            fetchAndCacheAssets(nonArc200AssetHoldingIds, false)
+        }
+        
+        // The AccountInformation object already contains ARC200 holdings and their details (including price if available)
+        // because Arc200BalanceCacheUpdater (called by FetchAndCacheAccountInformation) now handles them.
         return PeraResult.Success(accountInformation)
     }
 }

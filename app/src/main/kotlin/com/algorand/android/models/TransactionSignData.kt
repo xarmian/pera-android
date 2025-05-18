@@ -15,8 +15,10 @@ package com.algorand.android.models
 import android.os.Parcelable
 import com.algorand.android.utils.MIN_FEE
 import com.algorand.wallet.account.core.domain.model.TransactionSigner
+import com.algorand.wallet.asset.domain.model.AssetType
 import java.math.BigInteger
 import kotlinx.parcelize.Parcelize
+import android.util.Log
 
 @Parcelize
 sealed class TransactionSignData : Parcelable {
@@ -49,11 +51,23 @@ sealed class TransactionSignData : Parcelable {
         val minimumBalance: Long,
         val senderAccountName: String,
         val assetId: Long,
+        val assetType: AssetType?,
         val note: String? = null,
         val xnote: String? = null,
         var isMax: Boolean = false,
-        var projectedFee: Long = MIN_FEE
+        var projectedFee: Long = MIN_FEE,
+        val senderSpecificAssetAmount: BigInteger? = null,
+        var simulationResponse: String? = null
     ) : TransactionSignData() {
+
+        init {
+            if (assetType == AssetType.ARC200 && senderSpecificAssetAmount == null) {
+                Log.d("TransactionSignData", "ARC200 Send created with null senderSpecificAssetAmount. AssetId: $assetId, Amount: $amount", Exception("StackTrace"))
+            }
+            // General log for all Send creations if needed for broader debugging, can be commented out.
+            // Log.d("TransactionSignData", "Send created: assetId=$assetId, assetType=$assetType, senderSpecificAssetAmount=$senderSpecificAssetAmount", Exception("StackTraceLite"))
+        }
+
         override fun getSignedTransactionDetail(signedTransactionData: ByteArray): SignedTransactionDetail {
             return SignedTransactionDetail.Send(
                 signedTransactionData = signedTransactionData,

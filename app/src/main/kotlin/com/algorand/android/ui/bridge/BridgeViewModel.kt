@@ -44,6 +44,7 @@ import kotlin.math.pow
 import com.algorand.android.usecase.AccountAddressUseCase
 import com.algorand.android.models.BaseAccountAddress
 import com.algorand.android.utils.VOI_DECIMALS
+import com.algorand.wallet.asset.domain.model.AssetType
 
 enum class TransactionStatus {
     IDLE,
@@ -532,6 +533,7 @@ class BridgeViewModel @Inject constructor(
             minimumBalance = senderMinimumBalance,
             senderAccountName = fromVoiAccount.customAccountInfo?.customName ?: fromVoiAccount.address.toShortenedAddress(),
             assetId = AssetConstants.ALGO_ID, // For native Voi (treated as Algo on Voi network)
+            assetType = AssetType.ASA,
             xnote = unsignedTxnData.noteString,
             projectedFee = feeAmountAtomic.toLong()
         )

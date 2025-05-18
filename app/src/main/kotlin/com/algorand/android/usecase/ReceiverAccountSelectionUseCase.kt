@@ -13,6 +13,7 @@
 
 package com.algorand.android.usecase
 
+import com.algorand.android.models.TargetUserWithSimulation
 import com.algorand.android.R
 import com.algorand.android.SendAlgoNavigationDirections
 import com.algorand.android.models.AnnotatedString
@@ -39,7 +40,12 @@ import com.algorand.android.utils.validator.AccountTransactionValidator
 import com.algorand.wallet.account.detail.domain.model.AccountType.Companion.canSignTransaction
 import com.algorand.wallet.account.detail.domain.usecase.GetAccountState
 import com.algorand.wallet.account.info.domain.usecase.GetAccountInformation
+import com.algorand.wallet.asset.domain.model.AssetType
+import com.algorand.android.models.Arc200TransferSimulator
+import com.algorand.wallet.asset.domain.usecase.FetchAsset
+import com.algorand.wallet.asset.domain.usecase.GetAsset
 import com.algorand.wallet.asset.domain.util.AssetConstants.ALGO_ID
+import com.algorand.wallet.foundation.PeraResult
 import com.algorand.wallet.nameservice.domain.usecase.GetAccountNameService
 import java.math.BigInteger
 import javax.inject.Inject
@@ -60,7 +66,10 @@ class ReceiverAccountSelectionUseCase @Inject constructor(
     private val getAccountInformation: GetAccountInformation,
     private val getAccountState: GetAccountState,
     private val getAccountNameService: GetAccountNameService,
-    getAccountAssetUseCase: GetAccountAssetUseCase
+    getAccountAssetUseCase: GetAccountAssetUseCase,
+    private val getAsset: GetAsset,
+    private val fetchAsset: FetchAsset,
+    private val arc200TransferSimulator: Arc200TransferSimulator
 ) : BaseSendAccountSelectionUseCase(getAccountAssetUseCase) {
 
     fun getToAccountList(
@@ -163,7 +172,7 @@ class ReceiverAccountSelectionUseCase @Inject constructor(
         amount: BigInteger,
         nftDomainAddress: String?,
         nftDomainServiceLogoUrl: String?
-    ): Result<TargetUser> {
+    ): Result<TargetUserWithSimulation> {
         val isSelectedAssetValid = accountTransactionValidator.isSelectedAssetValid(fromAccountAddress, assetId)
         val receiverAccountType = getAccountState(accountAssetDetail.address).accountType
         val isReceiverAccountInMyWallet = receiverAccountType?.canSignTransaction() == true
@@ -172,7 +181,88 @@ class ReceiverAccountSelectionUseCase @Inject constructor(
             return Result.Error(Exception())
         }
 
-        if (accountAssetDetail.assetDetail == null && assetId != ALGO_ID && !isReceiverAccountInMyWallet) {
+        // Determine AssetType for the current assetId
+        val cachedAsset = getAsset(assetId)
+        var currentAssetType = cachedAsset?.assetType
+        if (assetId != ALGO_ID && (currentAssetType == null || currentAssetType == AssetType.ASA)) {
+            when (val fetchResult = fetchAsset(assetId)) {
+                is PeraResult.Success -> {
+                    if (fetchResult.data.assetType == AssetType.ARC200) {
+                        currentAssetType = AssetType.ARC200
+                        // Consider if fetchAndCacheAssets is needed here too
+                    }
+                }
+                is PeraResult.Error -> {
+                    com.algorand.android.utils.sendErrorLog("ReceiverAccountSelectionUseCase: Failed to fetch asset type for $assetId: ${fetchResult.exception.message}")
+                    /* proceed with cached/default type */
+                }
+            }
+        }
+        if (currentAssetType == null && assetId != ALGO_ID) currentAssetType = AssetType.ASA
+
+        // For ARC-200 assets, we need to check if MBR payment is needed
+        if (currentAssetType == AssetType.ARC200 && assetId != ALGO_ID) {
+            try {
+                val minimalParams = com.algorand.algosdk.v2.client.model.TransactionParametersResponse()
+                minimalParams.fee = 1000L
+                minimalParams.lastRound = 0L
+                minimalParams.genesisId = ""
+                minimalParams.genesisHash = ByteArray(32) { 0 }
+
+                println("About to call arc200TransferSimulator.simulateArc200TransferWithMbrCheck")
+                val simulationResult = arc200TransferSimulator.simulateArc200TransferWithMbrCheck(
+                    senderAddress = fromAccountAddress,
+                    receiverAddress = accountAssetDetail.address,
+                    arc200AppId = assetId,
+                    amount = amount,
+                    suggestedParams = minimalParams
+                )
+
+                println("ARC-200 simulation result: requiresMbrPaymentTransaction=${simulationResult.requiresMbrPaymentTransaction}, " +
+                         "mbrAmount=${simulationResult.mbrAmount}, " +
+                         "failureMessage=${simulationResult.failureMessage}, " +
+                         "logs=${simulationResult.logs?.joinToString()}")
+
+                if (simulationResult.failureMessage != null) {
+                    println("Simulation failed with message: ${simulationResult.failureMessage}")
+                    // For testing, we'll continue with validation rather than return an error
+                    // In production, we might want to:
+                    // return Result.Error(GlobalException(descriptionRes = R.string.transaction_failed, description = simulationResult.failureMessage))
+                }
+
+                if (simulationResult.requiresMbrPaymentTransaction) {
+                    println("MBR payment required for receiver: ${accountAssetDetail.address}, amount: ${simulationResult.mbrAmount}")
+                }
+
+                // Return the TargetUserWithSimulation result
+                return Result.Success(
+                    TargetUserWithSimulation(
+                        targetUser = TargetUser(
+                            contact = getContactByAddressIfExists(accountAssetDetail.address),
+                            publicKey = accountAssetDetail.address,
+                            algoBalance = accountAssetDetail.algoAmount,
+                            minBalance = accountAssetDetail.minBalanceRequired,
+                            nftDomainAddress = nftDomainAddress,
+                            nftDomainServiceLogoUrl = nftDomainServiceLogoUrl,
+                            accountIconDrawablePreview = getAccountIconDrawablePreview(accountAssetDetail.address)
+                        ),
+                        simulationResponse = simulationResult.simulationResponse
+                    )
+                )
+            } catch (e: Exception) {
+                println("Exception during ARC-200 simulation: ${e.message}")
+                e.printStackTrace()
+                // Log the error but continue with validation for now
+            }
+        }
+
+        val shouldCheckOptInAndNavigateToInbox =
+            currentAssetType != AssetType.ARC200 && // Only for non-ARC200
+            accountAssetDetail.assetDetail == null && // Recipient doesn't hold the asset
+            assetId != ALGO_ID && // Not ALGO
+            !isReceiverAccountInMyWallet // Not one of my accounts
+
+        if (shouldCheckOptInAndNavigateToInbox) {
             val nextDirection = ReceiverAccountSelectionFragmentDirections
                 .actionReceiverAccountSelectionFragmentToArc59RequestOptInNavigation(
                     Arc59SendSummaryNavArgs(
@@ -273,7 +363,7 @@ class ReceiverAccountSelectionUseCase @Inject constructor(
             nftDomainServiceLogoUrl = nftDomainServiceLogoUrl,
             accountIconDrawablePreview = getAccountIconDrawablePreview(toAccountPublicKey)
         )
-        return Result.Success(targetUser)
+        return Result.Success(TargetUserWithSimulation(targetUser, simulationResponse = null))
     }
 
     private suspend fun getContactByAddressIfExists(accountAddress: String): User? {

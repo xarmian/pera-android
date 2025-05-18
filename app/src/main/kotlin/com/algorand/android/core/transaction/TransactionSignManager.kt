@@ -69,6 +69,44 @@ import java.net.SocketException
 import javax.inject.Inject
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
+import com.algorand.android.utils.isValidAddress
+import com.algorand.android.utils.makeApplicationCallTxnWithAbi
+import com.algorand.android.utils.toSuggestedParams
+import com.algorand.wallet.asset.domain.model.AssetType
+import com.algorand.wallet.contract.arc200.Arc200Abi
+import android.util.Log
+import org.json.JSONObject
+
+private data class SimulationBoxReference(
+    val appId: Long,
+    val nameBase64: String
+)
+
+private fun extractBoxReferencesFromSimulation(simulationResponse: String, transactionAppId: Long): List<SimulationBoxReference> {
+    val boxList = mutableListOf<SimulationBoxReference>()
+    try {
+        val json = JSONObject(simulationResponse)
+        val txnGroups = json.getJSONArray("txn-groups")
+        if (txnGroups.length() == 0) return emptyList()
+
+        val firstGroup = txnGroups.getJSONObject(0)
+        val unnamedResources = firstGroup.getJSONObject("unnamed-resources-accessed")
+        val boxes = unnamedResources.getJSONArray("boxes")
+
+        for (i in 0 until boxes.length()) {
+            val box = boxes.getJSONObject(i)
+            boxList.add(
+                SimulationBoxReference(
+                    appId = transactionAppId,
+                    nameBase64 = box.getString("name")
+                )
+            )
+        }
+    } catch (e: Exception) {
+        Log.e("Simulation", "Error extracting box references", e)
+    }
+    return boxList
+}
 
 @Suppress("LongParameterList")
 class TransactionSignManager @Inject constructor(
@@ -88,6 +126,39 @@ class TransactionSignManager @Inject constructor(
 
     private var transactionParams: TransactionParams? = null
     var transactionDataList: List<TransactionSignData>? = null
+
+    private fun logTransactionBoxesForDebug(tag: String, txnBytes: ByteArray) {
+        try {
+            // Decode the transaction from bytes using Encoder
+            val txn = com.algorand.algosdk.util.Encoder.decodeFromMsgPack(txnBytes,
+                com.algorand.algosdk.transaction.Transaction::class.java)
+
+            Log.d(tag, "Transaction type: ${txn.type}")
+            Log.d(tag, "Sender: ${txn.sender}")
+
+            // For ApplicationCall transactions, log box references
+            if (txn.type == com.algorand.algosdk.transaction.Transaction.Type.ApplicationCall) {
+                Log.d(tag, "AppId: ${txn.applicationId}")
+
+                // Log boxes if they exist
+                txn.boxReferences?.forEachIndexed { index, boxRef ->
+                    val nameHex = boxRef.name?.joinToString("") { "%02x".format(it) } ?: "null"
+                    val nameBase64 = boxRef.name?.let {
+                        com.algorand.algosdk.util.Encoder.encodeToBase64(it)
+                    } ?: "null"
+
+                    Log.d(tag, "Box[$index]: appId=${boxRef.appIndex}, name(hex)=$nameHex, name(base64)=$nameBase64")
+                } ?: Log.d(tag, "No box references in transaction")
+            }
+
+            // Also log the full transaction JSON for reference
+            Log.d(tag, "Transaction JSON: ${com.algorand.algosdk.util.Encoder.encodeToJson(txn)}")
+        } catch (e: Exception) {
+            Log.e(tag, "Error logging transaction boxes: ${e.message}")
+            // Log the raw bytes if we can't decode the transaction
+            Log.d(tag, "Raw transaction bytes: ${txnBytes.joinToString("") { "%02x".format(it) }}")
+        }
+    }
 
     private val scanCallback = object : CustomScanCallback() {
         override fun onLedgerScanned(
@@ -257,12 +328,10 @@ class TransactionSignManager @Inject constructor(
                 val transactionBytes = transactionByteArray ?: return handleSignError()
                 val hdKey = getLocalAccount(signer.address) as? LocalAccount.HdKey ?: return handleSignError()
                 val seed = getHdSeed(seedId = hdKey.seedId) ?: return handleSignError()
-
-                val transactionSignedByteArray = signHdKeyTransaction.signTransaction(
+                val signedTransaction = signHdKeyTransaction.signTransaction(
                     transactionBytes, seed, hdKey.account, hdKey.change, hdKey.keyIndex
                 ) ?: return handleSignError()
-
-                checkAndCacheSignedTransaction(transactionSignedByteArray)
+                checkAndCacheSignedTransaction(signedTransaction)
             }
             is TransactionSigner.LedgerBle -> sendTransactionWithLedger(signer as TransactionSigner.LedgerBle)
             is TransactionSigner.SignerNotFound -> {
@@ -324,43 +393,92 @@ class TransactionSignManager @Inject constructor(
     }
 
     @SuppressWarnings("LongMethod")
-    suspend fun TransactionSignData.createTransaction(): ByteArray? {
+    suspend fun TransactionSignData.createTransaction(simulationResponse: String? = null): ByteArray? {
+        if (senderAccountAddress.isValidAddress().not()) return null
+
         val transactionParams = getTransactionParams(this) ?: return null
-        this@TransactionSignManager.transactionParams = transactionParams
 
-        val createdTransactionByteArray = when (this) {
+        // For ARC-200 transactions, ensure we have a simulation response
+        var txSimulationResponse: String? = null
+        if (this is TransactionSignData.Send && this.assetType?.name == "ARC200" && this.assetId != ALGO_ID) {
+            // First check if we have a simulation response in the transaction data
+            txSimulationResponse = this.simulationResponse ?: simulationResponse
+
+            if (txSimulationResponse.isNullOrBlank()) {
+                Log.e("TransactionSignManager", "Missing simulation response for ARC-200 transaction")
+                return null
+            }
+
+            Log.d("TransactionSignManager", "Using simulation response for ARC-200 transaction")
+
+            // Ensure the simulation response is set on the transaction data for later use
+            if (this.simulationResponse == null) {
+                this.simulationResponse = txSimulationResponse
+            }
+        }
+
+        val createdTransactionByteArray: ByteArray? = when (this) {
             is TransactionSignData.Send -> {
-                projectedFee = calculatedFee ?: transactionParams.getTxFee()
-                // calculate isMax before calculating real amount because while isMax true fee will be deducted.
-                isMax = isTransactionMax(amount, senderAccountAddress, assetId)
-                // TODO: 10.08.2022 Get all those calculations from a single AmountTransactionValidationUseCase
-                amount = calculateAmount(
-                    projectedAmount = amount,
-                    isMax = isMax,
-                    isSenderRekeyedToAnotherAccount = isSenderRekeyed(),
-                    senderMinimumBalance = minimumBalance,
-                    assetId = assetId,
-                    fee = projectedFee
-                ) ?: return null
+                if (targetUser?.publicKey?.isValidAddress()?.not() != false) return null
+                if (this.assetType == AssetType.ARC200 && this.assetId != ALGO_ID) {
+                    val noteByteArray = (if (this.xnote.isNullOrBlank()) this.note else this.xnote)?.toByteArray(Charsets.UTF_8)
+                    val sdkSuggestedParams = transactionParams.toSuggestedParams()
 
-                if (isSenderRekeyed()) {
-                    // if account is rekeyed to another account, min balance should be deducted from the amount.
-                    // after it'll be deducted, isMax will be false to not write closeToAddress.
-                    isMax = false
+                    // Use only the exact boxes from the simulation result
+                    val boxes = try {
+                        extractBoxReferencesFromSimulation(txSimulationResponse!!, this.assetId)
+                    } catch (e: Exception) {
+                        Log.e("TransactionSignManager", "Failed to extract box references from simulation", e)
+                        return null
+                    }
+
+                    Log.d("TransactionSignManager", "Extracted ${boxes.size} box references from simulation")
+                    val boxesList = boxes.map { boxRef ->
+                        Log.d("BOX_DEBUG", "Using box reference from simulation (base64): ${boxRef.nameBase64}")
+                        // Convert base64 to ByteArray for AppBoxReference
+                        val boxNameBytes = android.util.Base64.decode(boxRef.nameBase64, android.util.Base64.NO_WRAP)
+                        com.algorand.algosdk.transaction.AppBoxReference(
+                            this.assetId,
+                            boxNameBytes
+                        )
+                    }
+
+                    val txn = makeApplicationCallTxnWithAbi(
+                        senderAddress = this.senderAccountAddress,
+                        appId = this.assetId,
+                        method = Arc200Abi.arc200TransferMethod,
+                        methodArgs = listOf(com.algorand.algosdk.crypto.Address(this.targetUser.publicKey), this.amount),
+                        suggestedParams = sdkSuggestedParams.toTransactionParametersResponse(),
+                        note = noteByteArray,
+                        foreignApps = listOf(this.assetId),
+                        accounts = listOf(this.senderAccountAddress),
+                        boxes = boxesList
+                    )
+
+                    logTransactionBoxesForDebug("VOI_BOX_DEBUG", txn)
+
+                    txn
+                } else {
+                    if (this.assetId != ALGO_ID) { // ASA send, check opt-in
+                        val recipientAccountInfo = getAccountInformation(this.targetUser!!.publicKey)
+                        val isRecipientOptedIn = recipientAccountInfo?.assetHoldings?.any { it.assetId == this.assetId } == true
+                        if (!isRecipientOptedIn) {
+                            postResult(
+                                Defined(AnnotatedString(R.string.recipient_not_opted_in_to_asset))
+                            )
+                            return null // Stop transaction creation
+                        }
+                    }
+                    // Proceed with ALGO or ASA transaction creation
+                    transactionParams.makeTx(
+                        senderAddress = this.senderAccountAddress,
+                        receiverAddress = targetUser!!.publicKey,
+                        amount = this.amount,
+                        assetId = this.assetId,
+                        isMax = this.isMax,
+                        note = if (this.xnote.isNullOrBlank()) this.note else this.xnote
+                    )
                 }
-
-                if (isCloseToSameAccount()) {
-                    return null
-                }
-
-                transactionParams.makeTx(
-                    senderAddress = senderAccountAddress,
-                    receiverAddress = targetUser.publicKey,
-                    amount = amount,
-                    assetId = assetId,
-                    isMax = isMax,
-                    note = if (xnote.isNullOrBlank()) note else xnote
-                )
             }
             is TransactionSignData.AddAsset -> {
                 transactionParams.makeAddAssetTx(senderAccountAddress, assetId)
@@ -387,9 +505,25 @@ class TransactionSignManager @Inject constructor(
             is TransactionSignData.Rekey -> {
                 transactionParams.makeRekeyTx(senderAccountAddress, rekeyAdminAddress)
             }
+            else -> {
+                sendErrorLog("Unhandled TransactionSignData type: ${this::class.simpleName}")
+                null
+            }
         }
 
         transactionByteArray = createdTransactionByteArray
+
+        // Update calculatedFee with the actual fee from the constructed transaction
+        if (createdTransactionByteArray != null) {
+            try {
+                val decodedTransaction = com.algorand.algosdk.util.Encoder.decodeFromMsgPack(createdTransactionByteArray, com.algorand.algosdk.transaction.Transaction::class.java)
+                this.calculatedFee = decodedTransaction.fee?.toLong()
+            } catch (e: Exception) {
+                // Handle decoding exception, though it should ideally not happen if createdTransactionByteArray is valid
+                // Log error, and calculatedFee might remain as its previous value (e.g., projectedFee or null)
+                com.algorand.android.utils.sendErrorLog("Error decoding transaction for fee extraction: ${e.message}")
+            }
+        }
 
         return createdTransactionByteArray
     }
@@ -587,7 +721,14 @@ class TransactionSignManager @Inject constructor(
         isGroupTransaction: Boolean
     ): List<TransactionSignData>? {
         for (transactionData in transactionDataList) {
-            transactionData.transactionByteArray ?: transactionData.createTransaction() ?: return null
+            if (transactionData.transactionByteArray == null) {
+                val simulationResponse = (transactionData as? TransactionSignData.Send)?.simulationResponse
+                if (transactionData is TransactionSignData.Send && transactionData.assetType?.name == "ARC200" && simulationResponse == null) {
+                    Log.e("TransactionSignManager", "Missing simulation response for ARC-200 transaction")
+                    return null
+                }
+                transactionData.createTransaction(simulationResponse) ?: return null
+            }
         }
 
         if (isGroupTransaction) {

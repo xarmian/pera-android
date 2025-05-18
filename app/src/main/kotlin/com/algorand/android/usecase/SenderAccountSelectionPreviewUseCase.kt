@@ -27,6 +27,13 @@ import com.algorand.wallet.account.core.domain.usecase.GetAccountMinBalance
 import com.algorand.wallet.account.core.domain.usecase.GetTransactionSigner
 import com.algorand.wallet.account.custom.domain.usecase.GetAccountCustomName
 import com.algorand.wallet.account.info.domain.usecase.GetAccountInformation
+import com.algorand.wallet.asset.domain.model.AssetType
+import com.algorand.wallet.asset.domain.usecase.GetAsset
+import com.algorand.wallet.asset.domain.usecase.FetchAsset
+import com.algorand.wallet.asset.domain.usecase.FetchAndCacheAssets
+import com.algorand.wallet.asset.domain.util.AssetConstants.ALGO_ID
+import com.algorand.android.modules.accountcore.domain.usecase.GetAccountBaseOwnedAssetData
+import com.algorand.wallet.foundation.PeraResult
 import java.math.BigInteger
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -40,7 +47,11 @@ class SenderAccountSelectionPreviewUseCase @Inject constructor(
     private val getAccountInformation: GetAccountInformation,
     private val getAccountMinBalance: GetAccountMinBalance,
     private val getAccountCustomName: GetAccountCustomName,
-    private val getTransactionSigner: GetTransactionSigner
+    private val getTransactionSigner: GetTransactionSigner,
+    private val getAsset: GetAsset,
+    private val fetchAsset: FetchAsset,
+    private val fetchAndCacheAssets: FetchAndCacheAssets,
+    private val getAccountBaseOwnedAssetData: GetAccountBaseOwnedAssetData
 ) {
 
     suspend fun createSendTransactionData(
@@ -51,9 +62,52 @@ class SenderAccountSelectionPreviewUseCase @Inject constructor(
         assetTransaction: AssetTransaction
     ): TransactionSignData.Send? {
         val senderAccountDetail = getAccountInformation(accountAddress) ?: return null
-        val receiverAccountInfo = getAccountInformation(accountAddress)
         val accountName = getAccountCustomName(accountAddress)
         val minBalance = getAccountMinBalance(senderAccountDetail)
+
+        var currentAssetDetailFromCache = getAsset(assetId)
+        var finalAssetType = currentAssetDetailFromCache?.assetType
+
+        if (assetId != ALGO_ID) {
+            val needsRemoteCheck = finalAssetType == null ||
+                                   finalAssetType == AssetType.ASA ||
+                                   finalAssetType == AssetType.ARC200
+
+            if (needsRemoteCheck) {
+                when (val fetchResult = fetchAsset(assetId)) {
+                    is PeraResult.Success -> {
+                        val fetchedAssetDetail = fetchResult.data
+                        if (fetchedAssetDetail.assetType == AssetType.ARC200) {
+                            finalAssetType = AssetType.ARC200
+                            fetchAndCacheAssets(listOf(assetId), includeDeleted = false)
+                            currentAssetDetailFromCache = fetchedAssetDetail
+                        } else if (finalAssetType == null && fetchedAssetDetail.assetType != null) {
+                            finalAssetType = fetchedAssetDetail.assetType
+                            currentAssetDetailFromCache = fetchedAssetDetail
+                            fetchAndCacheAssets(listOf(assetId), includeDeleted = false)
+                        } else if (finalAssetType == AssetType.ASA && fetchedAssetDetail.assetType != AssetType.ASA) {
+                            finalAssetType = fetchedAssetDetail.assetType
+                            currentAssetDetailFromCache = fetchedAssetDetail
+                            fetchAndCacheAssets(listOf(assetId), includeDeleted = false)
+                        }
+                    }
+                    is PeraResult.Error -> {
+                        // TODO: Log error
+                    }
+                }
+            }
+        }
+
+        val specificAssetHolding = if (assetId != ALGO_ID) {
+            getAccountBaseOwnedAssetData(accountAddress, assetId)
+        } else {
+            null
+        }
+
+        val resolvedAssetType = finalAssetType ?: specificAssetHolding?.assetType ?: currentAssetDetailFromCache?.assetType
+        val receiverUserPublicKey = assetTransaction.receiverUser?.publicKey.orEmpty()
+        val receiverAccountInfo = if (receiverUserPublicKey.isNotBlank()) getAccountInformation(receiverUserPublicKey) else null
+
         return TransactionSignData.Send(
             senderAccountAddress = senderAccountDetail.address,
             senderAuthAddress = senderAccountDetail.rekeyAdminAddress,
@@ -62,6 +116,7 @@ class SenderAccountSelectionPreviewUseCase @Inject constructor(
             minimumBalance = minBalance.toLong(),
             amount = amount,
             assetId = assetId,
+            assetType = resolvedAssetType,
             note = note,
             targetUser = TargetUser(
                 contact = assetTransaction.receiverUser,
@@ -69,7 +124,8 @@ class SenderAccountSelectionPreviewUseCase @Inject constructor(
                 accountIconDrawablePreview = getAccountIconDrawablePreview(accountAddress)
             ),
             isArc59Transaction = receiverAccountInfo?.hasAsset(assetId)?.not() ?: false,
-            signer = getTransactionSigner(accountAddress)
+            signer = getTransactionSigner(accountAddress),
+            senderSpecificAssetAmount = specificAssetHolding?.amount
         )
     }
 
