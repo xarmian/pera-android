@@ -4,7 +4,6 @@ import com.algorand.algosdk.abi.Method
 import com.algorand.algosdk.crypto.Address
 import com.algorand.algosdk.transaction.Transaction
 import com.algorand.algosdk.util.Encoder
-import android.util.Log
 import com.algorand.algosdk.transaction.AppBoxReference
 import com.algorand.algosdk.v2.client.model.TransactionParametersResponse
 import java.security.MessageDigest
@@ -48,20 +47,16 @@ fun makeApplicationCallTxnWithAbi(
 ): ByteArray {
     // Generate method signature
     val methodSignature = "${method.name}(${method.args.joinToString(",") { it.type }})${method.returns.type}"
-    Log.d("makeApplicationCallTxnWithAbi", "Method signature for selector: $methodSignature")
 
     // Create application arguments
     val appArgs = mutableListOf<ByteArray>()
     val selector = getMethodSelector(methodSignature)
     appArgs.add(selector)
-    Log.d("makeApplicationCallTxnWithAbi", "Method selector (bytes): ${selector.toHexLogString()}")
 
     // Add method arguments with proper encoding for each type
     method.args.forEachIndexed { index, arg ->
         val argValue = methodArgs.getOrNull(index)
             ?: throw IllegalArgumentException("Missing argument at index $index for method ${method.name}")
-
-        Log.d("makeApplicationCallTxnWithAbi", "Processing arg ${arg.name} (${arg.type}) with value: $argValue")
 
         val encodedArg = when {
             arg.type.equals("address", ignoreCase = true) && argValue is Address -> {
@@ -116,7 +111,6 @@ fun makeApplicationCallTxnWithAbi(
             }
         }
         appArgs.add(encodedArg)
-        Log.d("makeApplicationCallTxnWithAbi", "Arg ${arg.name} (${arg.type}) encoded (bytes): ${encodedArg.toHexLogString()}")
     }
 
     // Convert collections to appropriate types

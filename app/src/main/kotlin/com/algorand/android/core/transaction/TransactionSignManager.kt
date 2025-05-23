@@ -72,10 +72,11 @@ import kotlinx.coroutines.launch
 import com.algorand.android.utils.isValidAddress
 import com.algorand.android.utils.makeApplicationCallTxnWithAbi
 import com.algorand.android.utils.toSuggestedParams
-import com.algorand.wallet.asset.domain.model.AssetType
 import com.algorand.wallet.contract.arc200.Arc200Abi
 import android.util.Log
+import com.algorand.android.models.Arc200TransactionData
 import org.json.JSONObject
+import com.algorand.wallet.account.core.domain.usecase.GetTransactionSigner
 
 private data class SimulationBoxReference(
     val appId: Long,
@@ -119,7 +120,8 @@ class TransactionSignManager @Inject constructor(
     private val getAlgo25SecretKey: GetAlgo25SecretKey,
     private val getHdSeed: GetHdSeed,
     private val getLocalAccount: GetLocalAccount,
-    private val signHdKeyTransaction: SignHdKeyTransaction
+    private val signHdKeyTransaction: SignHdKeyTransaction,
+    private val getTransactionSigner: GetTransactionSigner
 ) : LifecycleScopedCoroutineOwner() {
 
     val transactionManagerResultLiveData = MutableLiveData<Event<TransactionManagerResult>?>()
@@ -133,30 +135,18 @@ class TransactionSignManager @Inject constructor(
             val txn = com.algorand.algosdk.util.Encoder.decodeFromMsgPack(txnBytes,
                 com.algorand.algosdk.transaction.Transaction::class.java)
 
-            Log.d(tag, "Transaction type: ${txn.type}")
-            Log.d(tag, "Sender: ${txn.sender}")
-
             // For ApplicationCall transactions, log box references
             if (txn.type == com.algorand.algosdk.transaction.Transaction.Type.ApplicationCall) {
-                Log.d(tag, "AppId: ${txn.applicationId}")
-
                 // Log boxes if they exist
                 txn.boxReferences?.forEachIndexed { index, boxRef ->
                     val nameHex = boxRef.name?.joinToString("") { "%02x".format(it) } ?: "null"
                     val nameBase64 = boxRef.name?.let {
                         com.algorand.algosdk.util.Encoder.encodeToBase64(it)
                     } ?: "null"
-
-                    Log.d(tag, "Box[$index]: appId=${boxRef.appIndex}, name(hex)=$nameHex, name(base64)=$nameBase64")
                 } ?: Log.d(tag, "No box references in transaction")
             }
-
-            // Also log the full transaction JSON for reference
-            Log.d(tag, "Transaction JSON: ${com.algorand.algosdk.util.Encoder.encodeToJson(txn)}")
         } catch (e: Exception) {
             Log.e(tag, "Error logging transaction boxes: ${e.message}")
-            // Log the raw bytes if we can't decode the transaction
-            Log.d(tag, "Raw transaction bytes: ${txnBytes.joinToString("") { "%02x".format(it) }}")
         }
     }
 
@@ -237,6 +227,7 @@ class TransactionSignManager @Inject constructor(
 
     private suspend fun checkAndCacheSignedTransaction(transactionByteArray: ByteArray?) {
         if (transactionByteArray == null) {
+            Log.e("TransactionSignManager", "Transaction byte array is null")
             setSignFailed(Defined(AnnotatedString(R.string.unknown_error)))
             return
         }
@@ -301,6 +292,11 @@ class TransactionSignManager @Inject constructor(
         return transactionData.createArc59SendTransactions()
     }
 
+    suspend fun createArc200SendTransactionList(transactionData: TransactionSignData, simulationResponse: String?): List<Arc200TransactionData>? {
+        if (simulationResponse == null) return null
+        return transactionData.createArc200SendTransactions(simulationResponse)
+    }
+
     suspend fun getReceiverMinBalanceFee(transactionData: TransactionSignData): Long? {
         val transactionParams = getTransactionParams(transactionData) ?: return null
         this@TransactionSignManager.transactionParams = transactionParams
@@ -319,10 +315,12 @@ class TransactionSignManager @Inject constructor(
         when (signer) {
             is TransactionSigner.Algo25 -> {
                 val secretKey = getAlgo25SecretKey(signer.address) ?: run {
+                    Log.e("TransactionSignManager", "Failed to get secret key for address: ${signer.address}")
                     setSignFailed(Defined(AnnotatedString(stringResId = R.string.an_error_occured)))
                     return
                 }
-                checkAndCacheSignedTransaction(transactionByteArray?.signTx(secretKey))
+                val signedTx = transactionByteArray?.signTx(secretKey)
+                checkAndCacheSignedTransaction(signedTx)
             }
             is TransactionSigner.HdKey -> {
                 val transactionBytes = transactionByteArray ?: return handleSignError()
@@ -392,93 +390,107 @@ class TransactionSignManager @Inject constructor(
         return arc59TransactionData
     }
 
+    private suspend fun TransactionSignData.createArc200SendTransactions(simulationResponse: String): List<Arc200TransactionData>? {
+        val transactionParams = getTransactionParams(this) ?: return null
+        this@TransactionSignManager.transactionParams = transactionParams
+        val arc200TransactionData = mutableListOf<Arc200TransactionData>()
+
+        (this as? TransactionSignData.Send)?.let {
+            val boxes = try {
+                extractBoxReferencesFromSimulation(simulationResponse, this.assetId)
+            } catch (e: Exception) {
+                Log.e(
+                    "TransactionSignManager",
+                    "Failed to extract box references from simulation",
+                    e
+                )
+                return null
+            }
+
+            val boxesList = boxes.map { boxRef ->
+                // Convert base64 to ByteArray for AppBoxReference
+                val boxNameBytes =
+                    android.util.Base64.decode(boxRef.nameBase64, android.util.Base64.NO_WRAP)
+                com.algorand.algosdk.transaction.AppBoxReference(
+                    this.assetId,
+                    boxNameBytes
+                )
+            }
+
+            val appCallTxn = makeApplicationCallTxnWithAbi(
+                senderAddress = this.senderAccountAddress,
+                appId = this.assetId,
+                method = Arc200Abi.arc200TransferMethod,
+                methodArgs = listOf(
+                    com.algorand.algosdk.crypto.Address(this.targetUser.publicKey),
+                    this.amount
+                ),
+                suggestedParams = transactionParams.toSuggestedParams()
+                    .toTransactionParametersResponse(),
+                note = note?.toByteArray(Charsets.UTF_8),
+                foreignApps = listOf(this.assetId),
+                accounts = listOf(this.senderAccountAddress),
+                boxes = boxesList
+            )
+
+            val signer = getTransactionSigner(this.senderAccountAddress)
+            val additionalSigner = getTransactionSigner(this.senderAccountAddress) // Or a different signer if needed
+
+            if (isMbrPaymentActuallyRequired == true) {
+                val escrowAddress = com.algorand.algosdk.crypto.Address.forApplication(this.assetId)
+                val additionalPaymentTxn =
+                    com.algorand.algosdk.transaction.Transaction.PaymentTransactionBuilder()
+                        .sender(this.senderAccountAddress)
+                        .receiver(escrowAddress)
+                        .amount(mbrAmount)
+                        .suggestedParams(
+                            transactionParams.toSuggestedParams().toTransactionParametersResponse()
+                        )
+                        .note("MBR transaction".toByteArray()) // Optional
+                        .build()
+
+                arc200TransactionData.add(
+                    Arc200TransactionData(
+                        additionalPaymentTxn.bytes(),
+                        additionalSigner.address
+                    )
+                )
+            }
+
+            arc200TransactionData.add(Arc200TransactionData(appCallTxn, signer.address))
+        }
+
+        return arc200TransactionData
+    }
+
     @SuppressWarnings("LongMethod")
     suspend fun TransactionSignData.createTransaction(simulationResponse: String? = null): ByteArray? {
         if (senderAccountAddress.isValidAddress().not()) return null
 
         val transactionParams = getTransactionParams(this) ?: return null
 
-        // For ARC-200 transactions, ensure we have a simulation response
-        var txSimulationResponse: String? = null
-        if (this is TransactionSignData.Send && this.assetType?.name == "ARC200" && this.assetId != ALGO_ID) {
-            // First check if we have a simulation response in the transaction data
-            txSimulationResponse = this.simulationResponse ?: simulationResponse
-
-            if (txSimulationResponse.isNullOrBlank()) {
-                Log.e("TransactionSignManager", "Missing simulation response for ARC-200 transaction")
-                return null
-            }
-
-            Log.d("TransactionSignManager", "Using simulation response for ARC-200 transaction")
-
-            // Ensure the simulation response is set on the transaction data for later use
-            if (this.simulationResponse == null) {
-                this.simulationResponse = txSimulationResponse
-            }
-        }
-
         val createdTransactionByteArray: ByteArray? = when (this) {
             is TransactionSignData.Send -> {
-                if (targetUser?.publicKey?.isValidAddress()?.not() != false) return null
-                if (this.assetType == AssetType.ARC200 && this.assetId != ALGO_ID) {
-                    val noteByteArray = (if (this.xnote.isNullOrBlank()) this.note else this.xnote)?.toByteArray(Charsets.UTF_8)
-                    val sdkSuggestedParams = transactionParams.toSuggestedParams()
-
-                    // Use only the exact boxes from the simulation result
-                    val boxes = try {
-                        extractBoxReferencesFromSimulation(txSimulationResponse!!, this.assetId)
-                    } catch (e: Exception) {
-                        Log.e("TransactionSignManager", "Failed to extract box references from simulation", e)
-                        return null
-                    }
-
-                    Log.d("TransactionSignManager", "Extracted ${boxes.size} box references from simulation")
-                    val boxesList = boxes.map { boxRef ->
-                        Log.d("BOX_DEBUG", "Using box reference from simulation (base64): ${boxRef.nameBase64}")
-                        // Convert base64 to ByteArray for AppBoxReference
-                        val boxNameBytes = android.util.Base64.decode(boxRef.nameBase64, android.util.Base64.NO_WRAP)
-                        com.algorand.algosdk.transaction.AppBoxReference(
-                            this.assetId,
-                            boxNameBytes
+                if (targetUser.publicKey.isValidAddress().not()) return null
+                if (this.assetId != ALGO_ID) { // ASA send, check opt-in
+                    val recipientAccountInfo = getAccountInformation(this.targetUser!!.publicKey)
+                    val isRecipientOptedIn = recipientAccountInfo?.assetHoldings?.any { it.assetId == this.assetId } == true
+                    if (!isRecipientOptedIn) {
+                        postResult(
+                            Defined(AnnotatedString(R.string.recipient_not_opted_in_to_asset))
                         )
+                        return null // Stop transaction creation
                     }
-
-                    val txn = makeApplicationCallTxnWithAbi(
-                        senderAddress = this.senderAccountAddress,
-                        appId = this.assetId,
-                        method = Arc200Abi.arc200TransferMethod,
-                        methodArgs = listOf(com.algorand.algosdk.crypto.Address(this.targetUser.publicKey), this.amount),
-                        suggestedParams = sdkSuggestedParams.toTransactionParametersResponse(),
-                        note = noteByteArray,
-                        foreignApps = listOf(this.assetId),
-                        accounts = listOf(this.senderAccountAddress),
-                        boxes = boxesList
-                    )
-
-                    logTransactionBoxesForDebug("VOI_BOX_DEBUG", txn)
-
-                    txn
-                } else {
-                    if (this.assetId != ALGO_ID) { // ASA send, check opt-in
-                        val recipientAccountInfo = getAccountInformation(this.targetUser!!.publicKey)
-                        val isRecipientOptedIn = recipientAccountInfo?.assetHoldings?.any { it.assetId == this.assetId } == true
-                        if (!isRecipientOptedIn) {
-                            postResult(
-                                Defined(AnnotatedString(R.string.recipient_not_opted_in_to_asset))
-                            )
-                            return null // Stop transaction creation
-                        }
-                    }
-                    // Proceed with ALGO or ASA transaction creation
-                    transactionParams.makeTx(
-                        senderAddress = this.senderAccountAddress,
-                        receiverAddress = targetUser!!.publicKey,
-                        amount = this.amount,
-                        assetId = this.assetId,
-                        isMax = this.isMax,
-                        note = if (this.xnote.isNullOrBlank()) this.note else this.xnote
-                    )
                 }
+                // Proceed with ALGO or ASA transaction creation
+                transactionParams.makeTx(
+                    senderAddress = this.senderAccountAddress,
+                    receiverAddress = targetUser!!.publicKey,
+                    amount = this.amount,
+                    assetId = this.assetId,
+                    isMax = this.isMax,
+                    note = if (this.xnote.isNullOrBlank()) this.note else this.xnote
+                )
             }
             is TransactionSignData.AddAsset -> {
                 transactionParams.makeAddAssetTx(senderAccountAddress, assetId)
@@ -720,25 +732,122 @@ class TransactionSignManager @Inject constructor(
         transactionDataList: List<TransactionSignData>,
         isGroupTransaction: Boolean
     ): List<TransactionSignData>? {
+        val processedTransactionDataList = mutableListOf<TransactionSignData>()
         for (transactionData in transactionDataList) {
-            if (transactionData.transactionByteArray == null) {
-                val simulationResponse = (transactionData as? TransactionSignData.Send)?.simulationResponse
-                if (transactionData is TransactionSignData.Send && transactionData.assetType?.name == "ARC200" && simulationResponse == null) {
+            if (transactionData is TransactionSignData.Send && transactionData.assetType?.name == "ARC200") {
+                val simulationResponseForArc200 = transactionData.simulationResponse
+                if (simulationResponseForArc200 == null) {
                     Log.e("TransactionSignManager", "Missing simulation response for ARC-200 transaction")
+                    postResult(Defined(AnnotatedString(R.string.an_error_occured))) // Or a more specific error
                     return null
                 }
-                transactionData.createTransaction(simulationResponse) ?: return null
+                val arc200SubTransactions = transactionData.createArc200SendTransactions(simulationResponseForArc200)
+                    ?: return null // Error should be logged/posted by createArc200SendTransactions
+
+                for (arc200TxData in arc200SubTransactions) {
+                    val signer = getTransactionSigner(arc200TxData.accountAddress)
+                    if (signer is TransactionSigner.SignerNotFound) {
+                        postResult(Defined(AnnotatedString(stringResId = R.string.the_signing_account_has)))
+                        return null
+                    }
+
+                    val rawTxBytes = arc200TxData.transactionByteArray
+                    val decodedTx = try {
+                        com.algorand.algosdk.util.Encoder.decodeFromMsgPack(
+                            rawTxBytes,
+                            com.algorand.algosdk.transaction.Transaction::class.java
+                        )
+                    } catch (e: Exception) {
+                        Log.e("TransactionSignManager", "Failed to decode ARC200 sub-transaction", e)
+                        postResult(Defined(AnnotatedString(R.string.an_error_occured)))
+                        return null
+                    }
+
+                    val calculatedFeeForSubTx = decodedTx.fee?.toLong() ?: kotlin.run {
+                        Log.e("TransactionSignManager", "Failed to get fee for ARC200 sub-transaction")
+                        postResult(Defined(AnnotatedString(R.string.an_error_occured)))
+                        return null
+                    }
+
+                    val newSubTxData: TransactionSignData.Send = when (decodedTx.type) {
+                        com.algorand.algosdk.transaction.Transaction.Type.Payment -> {
+                            // This is likely the MBR payment
+                            TransactionSignData.Send(
+                                senderAccountAddress = transactionData.senderAccountAddress,
+                                signer = signer,
+                                amount = decodedTx.amount ?: BigInteger.ZERO,
+                                targetUser = com.algorand.android.models.TargetUser(
+                                    publicKey = decodedTx.receiver.toString(),
+                                    // Potentially fetch/set other TargetUser fields if necessary and available
+                                    minBalance = BigInteger.ZERO, // Default or fetch if critical
+                                    algoBalance = BigInteger.ZERO, // Default or fetch if critical
+                                    accountIconDrawablePreview = null
+                                ),
+                                assetId = ALGO_ID,
+                                note = "ARC-200 MBR Payment", // Or derive from tx note if present
+                                xnote = null,
+                                isMax = false,
+                                projectedFee = calculatedFeeForSubTx, // Set to actual fee
+                                senderSpecificAssetAmount = null, // Not relevant for Algo send
+                                senderAlgoAmount = transactionData.senderAlgoAmount, // Copied from original
+                                minimumBalance = transactionData.minimumBalance, // Copied from original
+                                assetType = null,
+                                isArc59Transaction = false,
+                                isArc200Transaction = false,
+                                senderAuthAddress = signer.address,
+                                senderAccountName = transactionData.senderAccountName
+                            )
+                        }
+                        com.algorand.algosdk.transaction.Transaction.Type.ApplicationCall -> {
+                            // This is the ARC-200 transfer app call
+                            transactionData.copy( // Copy original Send and override specific fields
+                                signer = signer,
+                                projectedFee = calculatedFeeForSubTx // Set to actual fee
+                                // Amount, targetUser, assetId, etc., are from original ARC-200 Send op.
+                            )
+                        }
+                        else -> {
+                            Log.e(
+                                "TransactionSignManager",
+                                "Unexpected transaction type in ARC200 sub-transactions: ${decodedTx.type}"
+                            )
+                            postResult(Defined(AnnotatedString(R.string.an_error_occured)))
+                            return null
+                        }
+                    }
+
+                    newSubTxData.transactionByteArray = rawTxBytes
+                    newSubTxData.calculatedFee = calculatedFeeForSubTx
+                    // projectedFee is already set to calculatedFeeForSubTx to prevent resign attempts
+
+                    processedTransactionDataList.add(newSubTxData)
+                }
+            } else {
+                // Existing logic for non-ARC200 transactions or those already having byte array
+                if (transactionData.transactionByteArray == null) {
+                    // This will call the appropriate createTransaction on the specific TransactionSignData type
+                    transactionData.createTransaction() ?: return null
+                }
+                processedTransactionDataList.add(transactionData)
             }
         }
 
-        if (isGroupTransaction) {
-            createGroupedBytesArray(transactionDataList)?.let {
-                for (index in 0L until it.length()) {
-                    transactionDataList[index.toInt()].transactionByteArray = it.get(index)
+        if (isGroupTransaction && processedTransactionDataList.size > 1) {
+            createGroupedBytesArray(processedTransactionDataList)?.let { groupedBytesArray ->
+                if (groupedBytesArray.length() == processedTransactionDataList.size.toLong()) {
+                    for (index in processedTransactionDataList.indices) {
+                        processedTransactionDataList[index].transactionByteArray = groupedBytesArray.get(index.toLong())
+                        // The fee is part of the transaction bytes, assignGroupId doesn't change it.
+                        // If it did, we might need to re-decode and update calculatedFee here.
+                    }
+                } else {
+                    Log.e("TransactionSignManager", "Grouped transaction count mismatch after processing.")
+                    postResult(Defined(AnnotatedString(R.string.an_error_occured)))
+                    return null
                 }
-            }
+            } ?: return null // Error in grouping should be handled by createGroupedBytesArray or posted
         }
-        return transactionDataList
+        return processedTransactionDataList
     }
 
     private fun postTxnSignResult(

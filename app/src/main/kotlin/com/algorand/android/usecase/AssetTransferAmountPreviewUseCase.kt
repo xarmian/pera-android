@@ -118,6 +118,7 @@ class AssetTransferAmountPreviewUseCase @Inject constructor(
             ),
             signer = getTransactionSigner(accountAddress),
             isArc59Transaction = receiverAccountInfo?.hasAsset(assetId)?.not() ?: false,
+            isArc200Transaction = determinedAssetType == AssetType.ARC200,
             senderSpecificAssetAmount = specificAssetHolding?.amount
         )
     }

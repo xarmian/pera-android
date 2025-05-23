@@ -529,6 +529,7 @@ class BridgeViewModel @Inject constructor(
             ),
             transactionByteArray = unsignedTxnData.unsignedTxnByteArray,
             isArc59Transaction = false,
+            isArc200Transaction = false,
             senderAlgoAmount = senderVoiAtomicBalance,
             minimumBalance = senderMinimumBalance,
             senderAccountName = fromVoiAccount.customAccountInfo?.customName ?: fromVoiAccount.address.toShortenedAddress(),

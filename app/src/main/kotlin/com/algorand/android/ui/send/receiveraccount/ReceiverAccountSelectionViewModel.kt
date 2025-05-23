@@ -45,6 +45,7 @@ import com.algorand.wallet.asset.domain.usecase.GetAsset
 import com.algorand.wallet.asset.domain.usecase.FetchAsset
 import com.algorand.wallet.asset.domain.usecase.FetchAndCacheAssets
 import com.algorand.android.modules.accountcore.domain.usecase.GetAccountBaseOwnedAssetData
+import com.algorand.wallet.asset.domain.model.AssetType
 
 @HiltViewModel
 class ReceiverAccountSelectionViewModel @Inject constructor(
@@ -180,6 +181,7 @@ class ReceiverAccountSelectionViewModel @Inject constructor(
 
         viewModelScope.launch {
             val isArc59Transaction = isArc59Transaction(targetUserWithSimulation.targetUser.publicKey, assetId)
+            val isArc200Transaction = isArc200Transaction((targetUserWithSimulation.targetUser.publicKey), assetId)
             val accountInfo = getAccountInformation(currentAssetTransaction.senderAddress) ?: return@launch
             val minBalance = getAccountMinBalance(currentAssetTransaction.senderAddress)
             val accountName = getAccountCustomName(currentAssetTransaction.senderAddress)
@@ -194,6 +196,7 @@ class ReceiverAccountSelectionViewModel @Inject constructor(
                 targetUser = targetUserWithSimulation.targetUser,
                 transactionByteArray = null,
                 isArc59Transaction = isArc59Transaction,
+                isArc200Transaction = isArc200Transaction,
                 senderAlgoAmount = accountInfo.amount,
                 minimumBalance = minBalance.toLong(),
                 senderAccountName = accountName.orEmpty(),
@@ -204,7 +207,9 @@ class ReceiverAccountSelectionViewModel @Inject constructor(
                 isMax = false,
                 projectedFee = com.algorand.android.utils.MIN_FEE,
                 senderSpecificAssetAmount = specificAssetHolding?.amount,
-                simulationResponse = targetUserWithSimulation.simulationResponse
+                simulationResponse = targetUserWithSimulation.simulationResponse,
+                isMbrPaymentActuallyRequired = targetUserWithSimulation.isMbrPaymentSimulated,
+                mbrAmount = targetUserWithSimulation.mbrAmount
             )
             _sendTransactionDataFlow.emit(Event(transactionData))
         }
@@ -221,6 +226,10 @@ class ReceiverAccountSelectionViewModel @Inject constructor(
         // Original logic for ASAs (and if assetType is somehow not ARC200):
         // if recipient hasn't opted in, it's an "Arc59 transaction" (needs inbox/causes API call)
         return getAccountInformation(targetUserAddress)?.hasAsset(assetId) == false*/
+    }
+
+    private suspend fun isArc200Transaction(targetUserAddress: String, assetId: Long): Boolean {
+        return this.getAsset(assetId)?.assetType == AssetType.ARC200
     }
 
     fun isExpressSendWarningEnabled(isArc59Transaction: Boolean): Boolean {

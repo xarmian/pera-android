@@ -52,6 +52,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
+import com.algorand.android.repository.Arc200Repository
 
 @Suppress("LongParameterList")
 class ReceiverAccountSelectionUseCase @Inject constructor(
@@ -69,7 +70,8 @@ class ReceiverAccountSelectionUseCase @Inject constructor(
     getAccountAssetUseCase: GetAccountAssetUseCase,
     private val getAsset: GetAsset,
     private val fetchAsset: FetchAsset,
-    private val arc200TransferSimulator: Arc200TransferSimulator
+    private val arc200TransferSimulator: Arc200TransferSimulator,
+    private val arc200Repository: Arc200Repository
 ) : BaseSendAccountSelectionUseCase(getAccountAssetUseCase) {
 
     fun getToAccountList(
@@ -193,48 +195,69 @@ class ReceiverAccountSelectionUseCase @Inject constructor(
                     }
                 }
                 is PeraResult.Error -> {
-                    com.algorand.android.utils.sendErrorLog("ReceiverAccountSelectionUseCase: Failed to fetch asset type for $assetId: ${fetchResult.exception.message}")
+                    com.algorand.android.utils.sendErrorLog(
+                        "ReceiverAccountSelectionUseCase: Failed to fetch asset type for $assetId: ${fetchResult.exception.message}"
+                    )
                     /* proceed with cached/default type */
                 }
             }
         }
         if (currentAssetType == null && assetId != ALGO_ID) currentAssetType = AssetType.ASA
 
-        // For ARC-200 assets, we need to check if MBR payment is needed
+        // For ARC-200 assets, determine MBR need and simulate
         if (currentAssetType == AssetType.ARC200 && assetId != ALGO_ID) {
-            try {
-                val minimalParams = com.algorand.algosdk.v2.client.model.TransactionParametersResponse()
-                minimalParams.fee = 1000L
-                minimalParams.lastRound = 0L
-                minimalParams.genesisId = ""
-                minimalParams.genesisHash = ByteArray(32) { 0 }
+            // Determine if MBR payment is likely required for the receiver using ARC-200 specific balance check
+            var isMbrPaymentActuallyRequired = true // Default to true, assume MBR needed if check fails or balance is zero
+            when (val arc200HoldingResult = arc200Repository.getArc200AssetHolding(accountAssetDetail.address, assetId)) {
+                is Result.Success -> {
+                    isMbrPaymentActuallyRequired = arc200HoldingResult.data.amount == BigInteger.ZERO
+                }
+                is Result.Error -> {
+                    com.algorand.android.utils.sendErrorLog(
+                        "ReceiverAUC: Failed to get ARC-200 holding for ${accountAssetDetail.address}, asset $assetId. Error: ${arc200HoldingResult.exception.message}"
+                    )
+                    // Assuming MBR is required to be safe if balance check fails
+                    isMbrPaymentActuallyRequired = true
+                }
+            }
 
-                println("About to call arc200TransferSimulator.simulateArc200TransferWithMbrCheck")
+            // Prepare minimal suggested params for the simulation call if needed, or pass null
+            val minimalSuggestedParams = com.algorand.algosdk.v2.client.model.TransactionParametersResponse().apply {
+                this.fee = Arc200TransferSimulator.DEFAULT_FEE // Use default from simulator
+                // lastRound, genesisId, genesisHash can be left to be fetched by simulator if needed
+            }
+
+            try {
+                println(
+                    "About to call arc200TransferSimulator.simulateArc200TransferWithMbrCheck with isMbrRequired=" +
+                        isMbrPaymentActuallyRequired
+                )
                 val simulationResult = arc200TransferSimulator.simulateArc200TransferWithMbrCheck(
                     senderAddress = fromAccountAddress,
                     receiverAddress = accountAssetDetail.address,
                     arc200AppId = assetId,
                     amount = amount,
-                    suggestedParams = minimalParams
+                    isMbrPaymentActuallyRequired = isMbrPaymentActuallyRequired,
+                    providedSuggestedParams = minimalSuggestedParams
                 )
 
-                println("ARC-200 simulation result: requiresMbrPaymentTransaction=${simulationResult.requiresMbrPaymentTransaction}, " +
-                         "mbrAmount=${simulationResult.mbrAmount}, " +
-                         "failureMessage=${simulationResult.failureMessage}, " +
-                         "logs=${simulationResult.logs?.joinToString()}")
+                println(
+                    "ARC-200 simulation result: requiresMbrPaymentTransaction=${simulationResult.requiresMbrPaymentTransaction}, " +
+                        "mbrAmount=${simulationResult.mbrAmount}, " +
+                        "failureMessage=${simulationResult.failureMessage}, " +
+                        "logs=${simulationResult.logs?.joinToString()}"
+                )
 
                 if (simulationResult.failureMessage != null) {
                     println("Simulation failed with message: ${simulationResult.failureMessage}")
-                    // For testing, we'll continue with validation rather than return an error
-                    // In production, we might want to:
-                    // return Result.Error(GlobalException(descriptionRes = R.string.transaction_failed, description = simulationResult.failureMessage))
+                    // Depending on product requirements, might return error or allow proceeding
+                    // For now, let's assume a simulation failure that's not just an MBR hint means we stop
+                    // However, the plan is to use simulation for box discovery primarily.
+                    // If failureMessage indicates a real problem beyond MBR, then it's an error.
+                    // For now, we pass the simulationResponse anyway for box extraction if possible.
                 }
 
-                if (simulationResult.requiresMbrPaymentTransaction) {
-                    println("MBR payment required for receiver: ${accountAssetDetail.address}, amount: ${simulationResult.mbrAmount}")
-                }
-
-                // Return the TargetUserWithSimulation result
+                // The TargetUserWithSimulation now needs to carry the simulation response and if MBR was part of it
                 return Result.Success(
                     TargetUserWithSimulation(
                         targetUser = TargetUser(
@@ -246,13 +269,21 @@ class ReceiverAccountSelectionUseCase @Inject constructor(
                             nftDomainServiceLogoUrl = nftDomainServiceLogoUrl,
                             accountIconDrawablePreview = getAccountIconDrawablePreview(accountAssetDetail.address)
                         ),
-                        simulationResponse = simulationResult.simulationResponse
+                        simulationResponse = simulationResult.simulationResponse, // Critical for TransactionSignManager
+                        isMbrPaymentSimulated = simulationResult.requiresMbrPaymentTransaction, // New flag
+                        mbrAmount = simulationResult.mbrAmount?.toBigInteger()
                     )
                 )
             } catch (e: Exception) {
-                println("Exception during ARC-200 simulation: ${e.message}")
+                println("Exception during ARC-200 simulation call: ${e.message}")
                 e.printStackTrace()
-                // Log the error but continue with validation for now
+                // Log the error and return a generic error or a more specific one based on e
+                return Result.Error(
+                    GlobalException(
+                        titleRes = R.string.error,
+                        descriptionRes = 0
+                    )
+                )
             }
         }
 

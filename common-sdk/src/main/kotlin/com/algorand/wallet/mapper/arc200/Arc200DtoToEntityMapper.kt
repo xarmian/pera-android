@@ -14,6 +14,8 @@ import com.algorand.wallet.asset.domain.model.VerificationTier
 import com.algorand.wallet.foundation.database.model.DbAssetType
 import javax.inject.Inject
 import java.math.BigInteger
+import com.algorand.wallet.account.info.domain.model.AssetHolding
+import com.algorand.wallet.account.info.domain.model.AssetStatus
 
 class Arc200DtoToEntityMapper @Inject constructor() {
 
@@ -117,6 +119,26 @@ class Arc200DtoToEntityMapper @Inject constructor() {
             id = contractId,
             assetInfo = assetInfo,
             verificationTier = verificationTier,
+            assetType = AssetType.ARC200
+        )
+    }
+
+    /**
+     * Maps ARC-200 API balance info to the domain model AssetHolding.
+     * This is for direct use when an entity isn't needed.
+     */
+    fun mapBalanceInfoToAssetHoldingDomain(balanceInfo: Arc200ApiBalanceInfo): AssetHolding? {
+        val contractId = balanceInfo.contractId ?: return null
+        val balance = balanceInfo.balance?.toBigIntegerOrNull() ?: return null
+
+        return AssetHolding(
+            assetId = contractId,
+            amount = balance,
+            isDeleted = false,
+            isFrozen = false, // ARC-200 tokens are generally not "frozen" in the ASA sense via API balance info
+            optedInAtRound = null, // Not applicable/available for ARC-200 from this DTO
+            optedOutAtRound = null, // Not applicable/available for ARC-200 from this DTO
+            status = AssetStatus.OWNED_BY_ACCOUNT,
             assetType = AssetType.ARC200
         )
     }

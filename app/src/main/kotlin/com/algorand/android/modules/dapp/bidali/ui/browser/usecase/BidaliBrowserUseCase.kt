@@ -89,6 +89,7 @@ class BidaliBrowserUseCase @Inject constructor(
                 accountIconDrawablePreview = getAccountIconDrawablePreview(accountAddress)
             ),
             isArc59Transaction = !receiverAccount.hasAsset(selectedAssetId),
+            isArc200Transaction = false,
             signer = getTransactionSigner(selectedAccount.address)
         )
     }

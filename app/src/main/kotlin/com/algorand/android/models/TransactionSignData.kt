@@ -18,7 +18,6 @@ import com.algorand.wallet.account.core.domain.model.TransactionSigner
 import com.algorand.wallet.asset.domain.model.AssetType
 import java.math.BigInteger
 import kotlinx.parcelize.Parcelize
-import android.util.Log
 
 @Parcelize
 sealed class TransactionSignData : Parcelable {
@@ -32,6 +31,7 @@ sealed class TransactionSignData : Parcelable {
     open var amount: BigInteger = BigInteger.ZERO
     open val targetUser: TargetUser? = null
     open var isArc59Transaction: Boolean = false
+    open var isArc200Transaction: Boolean = false
 
     abstract fun getSignedTransactionDetail(signedTransactionData: ByteArray): SignedTransactionDetail
 
@@ -47,26 +47,21 @@ sealed class TransactionSignData : Parcelable {
         override var targetUser: TargetUser,
         override var transactionByteArray: ByteArray? = null,
         override var isArc59Transaction: Boolean,
-        val senderAlgoAmount: BigInteger,
-        val minimumBalance: Long,
-        val senderAccountName: String,
+        override var isArc200Transaction: Boolean,
+        var senderAlgoAmount: BigInteger,
+        var minimumBalance: Long,
+        var senderAccountName: String,
         val assetId: Long,
         val assetType: AssetType?,
         val note: String? = null,
         val xnote: String? = null,
         var isMax: Boolean = false,
         var projectedFee: Long = MIN_FEE,
-        val senderSpecificAssetAmount: BigInteger? = null,
-        var simulationResponse: String? = null
+        var senderSpecificAssetAmount: BigInteger? = null,
+        var simulationResponse: String? = null,
+        var isMbrPaymentActuallyRequired: Boolean? = null,
+        var mbrAmount: BigInteger? = null
     ) : TransactionSignData() {
-
-        init {
-            if (assetType == AssetType.ARC200 && senderSpecificAssetAmount == null) {
-                Log.d("TransactionSignData", "ARC200 Send created with null senderSpecificAssetAmount. AssetId: $assetId, Amount: $amount", Exception("StackTrace"))
-            }
-            // General log for all Send creations if needed for broader debugging, can be commented out.
-            // Log.d("TransactionSignData", "Send created: assetId=$assetId, assetType=$assetType, senderSpecificAssetAmount=$senderSpecificAssetAmount", Exception("StackTraceLite"))
-        }
 
         override fun getSignedTransactionDetail(signedTransactionData: ByteArray): SignedTransactionDetail {
             return SignedTransactionDetail.Send(
@@ -90,6 +85,7 @@ sealed class TransactionSignData : Parcelable {
         override val signer: TransactionSigner,
         override var transactionByteArray: ByteArray? = null,
         override var isArc59Transaction: Boolean = false,
+        override var isArc200Transaction: Boolean = false,
         val assetId: Long
     ) : TransactionSignData() {
         override fun getSignedTransactionDetail(signedTransactionData: ByteArray): SignedTransactionDetail {

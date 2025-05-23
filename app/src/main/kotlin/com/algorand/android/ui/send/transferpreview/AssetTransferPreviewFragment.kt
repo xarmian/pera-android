@@ -114,6 +114,24 @@ class AssetTransferPreviewFragment : TransactionSignBaseFragment(R.layout.fragme
         }
     }
 
+    private val signArc200TransactionCollector: suspend (TransactionSignData?) -> Unit = { transactionData ->
+        transactionData?.let {
+            // Show loading state if needed
+            showProgress()
+            // Send the transaction
+            sendTransaction(it)
+        }
+    }
+
+    private val signArc200TransactionGroupCollector: suspend (List<TransactionSignData>?) -> Unit = { transactionDataList ->
+        transactionDataList?.let {
+            // Show loading state if needed
+            showProgress()
+            // Send the group transaction
+            sendGroupTransaction(it)
+        }
+    }
+
     override val transactionFragmentListener = object : TransactionFragmentListener {
         override fun onSignTransactionLoading() {
             showProgress()
@@ -130,6 +148,10 @@ class AssetTransferPreviewFragment : TransactionSignBaseFragment(R.layout.fragme
                 }
 
                 is SignedTransactionDetail.AssetOperation.AssetAddition -> {
+                    assetTransferPreviewViewModel.sendSignedTransaction(signedTransactionDetail)
+                }
+
+                is SignedTransactionDetail.Group -> {
                     assetTransferPreviewViewModel.sendSignedTransaction(signedTransactionDetail)
                 }
 
@@ -180,12 +202,22 @@ class AssetTransferPreviewFragment : TransactionSignBaseFragment(R.layout.fragme
             assetTransferPreviewViewModel.signArc59TransactionFlow,
             signArc59TransactionCollector
         )
+        viewLifecycleOwner.collectLatestOnLifecycle(
+            assetTransferPreviewViewModel.signArc200TransactionFlow,
+            signArc200TransactionCollector
+        )
+        viewLifecycleOwner.collectLatestOnLifecycle(
+            assetTransferPreviewViewModel.signArc200TransactionGroupFlow,
+            signArc200TransactionGroupCollector
+        )
     }
 
     private fun onConfirmTransferClick() {
         assetTransferPreviewViewModel.getTransactionData().let { transactionData ->
             if (transactionData.isArc59Transaction) {
                 assetTransferPreviewViewModel.sendArc59Transactions()
+            } else if (transactionData.isArc200Transaction) {
+                assetTransferPreviewViewModel.sendArc200Transactions()
             } else {
                 sendTransaction(transactionData)
             }
