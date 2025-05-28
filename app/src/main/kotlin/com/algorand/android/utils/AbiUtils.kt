@@ -118,7 +118,7 @@ fun makeApplicationCallTxnWithAbi(
     val accountsList = accounts?.map { Address(it) } ?: emptyList()
     val foreignAppsList = foreignApps ?: emptyList()
     val foreignAssetsList = foreignAssets ?: emptyList()
-    val rekeyToAddress = rekeyTo?.let { Address(it) }
+    // val rekeyToAddress = rekeyTo?.let { Address(it) }
 
     // Create application call transaction
     val builder = Transaction.ApplicationCallTransactionBuilder()
@@ -136,13 +136,16 @@ fun makeApplicationCallTxnWithAbi(
     builder.foreignApps(foreignAppsList)
     builder.foreignAssets(foreignAssetsList)
     builder.note(note)
-    builder.rekey(rekeyToAddress)
     builder.lease(lease)
     builder.boxReferences(boxes ?: emptyList())
 
     val transaction = builder.build()
 
     // Set the OnCompletion type to NoOp (it's set to NoOp by default in the builder)
+
+    // NOTE: For rekeyed accounts, the transaction sender should still be the account address,
+    // but the actual signer (who signs the transaction) should be the auth address.
+    // The auth address handling is done at the signing level, not in the transaction structure.
 
     // Encode transaction to message pack format
     return Encoder.encodeToMsgPack(transaction)

@@ -190,8 +190,8 @@ class ReceiverAccountSelectionViewModel @Inject constructor(
 
             val transactionData = TransactionSignData.Send(
                 senderAccountAddress = currentAssetTransaction.senderAddress,
-                senderAuthAddress = null,
-                signer = getTransactionSigner(currentAssetTransaction.senderAddress),
+                senderAuthAddress = accountInfo.rekeyAdminAddress,
+                signer = getTransactionSigner(accountInfo.rekeyAdminAddress ?: currentAssetTransaction.senderAddress),
                 amount = currentAssetTransaction.amount,
                 targetUser = targetUserWithSimulation.targetUser,
                 transactionByteArray = null,

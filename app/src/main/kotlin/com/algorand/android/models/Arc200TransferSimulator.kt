@@ -33,7 +33,9 @@ class Arc200TransferSimulator @Inject constructor(
         amount: BigInteger,
         isMbrPaymentActuallyRequired: Boolean,
         // Allow providing suggestedParams, but fetch fresh if null or insufficient
-        providedSuggestedParams: com.algorand.algosdk.v2.client.model.TransactionParametersResponse?
+        providedSuggestedParams: com.algorand.algosdk.v2.client.model.TransactionParametersResponse?,
+        // For rekeyed accounts, pass the auth address
+        senderAuthAddress: String? = null
     ): Arc200TransferSimulationResult {
         val currentSuggestedParams = if (providedSuggestedParams?.lastRound == null || providedSuggestedParams.lastRound == 0L) {
             withContext(Dispatchers.IO) {
@@ -70,7 +72,9 @@ class Arc200TransferSimulator @Inject constructor(
 
         val methodArgs = listOf(receiverSdkAddress, amount)
 
-        val signerAddress = getTransactionSigner(senderAddress)
+        // For rekeyed accounts, use the auth address for signing, otherwise use sender address
+        val actualSignerAddress = senderAuthAddress ?: senderAddress
+        val signerAddress = getTransactionSigner(actualSignerAddress)
 
         val appCallTxnBytes = makeApplicationCallTxnWithAbi(
             senderAddress = senderAddress,

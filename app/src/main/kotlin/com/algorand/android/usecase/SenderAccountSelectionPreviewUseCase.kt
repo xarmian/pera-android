@@ -125,7 +125,7 @@ class SenderAccountSelectionPreviewUseCase @Inject constructor(
             ),
             isArc59Transaction = receiverAccountInfo?.hasAsset(assetId)?.not() ?: false,
             isArc200Transaction = resolvedAssetType == AssetType.ARC200,
-            signer = getTransactionSigner(accountAddress),
+            signer = getTransactionSigner(senderAccountDetail.rekeyAdminAddress ?: accountAddress),
             senderSpecificAssetAmount = specificAssetHolding?.amount
         )
     }

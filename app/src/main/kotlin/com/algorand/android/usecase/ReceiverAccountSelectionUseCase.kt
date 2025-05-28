@@ -228,9 +228,13 @@ class ReceiverAccountSelectionUseCase @Inject constructor(
             }
 
             try {
+                // Get sender account info to check for rekey admin address
+                val senderAccountInfo = getAccountInformation(fromAccountAddress)
+                val senderAuthAddress = senderAccountInfo?.rekeyAdminAddress
+                
                 println(
                     "About to call arc200TransferSimulator.simulateArc200TransferWithMbrCheck with isMbrRequired=" +
-                        isMbrPaymentActuallyRequired
+                        isMbrPaymentActuallyRequired + ", senderAuthAddress=" + senderAuthAddress
                 )
                 val simulationResult = arc200TransferSimulator.simulateArc200TransferWithMbrCheck(
                     senderAddress = fromAccountAddress,
@@ -238,7 +242,8 @@ class ReceiverAccountSelectionUseCase @Inject constructor(
                     arc200AppId = assetId,
                     amount = amount,
                     isMbrPaymentActuallyRequired = isMbrPaymentActuallyRequired,
-                    providedSuggestedParams = minimalSuggestedParams
+                    providedSuggestedParams = minimalSuggestedParams,
+                    senderAuthAddress = senderAuthAddress
                 )
 
                 println(

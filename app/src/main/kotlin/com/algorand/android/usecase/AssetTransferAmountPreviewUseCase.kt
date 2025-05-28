@@ -116,7 +116,7 @@ class AssetTransferAmountPreviewUseCase @Inject constructor(
                 publicKey = assetTransaction.receiverUser?.publicKey.orEmpty(),
                 accountIconDrawablePreview = getAccountIconDrawablePreview(accountAddress)
             ),
-            signer = getTransactionSigner(accountAddress),
+            signer = getTransactionSigner(senderAccountDetail.rekeyAdminAddress ?: accountAddress),
             isArc59Transaction = receiverAccountInfo?.hasAsset(assetId)?.not() ?: false,
             isArc200Transaction = determinedAssetType == AssetType.ARC200,
             senderSpecificAssetAmount = specificAssetHolding?.amount
