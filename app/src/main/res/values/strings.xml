@@ -1564,6 +1564,7 @@
     <string name="receiving_account_on_voi_label">To Voi Account:</string>
     <string name="bridge_verawallet_no_fee">Vera Wallet does not add any fees for bridge transactions.</string>
     <string name="bridge_need_help">Need help? <annotation type="bridge_support_click">Learn more</annotation></string>
+    <string name="powered_by_aramid">Powered by</string>
 
     <string name="payment">Payment</string>
     <string name="asset_transfer">Asset Transfer</string>

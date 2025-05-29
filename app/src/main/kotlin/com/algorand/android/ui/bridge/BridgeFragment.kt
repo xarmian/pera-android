@@ -166,6 +166,11 @@ class BridgeFragment : DaggerBaseFragment(R.layout.fragment_bridge), BridgeAccou
         // binding.bridgeSupportLinkTextView.movementMethod = android.text.method.LinkMovementMethod.getInstance()
         setupSupportLinkText()
 
+        // Aramid logo click listener
+        binding.aramidLogoImageView.setOnClickListener {
+            context?.openUrl("https://aramid.finance")
+        }
+
         // Amount Listener
         binding.bridgeAmountSection.bridgeAmountEditText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { /* NA */ }

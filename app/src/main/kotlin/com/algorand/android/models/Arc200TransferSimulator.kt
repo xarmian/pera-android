@@ -164,7 +164,6 @@ class Arc200TransferSimulator @Inject constructor(
                 algodClient.SimulateTransaction().request(simulateRequest).execute()
             }
         } catch (e: Exception) {
-            Log.e("VOI_MBR_DEBUG", "[simulateArc200Transfer] Exception during simulation: ${e.message}", e)
             return Arc200TransferSimulationResult(
                 requiresMbrPaymentTransaction = isMbrPaymentActuallyRequired,
                 mbrAmount = if (isMbrPaymentActuallyRequired) MBR_AMOUNT_PER_BOX else null,

@@ -121,6 +121,10 @@ class AccountAssetsFragment : BaseFragment(R.layout.fragment_account_assets) {
         override fun onBuySellClick() {
             listener?.onBuySellClick()
         }
+
+        override fun onQrScanClick() {
+            listener?.onQrScanClick()
+        }
     }
 
     private val accountAssetsAdapter = AccountAssetsAdapter(accountAssetListener)
@@ -160,9 +164,6 @@ class AccountAssetsFragment : BaseFragment(R.layout.fragment_account_assets) {
             accountAssetsViewModel.isWatchAccount?.let { isWatchAccount ->
                 listener?.onAccountQuickActionsFloatingActionButtonClicked(isWatchAccount)
             }
-        }
-        binding.qrImageButton.setOnClickListener {
-            listener?.onQrScanClick()
         }
     }
 

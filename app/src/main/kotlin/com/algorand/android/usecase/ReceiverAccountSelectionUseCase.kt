@@ -231,11 +231,7 @@ class ReceiverAccountSelectionUseCase @Inject constructor(
                 // Get sender account info to check for rekey admin address
                 val senderAccountInfo = getAccountInformation(fromAccountAddress)
                 val senderAuthAddress = senderAccountInfo?.rekeyAdminAddress
-                
-                println(
-                    "About to call arc200TransferSimulator.simulateArc200TransferWithMbrCheck with isMbrRequired=" +
-                        isMbrPaymentActuallyRequired + ", senderAuthAddress=" + senderAuthAddress
-                )
+
                 val simulationResult = arc200TransferSimulator.simulateArc200TransferWithMbrCheck(
                     senderAddress = fromAccountAddress,
                     receiverAddress = accountAssetDetail.address,
@@ -245,22 +241,6 @@ class ReceiverAccountSelectionUseCase @Inject constructor(
                     providedSuggestedParams = minimalSuggestedParams,
                     senderAuthAddress = senderAuthAddress
                 )
-
-                println(
-                    "ARC-200 simulation result: requiresMbrPaymentTransaction=${simulationResult.requiresMbrPaymentTransaction}, " +
-                        "mbrAmount=${simulationResult.mbrAmount}, " +
-                        "failureMessage=${simulationResult.failureMessage}, " +
-                        "logs=${simulationResult.logs?.joinToString()}"
-                )
-
-                if (simulationResult.failureMessage != null) {
-                    println("Simulation failed with message: ${simulationResult.failureMessage}")
-                    // Depending on product requirements, might return error or allow proceeding
-                    // For now, let's assume a simulation failure that's not just an MBR hint means we stop
-                    // However, the plan is to use simulation for box discovery primarily.
-                    // If failureMessage indicates a real problem beyond MBR, then it's an error.
-                    // For now, we pass the simulationResponse anyway for box extraction if possible.
-                }
 
                 // The TargetUserWithSimulation now needs to carry the simulation response and if MBR was part of it
                 return Result.Success(
@@ -280,7 +260,6 @@ class ReceiverAccountSelectionUseCase @Inject constructor(
                     )
                 )
             } catch (e: Exception) {
-                println("Exception during ARC-200 simulation call: ${e.message}")
                 e.printStackTrace()
                 // Log the error and return a generic error or a more specific one based on e
                 return Result.Error(

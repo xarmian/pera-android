@@ -83,6 +83,12 @@ class AccountAssetsAdapter(
         }
     }
 
+    private val accountValueViewHolderListener = object : AccountValueViewHolder.Listener {
+        override fun onQrScanClick() {
+            listener.onQrScanClick()
+        }
+    }
+
     private val requiredMinimumBalanceListener = RequiredMinimumBalanceItemViewHolder.RequiredMinimumBalanceListener {
         listener.onRequiredMinimumBalanceClick()
     }
@@ -150,7 +156,7 @@ class AccountAssetsAdapter(
     }
 
     private fun createAccountValueViewHolder(parent: ViewGroup): AccountValueViewHolder {
-        return AccountValueViewHolder.create(parent)
+        return AccountValueViewHolder.create(parent, accountValueViewHolderListener)
     }
 
     private fun createOwnedAssetViewHolder(parent: ViewGroup): OwnedAssetViewHolder {
@@ -206,6 +212,7 @@ class AccountAssetsAdapter(
         fun onShowAddressClick()
         fun onBackupNowClick()
         fun onBuySellClick()
+        fun onQrScanClick()
     }
 
     companion object {

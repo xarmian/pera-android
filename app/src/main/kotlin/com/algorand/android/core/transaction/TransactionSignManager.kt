@@ -86,23 +86,21 @@ private data class SimulationBoxReference(
 private fun extractBoxReferencesFromSimulation(simulationResponse: String, transactionAppId: Long): List<SimulationBoxReference> {
     val boxList = mutableListOf<SimulationBoxReference>()
     try {
-        Log.d("Simulation", "Simulation response: $simulationResponse")
         val json = JSONObject(simulationResponse)
         val txnGroups = json.getJSONArray("txn-groups")
         if (txnGroups.length() == 0) return emptyList()
 
         val firstGroup = txnGroups.getJSONObject(0)
-        
+
         // Try to extract boxes from the original format: unnamed-resources-accessed.boxes
         var boxes: JSONArray? = null
         try {
             val unnamedResources = firstGroup.getJSONObject("unnamed-resources-accessed")
             boxes = unnamedResources.getJSONArray("boxes")
-            Log.d("Simulation", "Found boxes in unnamed-resources-accessed format")
         } catch (e: Exception) {
             Log.d("Simulation", "unnamed-resources-accessed format not found, trying alternative format")
         }
-        
+
         // If not found in original format, try the alternative format: txn-results[0].txn-result.txn.txn.apbx
         if (boxes == null) {
             try {
@@ -113,13 +111,12 @@ private fun extractBoxReferencesFromSimulation(simulationResponse: String, trans
                     val outerTxn = txnResult.getJSONObject("txn")
                     val innerTxn = outerTxn.getJSONObject("txn")
                     boxes = innerTxn.getJSONArray("apbx")
-                    Log.d("Simulation", "Found boxes in apbx format")
                 }
             } catch (e: Exception) {
                 Log.d("Simulation", "apbx format not found either", e)
             }
         }
-        
+
         // Process the boxes if found
         if (boxes != null) {
             for (i in 0 until boxes.length()) {
@@ -132,7 +129,7 @@ private fun extractBoxReferencesFromSimulation(simulationResponse: String, trans
                         continue
                     }
                 }
-                
+
                 boxList.add(
                     SimulationBoxReference(
                         appId = transactionAppId,
@@ -143,7 +140,6 @@ private fun extractBoxReferencesFromSimulation(simulationResponse: String, trans
         } else {
             Log.d("Simulation", "No boxes found in either format")
         }
-        
     } catch (e: Exception) {
         Log.e("Simulation", "Error extracting box references", e)
     }
@@ -268,7 +264,6 @@ class TransactionSignManager @Inject constructor(
 
     private suspend fun checkAndCacheSignedTransaction(transactionByteArray: ByteArray?) {
         if (transactionByteArray == null) {
-            Log.e("TransactionSignManager", "Transaction byte array is null")
             setSignFailed(Defined(AnnotatedString(R.string.unknown_error)))
             return
         }
