@@ -48,7 +48,6 @@ import com.algorand.wallet.account.detail.domain.usecase.GetAccountType
 import com.algorand.wallet.account.local.domain.usecase.IsThereAnyAccountWithAddress
 import com.algorand.wallet.account.local.domain.usecase.IsThereAnyLocalAccount
 import com.algorand.wallet.analytics.domain.service.PeraReferrerManager
-import com.algorand.wallet.cache.domain.model.AppCacheStatus
 import com.algorand.wallet.cache.domain.usecase.GetAppCacheStatusFlow
 import com.algorand.wallet.cache.domain.usecase.InitializeAppCache
 import com.algorand.wallet.deeplink.model.DeepLink
@@ -59,21 +58,16 @@ import com.algorand.wallet.deeplink.model.NotificationGroupType.TRANSACTIONS
 import com.algorand.wallet.deeplink.parser.CreateDeepLink
 import com.algorand.wallet.viewmodel.EventDelegate
 import com.algorand.wallet.viewmodel.EventViewModel
-import com.algorand.android.usecase.RefreshArc200CacheUseCase
-import com.algorand.wallet.account.local.domain.usecase.GetLocalAccountsAddresses
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlin.properties.Delegates
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 
@@ -103,8 +97,6 @@ class MainViewModel @Inject constructor(
     private val autoLockManager: AutoLockManager,
     private val autoLockSuggestionManager: AutoLockSuggestionManager,
     private val androidEncryptionManager: AndroidEncryptionManager,
-    private val getLocalAccountAddresses: GetLocalAccountsAddresses,
-    private val refreshArc200CacheUseCase: RefreshArc200CacheUseCase,
     firebaseTokenManager: FirebaseTokenManager,
     getAppCacheStatusFlow: GetAppCacheStatusFlow
 ) : BaseViewModel(), EventViewModel<MainViewModel.ViewEvent> by eventDelegate {
@@ -128,20 +120,17 @@ class MainViewModel @Inject constructor(
     private val _activeNodeFlow = MutableStateFlow<Node?>(null)
 
     private var refreshBalanceJob: Job? = null
-    private var arc200RefreshTriggered = false
 
     init {
         initActiveNodeFlow()
         initializeNodeInterceptor()
         initializeTutorial()
-        collectCacheStatusAndTriggerArc200Refresh()
     }
 
     fun initializeApp(lifecycle: Lifecycle) {
         viewModelScope.launch {
             androidEncryptionManager.initializeEncryptionManager()
             initializeAppCache(lifecycle)
-            arc200RefreshTriggered = false
         }
     }
 
@@ -149,7 +138,6 @@ class MainViewModel @Inject constructor(
         refreshBalanceJob?.cancel()
         viewModelScope.launch {
             initializeAppCache(lifecycle)
-            arc200RefreshTriggered = false
         }
     }
 
@@ -381,35 +369,6 @@ class MainViewModel @Inject constructor(
             ViewEvent.NavToAssetInboxOneAccountNavigation(accountAddress)
         } else {
             ViewEvent.NavToAccountDetailFragment(accountAddress)
-        }
-    }
-
-    private fun collectCacheStatusAndTriggerArc200Refresh() {
-        viewModelScope.launch(Dispatchers.IO) {
-            appCacheStatusFlow
-                .filter { it == AppCacheStatus.INITIALIZED }
-                .collectLatest {
-                    if (!arc200RefreshTriggered) {
-                        arc200RefreshTriggered = true
-                        triggerArc200CacheRefresh()
-                    }
-                }
-        }
-    }
-
-    private fun triggerArc200CacheRefresh() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val allAddresses = getLocalAccountAddresses()
-
-            if (allAddresses.isEmpty()) {
-                return@launch
-            }
-
-            allAddresses.map { accountAddress ->
-                async {
-                    refreshArc200CacheUseCase(accountAddress)
-                }
-            }.awaitAll()
         }
     }
 

@@ -14,6 +14,7 @@ internal object PeraClickEvent {
     const val TAP_LOWERMENU_DISCOVER = "lowermenu_discover_tap"
     const val TAP_LOWERMENU_PERA = "lowermenu_pera_tap"
     const val TAP_LOWERMENU_NFTS = "lowermenu_nfts_tap"
+    const val TAP_LOWERMENU_BRIDGE = "lowermenu_bridge_tap"
     const val TAP_LOWERMENU_SETTINGS = "lowermenu_settings_tap"
 
     const val TAP_HOME_BANNER_STAKING = "homescr_visitstaking"

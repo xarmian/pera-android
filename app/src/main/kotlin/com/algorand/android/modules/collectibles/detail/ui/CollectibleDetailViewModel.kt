@@ -21,8 +21,8 @@ import com.algorand.android.modules.collectibles.detail.ui.CollectibleDetailView
 import com.algorand.android.modules.collectibles.detail.ui.model.NFTDetailPreview
 import com.algorand.android.modules.collectibles.detail.ui.mapper.NFTDetailPreviewMapper
 import com.algorand.android.modules.collectibles.download.DownloadFileUseCase
-import com.algorand.android.network.dto.MimirNftItemDto
-import com.algorand.android.network.dto.MimirNftMetadataDto
+import com.algorand.wallet.network.mimir.model.MimirNftItemDto
+import com.algorand.wallet.network.mimir.model.MimirNftMetadataDto
 import com.algorand.android.repository.NftRepository
 import com.algorand.android.usecase.NetworkSlugUseCase
 import com.algorand.android.utils.getOrThrow

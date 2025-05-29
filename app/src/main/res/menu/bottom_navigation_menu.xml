@@ -28,10 +28,10 @@
         android:title="" />
 
     <item
-        android:id="@id/collectiblesFragment"
-        android:icon="@drawable/ic_collectibles"
-        android:enabled="false"
-        android:title="@string/nfts" />
+        android:id="@+id/bridgeFragment"
+        android:icon="@drawable/ic_bridge"
+        android:enabled="true"
+        android:title="@string/bridge" />
 
     <item
         android:id="@id/settingsFragment"

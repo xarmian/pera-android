@@ -38,6 +38,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import com.algorand.android.models.Arc200TransferReviewUiModel
+import java.math.BigInteger
 
 @HiltViewModel
 class AssetTransferPreviewViewModel @Inject constructor(
@@ -54,19 +56,36 @@ class AssetTransferPreviewViewModel @Inject constructor(
     private val _sendAlgoResponseFlow = MutableStateFlow<Event<Resource<String>>?>(null)
     val sendAlgoResponseFlow: StateFlow<Event<Resource<String>>?> = _sendAlgoResponseFlow
 
+    private val _arc200TransferReviewUiModelFlow = MutableStateFlow<Arc200TransferReviewUiModel?>(null)
+    val arc200TransferReviewUiModelFlow: StateFlow<Arc200TransferReviewUiModel?> = _arc200TransferReviewUiModelFlow
+
+    // Retain old preview flow for non-ARC-200 flows
     private val _assetTransferPreviewFlow = MutableStateFlow<AssetTransferPreview?>(null)
     val assetTransferPreviewFlow: StateFlow<AssetTransferPreview?> = _assetTransferPreviewFlow
 
     private val _signArc59TransactionFlow = MutableStateFlow<TransactionSignData?>(null)
     val signArc59TransactionFlow: StateFlow<TransactionSignData?> = _signArc59TransactionFlow
 
+    private val _signArc200TransactionFlow = MutableStateFlow<TransactionSignData?>(null)
+    val signArc200TransactionFlow: StateFlow<TransactionSignData?> = _signArc200TransactionFlow
+
+    private val _signArc200TransactionGroupFlow = MutableStateFlow<List<TransactionSignData>?>(null)
+    val signArc200TransactionGroupFlow: StateFlow<List<TransactionSignData>?> = _signArc200TransactionGroupFlow
+
     private var unsignedArc59Transactions = listOf<TransactionSignData>()
+    private var unsignedArc200Transactions = listOf<TransactionSignData>()
+
     private val signedArc59Transactions = mutableListOf<SignedTransactionDetail>()
+    private val signedArc200Transactions = mutableListOf<SignedTransactionDetail>()
 
     init {
-        getAssetTransferPreview(listOf(transactionData))
-        if (transactionData.isArc59Transaction) {
+        // For ARC200, build preview only (do not emit to signing flows)
+        if (transactionData.isArc200Transaction) {
+            makeArc200Preview(transactionData)
+        } else if (transactionData.isArc59Transaction) {
             makeArc59Transactions(transactionData)
+        } else {
+            getAssetTransferPreview(listOf(transactionData))
         }
     }
 
@@ -75,11 +94,31 @@ class AssetTransferPreviewViewModel @Inject constructor(
         receiverMinBalanceFee: Long? = null
     ) {
         viewModelScope.launch {
-            val signedTransactionPreview = assetTransferPreviewUserCase.getAssetTransferPreview(
-                transactionList,
-                receiverMinBalanceFee
-            )
-            _assetTransferPreviewFlow.emit(signedTransactionPreview)
+            val firstSend = transactionList.firstOrNull() as? TransactionSignData.Send
+            var updatedTransactionList = transactionList // Default to original list
+            var mbrAmountForPreview: BigInteger? = null
+
+            if (firstSend != null && firstSend.assetType?.name == "ARC200") {
+                mbrAmountForPreview = firstSend.mbrAmount ?: BigInteger.ZERO
+                val preview = assetTransferPreviewUserCase.getAssetTransferPreview(
+                    updatedTransactionList,
+                    receiverMinBalanceFee,
+                    mbrPaymentAmount = mbrAmountForPreview
+                )
+                _arc200TransferReviewUiModelFlow.emit(
+                    Arc200TransferReviewUiModel.Single(
+                        preview = preview,
+                        fee = preview.fee,
+                        totalFee = preview.fee
+                    )
+                )
+            } else {
+                val signedTransactionPreview = assetTransferPreviewUserCase.getAssetTransferPreview(
+                    transactionList,
+                    receiverMinBalanceFee
+                )
+                _assetTransferPreviewFlow.emit(signedTransactionPreview)
+            }
         }
     }
 
@@ -164,22 +203,78 @@ class AssetTransferPreviewViewModel @Inject constructor(
         }
     }
 
+    private fun makeArc200Preview(transactionData: TransactionSignData) {
+        viewModelScope.launch {
+            unsignedArc200Transactions = emptyList()
+            signedArc200Transactions.clear()
+            // Always use a fresh copy for preview
+            val previewData = (transactionData as? TransactionSignData.Send)?.copy(transactionByteArray = null)
+            previewData?.let { sendData ->
+                val transactions = transactionSignManager.createArc200SendTransactionList(
+                    sendData,
+                    sendData.simulationResponse
+                ) ?: return@launch
+
+                unsignedArc200Transactions = transactions.map { transaction ->
+                    sendData.copy(transactionByteArray = transaction.transactionByteArray)
+                }
+
+                val receiverMinBalanceFee = transactionSignManager.getReceiverMinBalanceFee(sendData)
+                getAssetTransferPreview(unsignedArc200Transactions)
+            }
+        }
+    }
+
+    // Remove preview logic from makeArc200Transactions, use only for signing
+    private fun makeArc200TransactionsForSigning(transactionData: TransactionSignData) {
+        viewModelScope.launch {
+            (transactionData as? TransactionSignData.Send)?.let { sendData ->
+                val transactions = transactionSignManager.createArc200SendTransactionList(
+                    sendData,
+                    sendData.simulationResponse
+                ) ?: return@launch
+
+                unsignedArc200Transactions = transactions.map { transaction ->
+                    sendData.copy(transactionByteArray = transaction.transactionByteArray)
+                }
+
+                signedArc200Transactions.clear()
+                // Do NOT call getAssetTransferPreview here
+            }
+        }
+    }
+
     fun sendArc59Transactions() {
         viewModelScope.launch {
             _signArc59TransactionFlow.emit(unsignedArc59Transactions.first())
         }
     }
 
+    fun sendArc200Transactions() {
+        viewModelScope.launch {
+            unsignedArc200Transactions = emptyList()
+            signedArc200Transactions.clear()
+            // Get the current transaction data with updated notes
+            val currentTransactionData = getTransactionData().copy(transactionByteArray = null)
+
+            // Instead of generating sub-transactions, emit the parent transaction for signing
+            _signArc200TransactionGroupFlow.emit(listOf(currentTransactionData))
+        }
+    }
+
     fun getTransactionData(): TransactionSignData.Send {
+        val simResponse = transactionData.simulationResponse
         return if (_assetTransferPreviewFlow.value?.isNoteEditable == true) {
             transactionData.copy(
                 note = _assetTransferPreviewFlow.value?.note,
-                xnote = null
+                xnote = null,
+                simulationResponse = simResponse
             )
         } else {
             transactionData.copy(
                 note = null,
-                xnote = _assetTransferPreviewFlow.value?.note
+                xnote = _assetTransferPreviewFlow.value?.note,
+                simulationResponse = simResponse
             )
         }
     }

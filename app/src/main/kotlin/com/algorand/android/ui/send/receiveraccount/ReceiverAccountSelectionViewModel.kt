@@ -19,7 +19,8 @@ import androidx.lifecycle.viewModelScope
 import com.algorand.android.models.AssetTransaction
 import com.algorand.android.models.BaseAccountSelectionListItem
 import com.algorand.android.models.Result
-import com.algorand.android.models.TargetUser
+import com.algorand.android.models.Arc200TransferSimulationResult
+import com.algorand.android.models.TargetUserWithSimulation
 import com.algorand.android.models.TransactionSignData
 import com.algorand.android.modules.accountasset.domain.model.AccountAssetDetail
 import com.algorand.android.modules.assetinbox.expresssend.domain.usecase.Arc59ExpressSendUseCase
@@ -40,6 +41,11 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import com.algorand.wallet.asset.domain.usecase.GetAsset
+import com.algorand.wallet.asset.domain.usecase.FetchAsset
+import com.algorand.wallet.asset.domain.usecase.FetchAndCacheAssets
+import com.algorand.android.modules.accountcore.domain.usecase.GetAccountBaseOwnedAssetData
+import com.algorand.wallet.asset.domain.model.AssetType
 
 @HiltViewModel
 class ReceiverAccountSelectionViewModel @Inject constructor(
@@ -49,6 +55,10 @@ class ReceiverAccountSelectionViewModel @Inject constructor(
     private val getAccountInformation: GetAccountInformation,
     private val getAccountMinBalance: GetAccountMinBalance,
     private val getAccountCustomName: GetAccountCustomName,
+    private val getAsset: GetAsset,
+    private val fetchAsset: FetchAsset,
+    private val fetchAndCacheAssets: FetchAndCacheAssets,
+    private val getAccountBaseOwnedAssetData: GetAccountBaseOwnedAssetData,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -63,9 +73,10 @@ class ReceiverAccountSelectionViewModel @Inject constructor(
     private val _toAccountInformationFlow = MutableStateFlow<Event<Resource<AccountAssetDetail>>?>(null)
     val toAccountInformationFlow: StateFlow<Event<Resource<AccountAssetDetail>>?> = _toAccountInformationFlow
 
-    private val _toAccountTransactionRequirementsFlow = MutableStateFlow<Event<Resource<TargetUser>>?>(null)
-    val toAccountTransactionRequirementsFlow: StateFlow<Event<Resource<TargetUser>>?> =
-        _toAccountTransactionRequirementsFlow
+    private val _toAccountTransactionRequirementsFlow = MutableStateFlow<Event<Resource<TargetUserWithSimulation>>?>(null)
+    val toAccountTransactionRequirementsFlow: StateFlow<Event<Resource<TargetUserWithSimulation>>?> = _toAccountTransactionRequirementsFlow
+
+    private val _currentArc200SimulationResult = MutableStateFlow<Arc200TransferSimulationResult?>(null)
 
     private val _sendTransactionDataFlow: MutableStateFlow<Event<TransactionSignData.Send>?> = MutableStateFlow(null)
     val sendTransactionDataFlow: StateFlow<Event<TransactionSignData.Send>?>
@@ -120,17 +131,22 @@ class ReceiverAccountSelectionViewModel @Inject constructor(
         viewModelScope.launch {
             _toAccountTransactionRequirementsFlow.emit(Event(Resource.Loading))
             val result = receiverAccountSelectionUseCase.checkToAccountTransactionRequirements(
-                accountAssetDetail,
-                assetTransaction.assetId,
-                assetTransaction.senderAddress,
+                accountAssetDetail = accountAssetDetail,
+                assetId = assetTransaction.assetId,
+                fromAccountAddress = assetTransaction.senderAddress,
                 amount = assetTransaction.amount,
                 nftDomainAddress = nftDomainAddressServiceLogoPair?.first,
                 nftDomainServiceLogoUrl = nftDomainAddressServiceLogoPair?.second
             )
             when (result) {
-                is Result.Error -> _toAccountTransactionRequirementsFlow.emit(Event(result.getAsResourceError()))
                 is Result.Success -> {
-                    _toAccountTransactionRequirementsFlow.emit(Event(Resource.Success(result.data)))
+                    _toAccountTransactionRequirementsFlow.value = Event(Resource.Success(result.data))
+                    _currentArc200SimulationResult.value = null // or set to result.data.simulationResponse if needed
+                }
+
+                is Result.Error -> {
+                    _currentArc200SimulationResult.value = null
+                    _toAccountTransactionRequirementsFlow.emit(Event(result.getAsResourceError()))
                 }
             }
         }
@@ -158,39 +174,67 @@ class ReceiverAccountSelectionViewModel @Inject constructor(
         }
     }
 
-    fun getSendTransactionData(targetUser: TargetUser) {
-        val assetTransaction = assetTransaction
-        val note = assetTransaction.xnote ?: assetTransaction.note
-        val minBalanceCalculatedAmount = assetTransaction.amount
+    fun getSendTransactionData(targetUserWithSimulation: TargetUserWithSimulation) {
+        val currentAssetTransaction = assetTransaction
+        val note = currentAssetTransaction.xnote ?: currentAssetTransaction.note
+        val assetId = currentAssetTransaction.assetId
 
         viewModelScope.launch {
-            val isArc59Transaction = isArc59Transaction(targetUser.publicKey, assetTransaction.assetId)
-            val accountInfo = getAccountInformation(assetTransaction.senderAddress) ?: return@launch
-            val accountName = getAccountCustomName(assetTransaction.senderAddress)
-            val minBalance = getAccountMinBalance(accountInfo)
-            val txnData = TransactionSignData.Send(
-                senderAccountAddress = assetTransaction.senderAddress,
-                senderAccountName = accountName.orEmpty(),
+            val isArc59Transaction = isArc59Transaction(targetUserWithSimulation.targetUser.publicKey, assetId)
+            val isArc200Transaction = isArc200Transaction((targetUserWithSimulation.targetUser.publicKey), assetId)
+            val accountInfo = getAccountInformation(currentAssetTransaction.senderAddress) ?: return@launch
+            val minBalance = getAccountMinBalance(currentAssetTransaction.senderAddress)
+            val accountName = getAccountCustomName(currentAssetTransaction.senderAddress)
+            val resolvedAssetType = getAsset(assetId)?.assetType
+            val specificAssetHolding = accountInfo.assetHoldings.firstOrNull { it.assetId == assetId }
+
+            val transactionData = TransactionSignData.Send(
+                senderAccountAddress = currentAssetTransaction.senderAddress,
                 senderAuthAddress = accountInfo.rekeyAdminAddress,
+                signer = getTransactionSigner(accountInfo.rekeyAdminAddress ?: currentAssetTransaction.senderAddress),
+                amount = currentAssetTransaction.amount,
+                targetUser = targetUserWithSimulation.targetUser,
+                transactionByteArray = null,
+                isArc59Transaction = isArc59Transaction,
+                isArc200Transaction = isArc200Transaction,
                 senderAlgoAmount = accountInfo.amount,
                 minimumBalance = minBalance.toLong(),
-                amount = minBalanceCalculatedAmount,
-                assetId = assetTransaction.assetId,
+                senderAccountName = accountName.orEmpty(),
+                assetId = assetId,
+                assetType = resolvedAssetType,
                 note = note,
-                targetUser = targetUser,
-                isArc59Transaction = isArc59Transaction,
-                signer = getTransactionSigner(assetTransaction.senderAddress)
+                xnote = null,
+                isMax = false,
+                projectedFee = com.algorand.android.utils.MIN_FEE,
+                senderSpecificAssetAmount = specificAssetHolding?.amount,
+                simulationResponse = targetUserWithSimulation.simulationResponse,
+                isMbrPaymentActuallyRequired = targetUserWithSimulation.isMbrPaymentSimulated,
+                mbrAmount = targetUserWithSimulation.mbrAmount
             )
-            _sendTransactionDataFlow.emit(Event(txnData))
+            _sendTransactionDataFlow.emit(Event(transactionData))
         }
     }
 
     private suspend fun isArc59Transaction(targetUserAddress: String, assetId: Long): Boolean {
-        return getAccountInformation(targetUserAddress)?.hasAsset(assetId) == false
+        return false
+
+        // Rely on the assetType already determined for the current assetTransaction
+        /*if (this.assetTransaction.assetType == AssetType.ARC200) {
+            return false // ARC-200 tokens do not use the Arc59 opt-in/inbox flow
+        }
+
+        // Original logic for ASAs (and if assetType is somehow not ARC200):
+        // if recipient hasn't opted in, it's an "Arc59 transaction" (needs inbox/causes API call)
+        return getAccountInformation(targetUserAddress)?.hasAsset(assetId) == false*/
+    }
+
+    private suspend fun isArc200Transaction(targetUserAddress: String, assetId: Long): Boolean {
+        return this.getAsset(assetId)?.assetType == AssetType.ARC200
     }
 
     fun isExpressSendWarningEnabled(isArc59Transaction: Boolean): Boolean {
-        return arc59ExpressSendUseCase.isExpressSendWarningEnabled(isArc59Transaction)
+        // return arc59ExpressSendUseCase.isExpressSendWarningEnabled(isArc59Transaction)
+        return false // Force disable the express send/asset inbox flow from this ViewModel
     }
 
     companion object {

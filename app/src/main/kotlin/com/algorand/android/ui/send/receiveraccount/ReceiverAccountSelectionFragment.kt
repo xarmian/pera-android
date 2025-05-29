@@ -24,7 +24,7 @@ import com.algorand.android.core.transaction.TransactionSignBaseFragment
 import com.algorand.android.databinding.FragmentReceiverAccountSelectionBinding
 import com.algorand.android.models.BaseAccountSelectionListItem
 import com.algorand.android.models.FragmentConfiguration
-import com.algorand.android.models.TargetUser
+import com.algorand.android.models.TargetUserWithSimulation
 import com.algorand.android.models.ToolbarConfiguration
 import com.algorand.android.models.TransactionSignData
 import com.algorand.android.modules.accountasset.domain.model.AccountAssetDetail
@@ -101,13 +101,21 @@ class ReceiverAccountSelectionFragment : TransactionSignBaseFragment(R.layout.fr
         )
     }
 
-    private val toAccountTransactionRequirementsCollector: suspend (Event<Resource<TargetUser>>?) -> Unit = {
-        it?.consume()?.use(
-            onSuccess = ::handleNextNavigation,
-            onFailed = { handleError(it, binding.root) },
-            onLoading = ::showProgress,
-            onLoadingFinished = ::hideProgress
-        )
+    private val toAccountTransactionRequirementsCollector: suspend (Event<Resource<TargetUserWithSimulation>>?) -> Unit = { event ->
+        event?.consume()?.let { resource ->
+            when (resource) {
+                is Resource.Error -> {
+                    hideProgress()
+                    showGlobalError(resource.parse(requireContext()))
+                }
+                is Resource.Loading -> showProgress()
+                is Resource.Success -> {
+                    hideProgress()
+                    resource.data?.let { handleNextNavigation(it) }
+                }
+                is Resource.OnLoadingFinished -> {}
+            }
+        }
     }
 
     private val sendTransactionDataCollector: suspend (Event<TransactionSignData.Send>?) -> Unit = {
@@ -201,8 +209,8 @@ class ReceiverAccountSelectionFragment : TransactionSignBaseFragment(R.layout.fr
         receiverAccountSelectionViewModel.checkIsGivenAddressValid(binding.searchView.text)
     }
 
-    private fun handleNextNavigation(targetUser: TargetUser) {
-        receiverAccountSelectionViewModel.getSendTransactionData(targetUser)
+    private fun handleNextNavigation(targetUserWithSimulation: TargetUserWithSimulation) {
+        receiverAccountSelectionViewModel.getSendTransactionData(targetUserWithSimulation)
     }
 
     private fun navToAssetTransferPreviewFragment(sendTransactionData: TransactionSignData.Send) {

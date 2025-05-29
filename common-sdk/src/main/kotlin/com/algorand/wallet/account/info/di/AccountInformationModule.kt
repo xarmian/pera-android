@@ -42,6 +42,7 @@ import com.algorand.wallet.account.info.data.repository.AccountInformationFetchH
 import com.algorand.wallet.account.info.data.repository.AccountInformationRepositoryImpl
 import com.algorand.wallet.account.info.data.repository.AssetHoldingCacheHelper
 import com.algorand.wallet.account.info.data.repository.AssetHoldingCacheHelperImpl
+import com.algorand.wallet.account.info.data.repository.Arc200BalanceCacheUpdater
 import com.algorand.wallet.account.info.data.service.AccountFastLookupApiService
 import com.algorand.wallet.account.info.data.service.AccountInformationApiService
 import com.algorand.wallet.account.info.domain.manager.AccountCacheManager
@@ -83,6 +84,9 @@ import com.algorand.wallet.account.info.domain.usecase.IsThereAnyCachedSuccessAc
 import com.algorand.wallet.account.info.domain.usecase.SetAccountAssetStatus
 import com.algorand.wallet.foundation.cache.SingleInMemoryLocalCache
 import com.algorand.wallet.foundation.database.PeraDatabase
+import com.algorand.wallet.mapper.arc200.Arc200DtoToEntityMapper
+import com.algorand.wallet.network.mimir.api.MimirApi
+import com.algorand.wallet.asset.data.repository.AssetDetailCacheHelper
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -154,6 +158,29 @@ internal object AccountInformationModule {
     fun provideAccountAssetHoldingsFetchHelper(
         impl: AccountAssetHoldingsFetchHelperImpl
     ): AccountAssetHoldingsFetchHelper = impl
+
+    @Provides
+    @Singleton
+    internal fun provideArc200BalanceCacheUpdater(
+        mimirApi: MimirApi,
+        arc200DtoToEntityMapper: Arc200DtoToEntityMapper,
+        assetHoldingDao: AssetHoldingDao,
+        assetHoldingMapper: AssetHoldingMapper,
+        assetDetailCacheHelper: AssetDetailCacheHelper
+    ): Arc200BalanceCacheUpdater {
+        return Arc200BalanceCacheUpdater(
+            mimirApi = mimirApi,
+            arc200DtoToEntityMapper = arc200DtoToEntityMapper,
+            assetHoldingDao = assetHoldingDao,
+            assetHoldingMapper = assetHoldingMapper,
+            assetDetailCacheHelper = assetDetailCacheHelper
+        )
+    }
+
+    @Provides
+    fun provideArc200DtoToEntityMapper(): Arc200DtoToEntityMapper {
+        return Arc200DtoToEntityMapper()
+    }
 
     @Provides
     fun provideAccountFastLookupMapper(impl: AccountFastLookupMapperImpl): AccountFastLookupMapper = impl

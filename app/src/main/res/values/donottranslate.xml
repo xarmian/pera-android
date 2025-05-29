@@ -30,7 +30,7 @@
     <string name="pair_value_format_with_coma">%1$s, %2$d</string>
     <string name="pair_value_format_with_interpunct">%1$s · %2$d</string>
     <string name="algo">Voi</string>
-    <string name="pera_explorer">Voi Explorer</string>
+    <string name="pera_explorer">Voiager Explorer</string>
     <string name="testnet">TESTNET</string>
 
     <!--Accessibility-->

@@ -20,7 +20,7 @@ import com.algorand.android.modules.currency.domain.usecase.GetPrimaryCurrencySy
 import com.algorand.wallet.account.detail.domain.model.AccountType
 import javax.inject.Inject
 
-internal class GetAccountSelectionAccountsWhichCanSignTransactionUseCase @Inject constructor(
+public class GetAccountSelectionAccountsWhichCanSignTransactionUseCase @Inject constructor(
     private val getPrimaryCurrencySymbol: GetPrimaryCurrencySymbol,
     private val getFilteredSortedAccountListItemsByAssetIdsWhichCanSignTransaction: GetFilteredSortedAccountListItemsByAssetIdsWhichCanSignTransaction,
     private val createLoadedAccountConfiguration: CreateLoadedAccountConfiguration,

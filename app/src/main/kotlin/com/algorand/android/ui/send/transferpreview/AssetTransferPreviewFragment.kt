@@ -25,6 +25,7 @@ import com.algorand.android.R
 import com.algorand.android.core.transaction.TransactionSignBaseFragment
 import com.algorand.android.databinding.FragmentTransferAssetPreviewBinding
 import com.algorand.android.models.AssetTransferPreview
+import com.algorand.android.models.Arc200TransferReviewUiModel
 import com.algorand.android.models.FragmentConfiguration
 import com.algorand.android.models.SignedTransactionDetail
 import com.algorand.android.models.TargetUser
@@ -46,10 +47,13 @@ import com.algorand.android.utils.toAlgoDisplayValue
 import com.algorand.android.utils.useSavedStateValue
 import com.algorand.android.utils.viewbinding.viewBinding
 import com.algorand.wallet.asset.domain.util.AssetConstants.ALGO_ID
+import com.algorand.wallet.asset.domain.util.AssetConstants.ALGO_DECIMALS
 import dagger.hilt.android.AndroidEntryPoint
 import java.math.BigDecimal
 import java.math.BigInteger
 import kotlin.properties.Delegates
+import com.algorand.android.modules.currency.domain.model.Currency
+import kotlin.math.pow
 
 @AndroidEntryPoint
 class AssetTransferPreviewFragment : TransactionSignBaseFragment(R.layout.fragment_transfer_asset_preview) {
@@ -65,6 +69,10 @@ class AssetTransferPreviewFragment : TransactionSignBaseFragment(R.layout.fragme
     private val assetTransferPreviewViewModel: AssetTransferPreviewViewModel by viewModels()
 
     private val binding by viewBinding(FragmentTransferAssetPreviewBinding::bind)
+
+    private val arc200TransferReviewUiModelCollector: suspend (Arc200TransferReviewUiModel?) -> Unit = {
+        it?.let { updateArc200Ui(it) }
+    }
 
     private val assetTransferPreviewCollector: suspend (AssetTransferPreview?) -> Unit = {
         it?.let { updateUi(it) }
@@ -106,6 +114,24 @@ class AssetTransferPreviewFragment : TransactionSignBaseFragment(R.layout.fragme
         }
     }
 
+    private val signArc200TransactionCollector: suspend (TransactionSignData?) -> Unit = { transactionData ->
+        transactionData?.let {
+            // Show loading state if needed
+            showProgress()
+            // Send the transaction
+            sendTransaction(it)
+        }
+    }
+
+    private val signArc200TransactionGroupCollector: suspend (List<TransactionSignData>?) -> Unit = { transactionDataList ->
+        transactionDataList?.let {
+            // Show loading state if needed
+            showProgress()
+            // Send the group transaction
+            sendGroupTransaction(it)
+        }
+    }
+
     override val transactionFragmentListener = object : TransactionFragmentListener {
         override fun onSignTransactionLoading() {
             showProgress()
@@ -125,6 +151,10 @@ class AssetTransferPreviewFragment : TransactionSignBaseFragment(R.layout.fragme
                     assetTransferPreviewViewModel.sendSignedTransaction(signedTransactionDetail)
                 }
 
+                is SignedTransactionDetail.Group -> {
+                    assetTransferPreviewViewModel.sendSignedTransaction(signedTransactionDetail)
+                }
+
                 else -> {
                     sendErrorLog("Unhandled else case in ReceiverAccountSelectionFragment.transactionFragmentListener")
                 }
@@ -135,6 +165,7 @@ class AssetTransferPreviewFragment : TransactionSignBaseFragment(R.layout.fragme
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initObservers()
+        initSavedStateListener()
     }
 
     private fun setTransactionNote(note: String?, isEditable: Boolean) {
@@ -143,7 +174,6 @@ class AssetTransferPreviewFragment : TransactionSignBaseFragment(R.layout.fragme
 
     override fun onResume() {
         super.onResume()
-        initSavedStateListener()
     }
 
     private fun initSavedStateListener() {
@@ -157,6 +187,10 @@ class AssetTransferPreviewFragment : TransactionSignBaseFragment(R.layout.fragme
 
     private fun initObservers() {
         viewLifecycleOwner.collectLatestOnLifecycle(
+            assetTransferPreviewViewModel.arc200TransferReviewUiModelFlow,
+            arc200TransferReviewUiModelCollector
+        )
+        viewLifecycleOwner.collectLatestOnLifecycle(
             assetTransferPreviewViewModel.assetTransferPreviewFlow,
             assetTransferPreviewCollector
         )
@@ -168,12 +202,22 @@ class AssetTransferPreviewFragment : TransactionSignBaseFragment(R.layout.fragme
             assetTransferPreviewViewModel.signArc59TransactionFlow,
             signArc59TransactionCollector
         )
+        viewLifecycleOwner.collectLatestOnLifecycle(
+            assetTransferPreviewViewModel.signArc200TransactionFlow,
+            signArc200TransactionCollector
+        )
+        viewLifecycleOwner.collectLatestOnLifecycle(
+            assetTransferPreviewViewModel.signArc200TransactionGroupFlow,
+            signArc200TransactionGroupCollector
+        )
     }
 
     private fun onConfirmTransferClick() {
         assetTransferPreviewViewModel.getTransactionData().let { transactionData ->
             if (transactionData.isArc59Transaction) {
                 assetTransferPreviewViewModel.sendArc59Transactions()
+            } else if (transactionData.isArc200Transaction) {
+                assetTransferPreviewViewModel.sendArc200Transactions()
             } else {
                 sendTransaction(transactionData)
             }
@@ -188,6 +232,33 @@ class AssetTransferPreviewFragment : TransactionSignBaseFragment(R.layout.fragme
             setAccountViews(this, targetUser, senderAccountAddress, senderAccountName, accountIconDrawablePreview)
             setFee(fee)
             setTransactionNote(note, isNoteEditable)
+            setArc200DetailsView(this)
+        }
+    }
+
+    private fun updateArc200Ui(uiModel: Arc200TransferReviewUiModel) {
+    // Ensure ARC-200 MBR details are reset/hidden before specific logic below
+        when (uiModel) {
+            is Arc200TransferReviewUiModel.Single -> {
+                updateUi(uiModel.preview)
+            }
+            is Arc200TransferReviewUiModel.WithMbr -> {
+                // Show MBR payment with unified arc200MbrPayment* views
+                if (uiModel.mbrPreview.mbrAmount > 0) {
+                    binding.arc200MbrPaymentTitleTextView.show()
+                    binding.arc200MbrPaymentAmountView.show()
+                    binding.arc200MbrPaymentTitleTextView.text = getString(R.string.arc200_mbr_payment)
+                    binding.arc200MbrPaymentAmountView.setAmount(
+                        "${Currency.ALGO.symbol}${uiModel.mbrPreview.mbrAmount.toDouble() / 10.0.pow(ALGO_DECIMALS)}",
+                        null,
+                    )
+                } else {
+                    binding.arc200MbrPaymentTitleTextView.hide()
+                    binding.arc200MbrPaymentAmountView.hide()
+                }
+                updateUi(uiModel.arc200Preview)
+                setFee(uiModel.totalFee)
+            }
         }
     }
 
@@ -274,6 +345,48 @@ class AssetTransferPreviewFragment : TransactionSignBaseFragment(R.layout.fragme
                 }
 
                 else -> toUserView.setAddress(targetUser.publicKey, targetUser.publicKey)
+            }
+        }
+    }
+
+    private fun setArc200DetailsView(assetTransferPreview: AssetTransferPreview) {
+        with(binding) {
+            val isArc200Transfer = assetTransferPreview.arc200ContractId != null
+            val viewsToToggle = listOf(
+                arc200TransactionTypeLabelTextView,
+                arc200TransactionTypeTextView,
+                arc200ContractIdLabelTextView,
+                arc200ContractIdTextView,
+                arc200MethodNameLabelTextView,
+                arc200MethodNameTextView,
+                arc200DetailsDivider
+            )
+
+            if (isArc200Transfer) {
+                arc200TransactionTypeTextView.text = getString(R.string.arc200_token_transfer)
+                arc200ContractIdTextView.text = assetTransferPreview.arc200ContractId?.toString()
+                arc200MethodNameTextView.text = assetTransferPreview.arc200MethodName
+                viewsToToggle.forEach { it.show() }
+
+                // Handle ARC-200 MBR Payment
+                val arc200MbrAmount = assetTransferPreview.mbrPaymentAmount
+                if (arc200MbrAmount != null && arc200MbrAmount > BigInteger.ZERO) {
+                    // Show ARC-200 MBR payment row styled like other items
+                    binding.arc200MbrPaymentTitleTextView.show()
+                    binding.arc200MbrPaymentAmountView.show()
+                    binding.arc200MbrPaymentTitleTextView.text = getString(R.string.arc200_mbr_payment)
+                    binding.arc200MbrPaymentAmountView.setAmount(
+                        "${Currency.ALGO.symbol}${arc200MbrAmount.toDouble() / 10.0.pow(ALGO_DECIMALS)}",
+                        null,
+                    )
+                } else {
+                    binding.arc200MbrPaymentTitleTextView.hide()
+                    binding.arc200MbrPaymentAmountView.hide()
+                }
+            } else {
+                viewsToToggle.forEach { it.hide() }
+                binding.arc200MbrPaymentTitleTextView.hide()
+                binding.arc200MbrPaymentAmountView.hide()
             }
         }
     }

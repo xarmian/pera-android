@@ -13,15 +13,19 @@
 package com.algorand.android.models
 
 import android.net.Uri
+import android.os.Parcel
+import android.os.Parcelable
 import androidx.annotation.StringRes
 import com.algorand.android.modules.accountsorting.ui.domain.model.BaseAccountAndAssetListItem.AccountListItem
+import kotlinx.parcelize.Parcelize
 
 sealed class BaseAccountSelectionListItem : RecyclerListItem {
 
     abstract override fun areItemsTheSame(other: RecyclerListItem): Boolean
     abstract override fun areContentsTheSame(other: RecyclerListItem): Boolean
 
-    data class HeaderItem(@StringRes val titleRes: Int) : BaseAccountSelectionListItem() {
+    @Parcelize
+    data class HeaderItem(@StringRes val titleRes: Int) : BaseAccountSelectionListItem(), Parcelable {
 
         override fun areItemsTheSame(other: RecyclerListItem): Boolean {
             return other is HeaderItem && titleRes == other.titleRes
@@ -32,7 +36,8 @@ sealed class BaseAccountSelectionListItem : RecyclerListItem {
         }
     }
 
-    data class PasteItem(val address: String) : BaseAccountSelectionListItem() {
+    @Parcelize
+    data class PasteItem(val address: String) : BaseAccountSelectionListItem(), Parcelable {
         override fun areItemsTheSame(other: RecyclerListItem): Boolean {
             return other is PasteItem && address == other.address
         }
@@ -42,7 +47,7 @@ sealed class BaseAccountSelectionListItem : RecyclerListItem {
         }
     }
 
-    sealed class BaseAccountItem : BaseAccountSelectionListItem() {
+    sealed class BaseAccountItem : BaseAccountSelectionListItem(), Parcelable {
         abstract val displayName: String
         abstract val address: String
 
@@ -113,6 +118,22 @@ sealed class BaseAccountSelectionListItem : RecyclerListItem {
             override fun areContentsTheSame(other: RecyclerListItem): Boolean {
                 return other is NftDomainAccountItem && this == other
             }
+        }
+
+        override fun areItemsTheSame(other: RecyclerListItem): Boolean {
+            TODO("Not yet implemented")
+        }
+
+        override fun areContentsTheSame(other: RecyclerListItem): Boolean {
+            TODO("Not yet implemented")
+        }
+
+        override fun describeContents(): Int {
+            TODO("Not yet implemented")
+        }
+
+        override fun writeToParcel(p0: Parcel, p1: Int) {
+            TODO("Not yet implemented")
         }
     }
 }

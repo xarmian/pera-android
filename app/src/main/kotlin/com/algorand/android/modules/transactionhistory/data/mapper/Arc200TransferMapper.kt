@@ -4,8 +4,8 @@ import com.algorand.android.modules.transaction.common.domain.model.TransactionD
 import com.algorand.android.modules.transaction.common.domain.model.TransactionTypeDTO
 import com.algorand.android.modules.transaction.common.domain.model.AssetTransferDTO
 import com.algorand.android.modules.transactionhistory.domain.model.PaginatedTransactionsDTO
-import com.algorand.android.network.dto.Arc200ApiTransferInfo
-import com.algorand.android.network.dto.Arc200ApiTransfersResponse
+import com.algorand.wallet.network.mimir.model.Arc200ApiTransferInfo
+import com.algorand.wallet.network.mimir.model.Arc200ApiTransfersResponse
 import java.math.BigInteger
 import javax.inject.Inject
 

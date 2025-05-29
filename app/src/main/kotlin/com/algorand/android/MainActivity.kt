@@ -440,6 +440,7 @@ class MainActivity :
         when (item.itemId) {
             R.id.accountsFragment -> mainViewModel.logEvent(PeraClickEvent.TAP_LOWERMENU_HOME)
             R.id.discoverHomeNavigation -> mainViewModel.logEvent(PeraClickEvent.TAP_LOWERMENU_DISCOVER)
+            R.id.bridgeFragment -> mainViewModel.logEvent(PeraClickEvent.TAP_LOWERMENU_BRIDGE)
             // R.id.collectiblesFragment -> mainViewModel.logEvent(PeraClickEvent.TAP_LOWERMENU_NFTS)
             R.id.settingsFragment -> mainViewModel.logEvent(PeraClickEvent.TAP_LOWERMENU_SETTINGS)
         }

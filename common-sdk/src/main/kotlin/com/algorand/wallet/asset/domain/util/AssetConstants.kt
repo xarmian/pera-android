@@ -25,6 +25,7 @@ object AssetConstants {
     const val ALGORAND_TWITTER_USERNAME = "Voi_Net"
     const val ALGORAND_WEBSITE_URL = "https://voi.network"
     const val MINIMUM_CURRENCY_VALUE_TO_DISPLAY_EXACT_AMOUNT = "0.000001"
+    const val PAGINATION_LIMIT_DEFAULT = 100
     val ALGO_TOTAL_SUPPLY: BigDecimal = "10000000000".toBigDecimal()
 
     const val USDC_MAINNET_ID = 302190L

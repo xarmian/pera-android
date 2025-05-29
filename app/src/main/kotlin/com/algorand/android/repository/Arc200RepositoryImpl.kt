@@ -1,8 +1,8 @@
 package com.algorand.android.repository
 
-import com.algorand.android.mapper.Arc200DtoToEntityMapper
-import com.algorand.android.network.MimirApi
-import com.algorand.android.network.dto.Arc200ApiBalanceInfo
+import com.algorand.wallet.mapper.arc200.Arc200DtoToEntityMapper
+import com.algorand.wallet.network.mimir.api.MimirApi
+import com.algorand.wallet.network.mimir.model.Arc200ApiBalanceInfo
 import com.algorand.wallet.account.info.data.database.dao.AssetHoldingDao
 import com.algorand.wallet.account.info.data.database.model.AssetHoldingEntity
 import com.algorand.wallet.asset.data.database.dao.AssetDetailDao
@@ -10,9 +10,10 @@ import com.algorand.wallet.asset.data.database.model.AssetDetailEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.algorand.android.network.request
-import com.algorand.wallet.asset.domain.model.AssetDetail
 import javax.inject.Inject
 import com.algorand.android.models.Result
+import com.algorand.wallet.account.info.domain.model.AssetHolding
+import com.algorand.wallet.asset.domain.model.AssetDetail
 
 class Arc200RepositoryImpl @Inject constructor(
     private val mimirApi: MimirApi,
@@ -62,6 +63,32 @@ class Arc200RepositoryImpl @Inject constructor(
                 Result.Success(Unit)
             } catch (e: Exception) {
                 Result.Error(e)
+            }
+        }
+    }
+
+    override suspend fun getArc200AssetHolding(accountId: String, assetId: Long): Result<AssetHolding> {
+        return withContext(Dispatchers.IO) {
+            request { mimirApi.getArc200Balances(accountId, BALANCE_PAGINATION_LIMIT, null) }.run {
+                when (this) {
+                    is Result.Success -> {
+                        val assetHoldingDto = data.balances?.firstOrNull { it.contractId == assetId }
+                        if (assetHoldingDto == null) {
+                            Result.Error(Exception("ARC-200 asset holding DTO not found in Mimir response for account: $accountId, asset ID: $assetId"))
+                        } else {
+                            val assetHoldingDomain = arc200DtoToEntityMapper.mapBalanceInfoToAssetHoldingDomain(assetHoldingDto)
+                            if (assetHoldingDomain == null) {
+                                Result.Error(Exception("Failed to map ARC-200 DTO to AssetHolding domain for asset ID: $assetId"))
+                            } else {
+                                Result.Success(assetHoldingDomain)
+                            }
+                        }
+                    }
+                    is Result.Error -> {
+                        // Propagate the error
+                        Result.Error(exception)
+                    }
+                }
             }
         }
     }

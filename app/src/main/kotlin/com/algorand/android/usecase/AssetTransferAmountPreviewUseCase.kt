@@ -33,7 +33,12 @@ import com.algorand.wallet.account.core.domain.usecase.GetAccountMinBalance
 import com.algorand.wallet.account.core.domain.usecase.GetTransactionSigner
 import com.algorand.wallet.account.custom.domain.usecase.GetAccountCustomName
 import com.algorand.wallet.account.info.domain.usecase.GetAccountInformation
+import com.algorand.wallet.asset.domain.usecase.GetAsset
 import com.algorand.wallet.asset.domain.util.AssetConstants.ALGO_ID
+import com.algorand.wallet.asset.domain.model.AssetType
+import com.algorand.wallet.asset.domain.usecase.FetchAsset
+import com.algorand.wallet.asset.domain.usecase.FetchAndCacheAssets
+import com.algorand.wallet.foundation.PeraResult
 import java.math.BigDecimal
 import java.math.BigInteger
 import javax.inject.Inject
@@ -51,7 +56,10 @@ class AssetTransferAmountPreviewUseCase @Inject constructor(
     private val getAccountInformation: GetAccountInformation,
     private val getAccountMinBalance: GetAccountMinBalance,
     private val getAccountCustomName: GetAccountCustomName,
-    private val getTransactionSigner: GetTransactionSigner
+    private val getTransactionSigner: GetTransactionSigner,
+    private val getAsset: GetAsset,
+    private val fetchAsset: FetchAsset,
+    private val fetchAndCacheAssets: FetchAndCacheAssets
 ) {
 
     suspend fun createSendTransactionData(
@@ -65,6 +73,34 @@ class AssetTransferAmountPreviewUseCase @Inject constructor(
         val receiverAccountInfo = getAccountInformation(accountAddress)
         val accountName = getAccountCustomName(accountAddress)
         val minBalance = getAccountMinBalance(senderAccountDetail)
+        val assetDetail = getAsset(assetId)
+
+        val specificAssetHolding = if (assetId != ALGO_ID) {
+            getAccountBaseOwnedAssetData(accountAddress, assetId)
+        } else {
+            null
+        }
+
+        var determinedAssetType = assetDetail?.assetType
+
+        if (assetId != ALGO_ID && (determinedAssetType == null || determinedAssetType == AssetType.ASA || determinedAssetType == AssetType.ARC200)) {
+            when (val fetchResult = fetchAsset(assetId)) {
+                is PeraResult.Success -> {
+                    val fetchedAsset = fetchResult.data
+                    if (fetchedAsset.assetType == AssetType.ARC200) {
+                        determinedAssetType = AssetType.ARC200
+                        // Now, trigger re-caching for this asset ID to update its type in DB
+                        fetchAndCacheAssets(listOf(assetId), false) // includeDeleted = false typically
+                    }
+                }
+                is PeraResult.Error -> {
+                    // Failed to fetch or not identified as ARC-200 by fetchAsset.
+                    // Stick with the determinedAssetType from cache.
+                    // Log the error if needed: e.g., sendErrorLog("Failed to re-check asset type for $assetId: ${fetchResult.exception.message}")
+                }
+            }
+        }
+
         return TransactionSignData.Send(
             senderAccountAddress = senderAccountDetail.address,
             senderAuthAddress = senderAccountDetail.rekeyAdminAddress,
@@ -73,14 +109,17 @@ class AssetTransferAmountPreviewUseCase @Inject constructor(
             minimumBalance = minBalance.toLong(),
             amount = amount,
             assetId = assetId,
+            assetType = determinedAssetType,
             note = note,
             targetUser = TargetUser(
                 contact = assetTransaction.receiverUser,
                 publicKey = assetTransaction.receiverUser?.publicKey.orEmpty(),
                 accountIconDrawablePreview = getAccountIconDrawablePreview(accountAddress)
             ),
-            signer = getTransactionSigner(accountAddress),
-            isArc59Transaction = receiverAccountInfo?.hasAsset(assetId)?.not() ?: false
+            signer = getTransactionSigner(senderAccountDetail.rekeyAdminAddress ?: accountAddress),
+            isArc59Transaction = receiverAccountInfo?.hasAsset(assetId)?.not() ?: false,
+            isArc200Transaction = determinedAssetType == AssetType.ARC200,
+            senderSpecificAssetAmount = specificAssetHolding?.amount
         )
     }
 

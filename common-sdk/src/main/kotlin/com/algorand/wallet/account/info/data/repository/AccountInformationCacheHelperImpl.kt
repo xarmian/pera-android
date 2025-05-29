@@ -12,6 +12,9 @@
 
 package com.algorand.wallet.account.info.data.repository
 
+import com.algorand.wallet.account.custom.domain.model.CustomAccountInfo
+import com.algorand.wallet.account.custom.domain.usecase.GetAccountCustomInfoOrNull
+import com.algorand.wallet.account.custom.domain.usecase.SetAccountCustomInfo
 import com.algorand.wallet.account.info.data.cache.AccountInformationErrorCache
 import com.algorand.wallet.account.info.data.database.dao.AccountInformationDao
 import com.algorand.wallet.account.info.data.database.model.AccountInformationEntity
@@ -20,9 +23,7 @@ import com.algorand.wallet.account.info.data.mapper.model.AccountInformationMapp
 import com.algorand.wallet.account.info.data.model.AccountInformationResponse
 import com.algorand.wallet.account.info.domain.model.AccountInformation
 import com.algorand.wallet.account.info.domain.model.AssetHolding
-import com.algorand.wallet.account.custom.domain.model.CustomAccountInfo
-import com.algorand.wallet.account.custom.domain.usecase.GetAccountCustomInfoOrNull
-import com.algorand.wallet.account.custom.domain.usecase.SetAccountCustomInfo
+import com.algorand.wallet.foundation.PeraResult
 import javax.inject.Inject
 
 internal class AccountInformationCacheHelperImpl @Inject constructor(
@@ -30,6 +31,7 @@ internal class AccountInformationCacheHelperImpl @Inject constructor(
     private val accountInformationMapper: AccountInformationMapper,
     private val accountInformationDao: AccountInformationDao,
     private val assetHoldingCacheHelper: AssetHoldingCacheHelper,
+    private val arc200BalanceCacheUpdater: Arc200BalanceCacheUpdater,
     private val accountInformationErrorCache: AccountInformationErrorCache,
     private val getAccountCustomInfoOrNull: GetAccountCustomInfoOrNull,
     private val setAccountCustomInfo: SetAccountCustomInfo
@@ -39,20 +41,34 @@ internal class AccountInformationCacheHelperImpl @Inject constructor(
         address: String,
         response: AccountInformationResponse
     ): AccountInformation? {
-        val entity = accountInformationEntityMapper(response)
-        return if (entity != null) {
-            val assetHoldings = assetHoldingCacheHelper.cacheAssetHolding(
-                address,
-                response.accountInformation?.allAssetHoldingList.orEmpty()
-            )
-            accountInformationErrorCache.remove(address)
-            cacheAccountInformation(entity, assetHoldings)
-        } else {
+        val accountEntity = accountInformationEntityMapper(response)
+        if (accountEntity == null) {
             if (!accountInformationDao.isAddressExists(address)) {
                 accountInformationErrorCache.put(address)
             }
-            null
+            return null
         }
+
+        val asaDomainHoldings = assetHoldingCacheHelper.cacheAssetHolding(
+            address,
+            response.accountInformation?.allAssetHoldingList.orEmpty()
+        )
+
+        val arc200FetchResult = arc200BalanceCacheUpdater.fetchAndPersistArc200Balances(address)
+        val arc200DomainHoldings: List<AssetHolding>
+
+        if (arc200FetchResult is PeraResult.Success) {
+            arc200DomainHoldings = arc200FetchResult.data
+        } else {
+            accountInformationErrorCache.put(address)
+            return null
+        }
+
+        accountInformationErrorCache.remove(address)
+
+        val combinedDomainHoldings = asaDomainHoldings + arc200DomainHoldings
+
+        return cacheAccountInformation(accountEntity, combinedDomainHoldings)
     }
 
     private suspend fun cacheAccountInformation(
@@ -63,8 +79,7 @@ internal class AccountInformationCacheHelperImpl @Inject constructor(
 
         ensureCustomAccountInfoExists(entity.algoAddress)
 
-        val mappedAccountInfo = accountInformationMapper(entity, assetHoldings)
-        return mappedAccountInfo
+        return accountInformationMapper(entity, assetHoldings)
     }
 
     private suspend fun ensureCustomAccountInfoExists(address: String) {

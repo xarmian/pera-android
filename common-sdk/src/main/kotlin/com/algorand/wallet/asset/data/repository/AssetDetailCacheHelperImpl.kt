@@ -27,6 +27,8 @@ import com.algorand.wallet.asset.data.model.AssetResponse
 import com.algorand.wallet.asset.domain.model.Asset
 import com.algorand.wallet.asset.domain.model.AssetDetail
 import com.algorand.wallet.asset.domain.model.CollectibleDetail
+import com.algorand.wallet.asset.domain.model.AssetType
+import com.algorand.wallet.mapper.arc200.Arc200DtoToEntityMapper
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -47,10 +49,11 @@ internal class AssetDetailCacheHelperImpl @Inject constructor(
     private val collectibleEntityMapper: CollectibleEntityMapper,
     private val collectibleMediaEntityMapper: CollectibleMediaEntityMapper,
     private val collectibleTraitEntityMapper: CollectibleTraitEntityMapper,
+    private val arc200DtoToEntityMapper: Arc200DtoToEntityMapper,
     private val coroutineDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : AssetDetailCacheHelper {
 
-    override suspend fun cacheAssetDetails(assetDetails: List<AssetResponse>) {
+    override suspend fun cacheAssetResponseDetails(assetDetails: List<AssetResponse>) {
         withContext(coroutineDispatcher) {
             val assetDetailEntities = assetDetails.mapNotNull { assetDetailEntityMapper(it) }
             val collectibleEntities = assetDetails.mapNotNull { collectibleEntityMapper(it) }
@@ -61,6 +64,33 @@ internal class AssetDetailCacheHelperImpl @Inject constructor(
             collectibleMediaDao.insertAll(collectibleMediaEntities)
             assetDetailDao.insertAll(assetDetailEntities)
             collectibleTraitDao.insertAll(collectibleTraitEntities)
+        }
+    }
+
+    override suspend fun cacheAssetDomainDetails(assetDetails: List<AssetDetail>) {
+        withContext(coroutineDispatcher) {
+            val entitiesToCache = assetDetails.mapNotNull { domainDetail ->
+                var entityToCache = arc200DtoToEntityMapper.mapDomainArc200AssetDetailToEntity(domainDetail)
+
+                // If it's an ARC200 and the incoming domain detail (likely from Arc200ApiTokenDetail)
+                // has no fiat/USD value, check if a USD value already exists in the DB
+                // (likely from a previous cache operation using Arc200ApiBalanceInfo).
+                if (domainDetail.assetType == AssetType.ARC200 &&
+                    domainDetail.assetInfo?.fiat?.usdValue == null &&
+                    entityToCache != null
+                ) {
+                    val existingEntity = assetDetailDao.getByAssetId(domainDetail.id)
+                    if (existingEntity?.usdValue != null) {
+                        // Preserve the existing USD value.
+                        entityToCache = entityToCache.copy(usdValue = existingEntity.usdValue)
+                    }
+                }
+                entityToCache
+            }
+
+            if (entitiesToCache.isNotEmpty()) {
+                assetDetailDao.insertAll(entitiesToCache)
+            }
         }
     }
 

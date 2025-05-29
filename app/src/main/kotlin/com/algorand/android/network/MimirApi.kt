@@ -12,10 +12,10 @@
 
 package com.algorand.android.network
 
-import com.algorand.android.network.dto.Arc200BalanceResponse
-import com.algorand.android.network.dto.Arc200TokenDetailResponse
-import com.algorand.android.network.dto.Arc200ApiTransfersResponse
-import com.algorand.android.network.dto.MimirNftListResponse
+import com.algorand.wallet.network.mimir.model.Arc200BalanceResponse
+import com.algorand.wallet.network.mimir.model.Arc200TokenDetailResponse
+import com.algorand.wallet.network.mimir.model.Arc200ApiTransfersResponse
+import com.algorand.wallet.network.mimir.model.MimirNftListResponse
 import com.algorand.wallet.block.data.model.ShouldRefreshRequestBody
 import com.algorand.wallet.block.data.model.ShouldRefreshResponse
 import com.algorand.wallet.block.data.service.BlockPollingNetworkService

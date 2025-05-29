@@ -1,7 +1,7 @@
 package com.algorand.android.repository
 
 import com.algorand.android.models.Result
-import com.algorand.android.network.dto.MimirNftItemDto
+import com.algorand.wallet.network.mimir.model.MimirNftItemDto
 
 /**
  * Repository for fetching NFT (collectible) data.

@@ -12,12 +12,15 @@
 
 package com.algorand.android.models
 
+import android.os.Parcelable
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
+import kotlinx.parcelize.Parcelize
 
+@Parcelize
 data class ButtonConfiguration(
     @DrawableRes val iconDrawableResId: Int? = null,
     @ColorRes val iconTintResId: Int? = null,
     @ColorRes val iconBackgroundColorResId: Int? = null,
     @ColorRes val iconRippleColorResId: Int? = null
-)
+) : Parcelable

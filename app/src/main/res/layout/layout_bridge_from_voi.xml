@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/from_voi_account_label_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="From Voi Account"
+        android:textAppearance="?attr/textAppearanceHeadline6"
+        android:layout_marginBottom="8dp"/>
+
+    <Button
+        android:id="@+id/select_from_voi_account_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Select Voi Account"
+        style="?attr/materialButtonOutlinedStyle"
+        android:layout_marginBottom="4dp"/>
+
+    <TextView
+        android:id="@+id/from_voi_account_balance_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        tools:text="Balance: 1,234.56 VOI"
+        android:textAppearance="?attr/textAppearanceCaption"/>
+
+</LinearLayout> 

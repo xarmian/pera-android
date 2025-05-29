@@ -103,4 +103,10 @@ interface AssetHoldingDao {
 
     @Query("DELETE FROM asset_holding_table")
     suspend fun clearAll()
+
+    @Query("DELETE FROM asset_holding_table WHERE algo_address = :algoAddress AND asset_type = 'ARC200'")
+    suspend fun deleteArc200HoldingsByAddress(algoAddress: String)
+
+    @Query("SELECT * FROM asset_holding_table WHERE algo_address = :algoAddress AND asset_type = 'ARC200'")
+    suspend fun getArc200AssetsByAddress(algoAddress: String): List<AssetHoldingEntity>
 }

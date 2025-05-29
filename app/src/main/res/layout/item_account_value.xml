@@ -11,28 +11,41 @@
   ~
   -->
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@color/hero_bg"
-    android:orientation="vertical"
     android:paddingHorizontal="@dimen/spacing_xlarge"
     android:paddingTop="@dimen/spacing_xxxlarge"
     android:paddingBottom="@dimen/spacing_small">
 
+    <androidx.appcompat.widget.AppCompatImageButton
+        android:id="@+id/qrImageButton"
+        style="?attr/toolbarNavigationButtonStyle"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="-10dp"
+        android:layout_marginEnd="-10dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_qr_scan" />
+
     <TextView
+        android:id="@+id/accountValueLabel"
         style="@style/TextAppearance.Description"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="@string/account_value" />
+        android:text="@string/account_value"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/primaryValueTextView"
         style="@style/TextAppearance.Title.Large.Sans.Medium"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginVertical="@dimen/spacing_xsmall"
         android:gravity="center"
@@ -40,11 +53,14 @@
         app:autoSizeMaxTextSize="@dimen/text_size_36"
         app:autoSizeMinTextSize="@dimen/text_size_13"
         app:autoSizeTextType="uniform"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/accountValueLabel"
         tools:text="$15,23232,232.42" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/secondaryValueTextView"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/spacing_xsmall"
         android:gravity="center"
@@ -54,6 +70,10 @@
         app:autoSizeMaxTextSize="@dimen/text_size_36"
         app:autoSizeMinTextSize="@dimen/text_size_13"
         app:autoSizeTextType="uniform"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/primaryValueTextView"
         tools:text="$15,594.15" />
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

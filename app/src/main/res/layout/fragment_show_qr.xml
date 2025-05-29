@@ -21,75 +21,124 @@
         android:id="@+id/showQRRootLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="@dimen/bottom_safe_area_margin"
+        android:paddingHorizontal="@dimen/spacing_xlarge"
+        android:paddingVertical="@dimen/spacing_large"
         tools:background="@color/primary_background">
 
         <ImageView
             android:id="@+id/qrImageView"
             android:layout_width="@dimen/show_qr_size"
             android:layout_height="@dimen/show_qr_size"
-            android:layout_marginTop="@dimen/spacing_xxsmall"
-            app:layout_constraintBottom_toTopOf="@id/accountAddressLabelTextView"
+            android:layout_marginTop="@dimen/spacing_normal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_chainStyle="packed"
             tools:background="@color/white"
             tools:srcCompat="@drawable/ic_qr" />
 
         <TextView
-            android:id="@+id/accountAddressLabelTextView"
-            style="@style/TextAppearance.Body.Large.Sans.Medium"
+            android:id="@+id/instructionTextView"
+            style="@style/TextAppearance.Body.Sans"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="@dimen/spacing_xlarge"
-            android:layout_marginTop="@dimen/spacing_normal"
-            android:gravity="center"
-            app:layout_constraintBottom_toTopOf="@id/accountAddressTextView"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginTop="@dimen/spacing_large"
+            android:gravity="center_horizontal"
+            android:text="@string/scan_qr_with_pera_or_defly_bridge"
             app:layout_constraintTop_toBottomOf="@id/qrImageView"
-            tools:text="@tools:sample/lorem[2]" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
 
         <TextView
-            android:id="@+id/accountAddressTextView"
-            style="@style/TextAppearance.Description"
+            android:id="@+id/tokenToSendLabelTextView"
+            style="@style/TextAppearance.Footnote.Sans.Medium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_large"
+            android:text="@string/token_to_send_label"
+            app:layout_constraintTop_toBottomOf="@id/instructionTextView"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/tokenToSendTextView"
+            style="@style/TextAppearance.Body.Sans"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="@dimen/spacing_xlarge"
+            android:layout_marginStart="@dimen/spacing_small"
+            android:gravity="end"
+            app:layout_constraintTop_toTopOf="@id/tokenToSendLabelTextView"
+            app:layout_constraintBottom_toBottomOf="@id/tokenToSendLabelTextView"
+            app:layout_constraintStart_toEndOf="@id/tokenToSendLabelTextView"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:text="aVOI" />
+
+        <TextView
+            android:id="@+id/amountToSendLabelTextView"
+            style="@style/TextAppearance.Footnote.Sans.Medium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/spacing_small"
-            android:layout_marginBottom="@dimen/spacing_xxlarge"
-            android:gravity="center"
-            app:layout_constraintBottom_toTopOf="@id/copyButton"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/accountAddressLabelTextView"
-            tools:text="@tools:sample/lorem[25]" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/copyButton"
-            style="@style/Button.Primary.Icon"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="@dimen/spacing_xlarge"
-            android:layout_marginBottom="@dimen/spacing_normal"
-            android:text="@string/copy_address"
-            app:icon="@drawable/ic_copy"
-            app:layout_constraintBottom_toTopOf="@id/shareButton"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:text="@string/amount_to_send_label"
+            app:layout_constraintTop_toBottomOf="@id/tokenToSendLabelTextView"
             app:layout_constraintStart_toStartOf="parent" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/shareButton"
-            style="@style/Button.Secondary.Icon"
+        <TextView
+            android:id="@+id/amountToSendTextView"
+            style="@style/TextAppearance.Body.Sans"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="@dimen/spacing_xlarge"
-            android:text="@string/share_address"
-            app:icon="@drawable/ic_share"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginStart="@dimen/spacing_small"
+            android:gravity="end"
+            app:layout_constraintTop_toTopOf="@id/amountToSendLabelTextView"
+            app:layout_constraintBottom_toBottomOf="@id/amountToSendLabelTextView"
+            app:layout_constraintStart_toEndOf="@id/amountToSendLabelTextView"
             app:layout_constraintEnd_toEndOf="parent"
+            tools:text="100.00 aVOI" />
+
+        <TextView
+            android:id="@+id/amountToReceiveLabelTextView"
+            style="@style/TextAppearance.Footnote.Sans.Medium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_small"
+            android:text="@string/amount_to_receive_label"
+            app:layout_constraintTop_toBottomOf="@id/amountToSendLabelTextView"
             app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/amountToReceiveTextView"
+            style="@style/TextAppearance.Body.Sans"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_small"
+            android:gravity="end"
+            app:layout_constraintTop_toTopOf="@id/amountToReceiveLabelTextView"
+            app:layout_constraintBottom_toBottomOf="@id/amountToReceiveLabelTextView"
+            app:layout_constraintStart_toEndOf="@id/amountToReceiveLabelTextView"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:text="99.50 VOI" />
+
+        <TextView
+            android:id="@+id/receivingAccountLabelTextView"
+            style="@style/TextAppearance.Footnote.Sans.Medium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_small"
+            android:text="@string/receiving_account_on_voi_label"
+            app:layout_constraintTop_toBottomOf="@id/amountToReceiveLabelTextView"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/receivingAccountTextView"
+            style="@style/TextAppearance.Body.Sans"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_small"
+            android:gravity="end"
+            app:layout_constraintTop_toTopOf="@+id/receivingAccountLabelTextView"
+            app:layout_constraintBottom_toBottomOf="@+id/receivingAccountLabelTextView"
+            app:layout_constraintStart_toEndOf="@+id/receivingAccountLabelTextView"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:text="VOIADDRESSLONGSTRING..." />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

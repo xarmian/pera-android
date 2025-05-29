@@ -15,6 +15,7 @@ package com.algorand.android.models
 import android.os.Parcelable
 import com.algorand.android.utils.MIN_FEE
 import com.algorand.wallet.account.core.domain.model.TransactionSigner
+import com.algorand.wallet.asset.domain.model.AssetType
 import java.math.BigInteger
 import kotlinx.parcelize.Parcelize
 
@@ -30,6 +31,7 @@ sealed class TransactionSignData : Parcelable {
     open var amount: BigInteger = BigInteger.ZERO
     open val targetUser: TargetUser? = null
     open var isArc59Transaction: Boolean = false
+    open var isArc200Transaction: Boolean = false
 
     abstract fun getSignedTransactionDetail(signedTransactionData: ByteArray): SignedTransactionDetail
 
@@ -45,15 +47,22 @@ sealed class TransactionSignData : Parcelable {
         override var targetUser: TargetUser,
         override var transactionByteArray: ByteArray? = null,
         override var isArc59Transaction: Boolean,
-        val senderAlgoAmount: BigInteger,
-        val minimumBalance: Long,
-        val senderAccountName: String,
+        override var isArc200Transaction: Boolean,
+        var senderAlgoAmount: BigInteger,
+        var minimumBalance: Long,
+        var senderAccountName: String,
         val assetId: Long,
+        val assetType: AssetType?,
         val note: String? = null,
         val xnote: String? = null,
         var isMax: Boolean = false,
-        var projectedFee: Long = MIN_FEE
+        var projectedFee: Long = MIN_FEE,
+        var senderSpecificAssetAmount: BigInteger? = null,
+        var simulationResponse: String? = null,
+        var isMbrPaymentActuallyRequired: Boolean? = null,
+        var mbrAmount: BigInteger? = null
     ) : TransactionSignData() {
+
         override fun getSignedTransactionDetail(signedTransactionData: ByteArray): SignedTransactionDetail {
             return SignedTransactionDetail.Send(
                 signedTransactionData = signedTransactionData,
@@ -76,6 +85,7 @@ sealed class TransactionSignData : Parcelable {
         override val signer: TransactionSigner,
         override var transactionByteArray: ByteArray? = null,
         override var isArc59Transaction: Boolean = false,
+        override var isArc200Transaction: Boolean = false,
         val assetId: Long
     ) : TransactionSignData() {
         override fun getSignedTransactionDetail(signedTransactionData: ByteArray): SignedTransactionDetail {
