@@ -16,6 +16,33 @@
     android:id="@+id/showQrNavigation"
     app:startDestination="@id/showQrFragment">
 
+    <argument
+        android:name="title"
+        app:argType="string" />
+    <argument
+        android:name="qrText"
+        app:argType="string" />
+    <argument
+        android:name="tokenToSend"
+        app:argType="string"
+        app:nullable="true"
+        android:defaultValue="@null" />
+    <argument
+        android:name="amountToSend"
+        app:argType="string"
+        app:nullable="true"
+        android:defaultValue="@null" />
+    <argument
+        android:name="amountToReceive"
+        app:argType="string"
+        app:nullable="true"
+        android:defaultValue="@null" />
+    <argument
+        android:name="receivingAccount"
+        app:argType="string"
+        app:nullable="true"
+        android:defaultValue="@null" />
+
     <fragment
         android:id="@+id/showQrFragment"
         android:name="com.algorand.android.utils.ShowQrFragment"

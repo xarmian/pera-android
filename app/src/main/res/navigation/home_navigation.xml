@@ -476,8 +476,8 @@
         <argument
             android:name="tokenId"
             app:argType="string" />
-        <deepLink app:uri="perawallet://collectible-detail/{collectibleAssetId}/{publicKey}/{tokenId}" />
-        <deepLink app:uri="https://perawallet.app/collectible-detail/{collectibleAssetId}/{publicKey}/{tokenId}" />
+        <deepLink app:uri="verawallet://collectible-detail/{collectibleAssetId}/{publicKey}/{tokenId}" />
+        <deepLink app:uri="https://verawallet.app/collectible-detail/{collectibleAssetId}/{publicKey}/{tokenId}" />
         <action
             android:id="@+id/action_collectibleDetailFragment_to_videoPlayerNavigation"
             app:destination="@+id/videoPlayerNavigation">
